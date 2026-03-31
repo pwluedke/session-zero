@@ -13,14 +13,12 @@
       <p class="subtitle">So many games, so little night.</p>
     </header>
 
-    <section class="player-registration">
-      <h2 class="section-label">Who's Playing Tonight?</h2>
-      <div class="player-input-row">
-        <input type="text" id="player-name-input" placeholder="Add a player..."
-               onkeydown="if(event.key==='Enter') addPlayerFromInput()" />
-        <button id="add-player-btn" onclick="addPlayerFromInput()">Add</button>
+    <section class="roll-call">
+      <div class="roll-call-header">
+        <h2 class="section-label">Roll Call</h2>
+        <button class="vault-btn" onclick="openVault()">Player Vault</button>
       </div>
-      <div id="player-chips" class="player-chips"></div>
+      <div id="roll-call-chips" class="roll-call-chips"></div>
     </section>
 
     <section class="filters">
@@ -130,6 +128,24 @@
     <section id="no-results" class="no-results hidden">
       <p>No games matched your filters. Try loosening the constraints!</p>
     </section>
+  </div>
+
+  <!-- Player Vault Modal -->
+  <div id="vault-modal" class="modal-overlay">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div class="session-title">Player Vault</div>
+        <button class="modal-close" onclick="closeVault()">×</button>
+      </div>
+      <div class="modal-section">
+        <div class="player-input-row">
+          <input type="text" id="vault-name-input" placeholder="Add a player..."
+                 onkeydown="if(event.key==='Enter') addToVault()" />
+          <button id="add-vault-btn" onclick="addToVault()">Add</button>
+        </div>
+        <div id="vault-list" class="vault-list"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Session Modal -->

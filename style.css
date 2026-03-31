@@ -275,13 +275,20 @@ button:hover {
   border: 1px solid #0f3460;
 }
 
-/* ── Player Registration ─────────────────────────────────────────────────── */
-.player-registration {
+/* ── Roll Call ───────────────────────────────────────────────────────────── */
+.roll-call {
   background: #16213e;
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
   border: 1px solid #0f3460;
+}
+
+.roll-call-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
 }
 
 .section-label {
@@ -290,13 +297,76 @@ button:hover {
   color: #9a9ab0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.8rem;
 }
 
+.vault-btn {
+  flex: unset;
+  padding: 0.35rem 0.9rem;
+  background: transparent;
+  border: 1px solid #f5c842;
+  border-radius: 6px;
+  color: #f5c842;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vault-btn:hover {
+  background: rgba(245, 200, 66, 0.1);
+  opacity: 1;
+}
+
+.roll-call-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.roll-call-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 20px;
+  padding: 0.3rem 0.7rem 0.3rem 0.3rem;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.roll-call-chip:hover {
+  opacity: 0.75;
+}
+
+.roll-call-chip.active {
+  opacity: 1;
+  border-color: #f5c842;
+}
+
+.roll-call-chip.active:hover {
+  opacity: 0.85;
+}
+
+.check {
+  font-size: 0.75rem;
+  color: #f5c842;
+  font-weight: 700;
+}
+
+/* ── Player Vault Modal list ─────────────────────────────────────────────── */
+.vault-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+/* ── Player Input Row (shared: vault modal) ──────────────────────────────── */
 .player-input-row {
   display: flex;
   gap: 0.6rem;
-  margin-bottom: 0.8rem;
 }
 
 .player-input-row input[type="text"] {
@@ -314,18 +384,22 @@ button:hover {
   border-color: #f5c842;
 }
 
-#add-player-btn {
+.player-input-row input[type="text"].input-error {
+  border-color: #e05252;
+  animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-6px); }
+  75%       { transform: translateX(6px); }
+}
+
+#add-vault-btn {
   flex: unset;
   padding: 0.6rem 1.2rem;
   background: #f5c842;
   color: #1a1a2e;
-}
-
-.player-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  min-height: 0;
 }
 
 .player-chip {

@@ -4,11 +4,14 @@ let newOnly = false;
 let coopOnly = false;
 let renderedGames = [];
 
-// Players
+// Player Vault (permanent registry)
 const AVATAR_COLORS = ['#e05252','#f5a842','#5dd67a','#52a8e0','#c275e0','#e91e8c','#f5c842'];
 const AVATAR_EMOJIS = ['🎮','🎲','🃏','🧩','♟️','🎯','🎪','🦁','🐉','🦊','🐺','🦝','🎭','🤖','👾','🧙','🧝','🧛','🎩','⚔️','🏴‍☠️','🐸','🐧','🦄'];
-let players = JSON.parse(localStorage.getItem('sz-players') || '[]');
-let emojiPickerTarget = null;
+let vault = JSON.parse(localStorage.getItem('sz-vault') || '[]');
+let emojiPickerTarget = null; // vault player id
+
+// Roll Call (who's playing tonight — session state)
+let rollCall = new Set();
 
 // Session
 let sessionGame = null;
@@ -22,62 +25,115 @@ fetch("games.json")
   .then(data => { games = data; })
   .catch(() => console.error("Could not load games.json"));
 
-renderPlayers();
+renderRollCall();
 
-// ── Player Registration ────────────────────────────────────────────────────
-function addPlayerFromInput() {
-  const input = document.getElementById('player-name-input');
+// ── Player Vault ───────────────────────────────────────────────────────────
+function openVault() {
+  renderVaultList();
+  document.getElementById('vault-modal').classList.add('active');
+  document.getElementById('vault-name-input').focus();
+}
+
+function closeVault() {
+  document.getElementById('vault-modal').classList.remove('active');
+}
+
+function addToVault() {
+  const input = document.getElementById('vault-name-input');
   const name = input.value.trim();
   if (!name) return;
-  const color = AVATAR_COLORS[players.length % AVATAR_COLORS.length];
-  players.push({ name, emoji: null, color });
-  savePlayers();
-  renderPlayers();
-  syncPlayersFilter();
+  if (vault.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+    input.classList.add('input-error');
+    input.select();
+    setTimeout(() => input.classList.remove('input-error'), 1200);
+    return;
+  }
+  const color = AVATAR_COLORS[vault.length % AVATAR_COLORS.length];
+  vault.push({ id: Date.now().toString(), name, emoji: null, color });
+  saveVault();
+  renderVaultList();
+  renderRollCall();
   input.value = '';
   input.focus();
 }
 
-function removePlayer(index) {
-  players.splice(index, 1);
-  savePlayers();
-  renderPlayers();
+function removeFromVault(id) {
+  vault = vault.filter(p => p.id !== id);
+  rollCall.delete(id);
+  saveVault();
+  renderVaultList();
+  renderRollCall();
   syncPlayersFilter();
 }
 
-function savePlayers() {
-  localStorage.setItem('sz-players', JSON.stringify(players));
+function saveVault() {
+  localStorage.setItem('sz-vault', JSON.stringify(vault));
+}
+
+function renderVaultList() {
+  const container = document.getElementById('vault-list');
+  if (!container) return;
+  if (vault.length === 0) {
+    container.innerHTML = '<p class="no-players-msg">No players yet — add your game group above.</p>';
+    return;
+  }
+  container.innerHTML = vault.map(p => `
+    <div class="player-chip">
+      ${avatarHtml(p, true)}
+      <span class="player-name">${p.name}</span>
+      <button class="player-remove" onclick="removeFromVault('${p.id}')">×</button>
+    </div>
+  `).join('');
+}
+
+// ── Roll Call ──────────────────────────────────────────────────────────────
+function toggleRollCall(id) {
+  if (rollCall.has(id)) {
+    rollCall.delete(id);
+  } else {
+    rollCall.add(id);
+  }
+  renderRollCall();
+  syncPlayersFilter();
+}
+
+function renderRollCall() {
+  const container = document.getElementById('roll-call-chips');
+  if (!container) return;
+  if (vault.length === 0) {
+    container.innerHTML = '<p class="no-players-msg">Open the Player Vault to register your game group.</p>';
+    return;
+  }
+  container.innerHTML = vault.map(p => {
+    const active = rollCall.has(p.id);
+    return `
+      <div class="roll-call-chip ${active ? 'active' : ''}" onclick="toggleRollCall('${p.id}')">
+        ${avatarHtml(p)}
+        <span class="player-name">${p.name}</span>
+        ${active ? '<span class="check">✓</span>' : ''}
+      </div>
+    `;
+  }).join('');
 }
 
 function syncPlayersFilter() {
-  document.getElementById('players').value = players.length > 0 ? players.length : '';
+  document.getElementById('players').value = rollCall.size > 0 ? rollCall.size : '';
 }
 
-function avatarHtml(player, playerIndex) {
+// ── Avatars ────────────────────────────────────────────────────────────────
+function avatarHtml(player, clickable = false) {
   const isEmoji = !!player.emoji;
   const content = isEmoji
     ? player.emoji
     : player.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const style = isEmoji ? '' : `style="background:${player.color}"`;
-  const clickHandler = playerIndex !== null ? `onclick="openEmojiPicker(${playerIndex})"` : '';
+  const clickHandler = clickable ? `onclick="openEmojiPicker('${player.id}')"` : '';
   return `<div class="avatar ${isEmoji ? 'avatar-emoji' : 'avatar-initials'}" ${style} ${clickHandler}>${content}</div>`;
 }
 
-function renderPlayers() {
-  const container = document.getElementById('player-chips');
-  if (!container) return;
-  container.innerHTML = players.map((p, i) => `
-    <div class="player-chip">
-      ${avatarHtml(p, i)}
-      <span class="player-name">${p.name}</span>
-      <button class="player-remove" onclick="removePlayer(${i})">×</button>
-    </div>
-  `).join('');
-}
-
 // ── Emoji Picker ───────────────────────────────────────────────────────────
-function openEmojiPicker(playerIndex) {
-  emojiPickerTarget = playerIndex;
+function openEmojiPicker(playerId) {
+  emojiPickerTarget = playerId;
   const grid = document.getElementById('emoji-grid');
   grid.innerHTML = AVATAR_EMOJIS.map(e =>
     `<button class="emoji-option" onclick="selectPlayerEmoji('${e}')">${e}</button>`
@@ -87,18 +143,26 @@ function openEmojiPicker(playerIndex) {
 
 function selectPlayerEmoji(emoji) {
   if (emojiPickerTarget !== null) {
-    players[emojiPickerTarget].emoji = emoji;
-    savePlayers();
-    renderPlayers();
+    const player = vault.find(p => p.id === emojiPickerTarget);
+    if (player) {
+      player.emoji = emoji;
+      saveVault();
+      renderVaultList();
+      renderRollCall();
+    }
   }
   closeEmojiPicker();
 }
 
 function clearPlayerEmoji() {
   if (emojiPickerTarget !== null) {
-    players[emojiPickerTarget].emoji = null;
-    savePlayers();
-    renderPlayers();
+    const player = vault.find(p => p.id === emojiPickerTarget);
+    if (player) {
+      player.emoji = null;
+      saveVault();
+      renderVaultList();
+      renderRollCall();
+    }
   }
   closeEmojiPicker();
 }
@@ -277,7 +341,7 @@ async function askWhy(btn, game, filters) {
 // ── Session Modal ──────────────────────────────────────────────────────────
 function openSession(index) {
   sessionGame = renderedGames[index];
-  sessionPlayers = players.map(p => ({ ...p }));
+  sessionPlayers = vault.filter(p => rollCall.has(p.id));
   document.getElementById('session-game-title').textContent = sessionGame.name;
   renderSessionPlayers();
   resetTimer();
@@ -297,12 +361,12 @@ function removeSessionPlayer(index) {
 function renderSessionPlayers() {
   const container = document.getElementById('session-player-list');
   if (sessionPlayers.length === 0) {
-    container.innerHTML = '<p class="no-players-msg">No players registered — add players in the "Who\'s Playing?" panel above.</p>';
+    container.innerHTML = '<p class="no-players-msg">No players on the Roll Call — tap players above to add them.</p>';
     return;
   }
   container.innerHTML = sessionPlayers.map((p, i) => `
     <div class="player-chip">
-      ${avatarHtml(p, null)}
+      ${avatarHtml(p)}
       <span class="player-name">${p.name}</span>
       <button class="player-remove" onclick="removeSessionPlayer(${i})">×</button>
     </div>
