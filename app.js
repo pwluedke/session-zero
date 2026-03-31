@@ -643,6 +643,87 @@ function renderGamesInProgress() {
   }).join('');
 }
 
+// ── Play History ───────────────────────────────────────────────────────────
+function openHistory() {
+  renderHistory();
+  document.getElementById('history-modal').classList.add('active');
+}
+
+function closeHistory() {
+  document.getElementById('history-modal').classList.remove('active');
+}
+
+function renderHistory() {
+  const history = JSON.parse(localStorage.getItem('sz-history') || '[]');
+  const container = document.getElementById('history-list');
+  if (!container) return;
+
+  if (history.length === 0) {
+    container.innerHTML = '<p class="no-players-msg">No sessions recorded yet.</p>';
+    return;
+  }
+
+  container.innerHTML = history.map(entry => {
+    const date = new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: '2-digit',
+    });
+
+    const h = Math.floor(entry.timerSeconds / 3600);
+    const m = Math.floor((entry.timerSeconds % 3600) / 60);
+    const duration = h > 0 ? `${h}h ${m}m` : `${m}m`;
+
+    let resultHtml = '';
+    if (entry.mode === 'winlose') {
+      resultHtml = entry.outcome === 'win' ? '🎉 Victory' : '💀 Defeat';
+    } else {
+      const sorted = [...entry.players].sort((a, b) =>
+        entry.lowScoreWins ? a.score - b.score : b.score - a.score
+      );
+      resultHtml = sorted.map((p, i) =>
+        `<span class="${i === 0 ? 'history-winner' : ''}">${p.name}: ${p.score}</span>`
+      ).join('<span class="history-sep"> · </span>');
+    }
+
+    const feedbackValues = entry.feedback ? Object.values(entry.feedback) : [];
+    const ratings = feedbackValues.map(f => f.rating).filter(Boolean);
+    const avgRating = ratings.length
+      ? Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length)
+      : 0;
+    const ratingHtml = avgRating
+      ? `<span class="history-stars">${'★'.repeat(avgRating)}${'☆'.repeat(5 - avgRating)}</span>`
+      : '';
+
+    const paCounts = { yes: 0, maybe: 0, no: 0 };
+    feedbackValues.forEach(f => { if (f.playAgain) paCounts[f.playAgain]++; });
+    const paHtml = [
+      paCounts.yes   ? `${paCounts.yes} 👍`   : '',
+      paCounts.maybe ? `${paCounts.maybe} 🤔` : '',
+      paCounts.no    ? `${paCounts.no} 👎`    : '',
+    ].filter(Boolean).join(' · ');
+
+    const playerAvatars = entry.players.map(p => {
+      const vp = vault.find(v => v.id === p.id);
+      return vp ? avatarHtml(vp) : `<div class="avatar avatar-initials" style="background:#6a7a90">${p.name[0].toUpperCase()}</div>`;
+    }).join('');
+
+    return `
+      <div class="history-card">
+        <div class="history-card-top">
+          <span class="history-game">${entry.game}</span>
+          <span class="history-date">${date}</span>
+        </div>
+        <div class="history-players">${playerAvatars}</div>
+        <div class="history-result">${resultHtml}</div>
+        <div class="history-meta">
+          <span>⏱ ${duration}</span>
+          ${ratingHtml}
+          ${paHtml ? `<span>${paHtml}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 function finalizeSession() {
   const lowWins = document.getElementById('low-score-wins')?.checked ?? false;
   let players;
