@@ -1,7 +1,7 @@
 {
-  "name": "game-night",
+  "name": "session-zero",
   "version": "1.0.0",
-  "description": "",
+  "description": "So many games, so little night.",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

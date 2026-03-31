@@ -1,6 +1,7 @@
-# Game Night Planner
+# Session Zero: A Game Night Planner
+### *So many games, so little night.*
 
-A personal web application for planning board game nights with family. Filter your game library by players, playtime, complexity, setup time, and more — then get an AI-powered explanation of why each suggestion fits your group.
+A personal web application for planning game nights with family and friends. Filter your library by players, playtime, complexity, setup time, and more — then get an AI-powered explanation of why each suggestion fits your group tonight.
 
 Built as a portfolio project to demonstrate full-stack development, AI integration, and engineering workflow practices.
 
@@ -39,8 +40,8 @@ Built as a portfolio project to demonstrate full-stack development, AI integrati
 **Prerequisites:** Node.js, npm
 
 ```bash
-git clone https://github.com/pwluedke/game-night.git
-cd game-night
+git clone https://github.com/pwluedke/session-zero.git
+cd session-zero
 npm install
 ```
 
