@@ -357,10 +357,59 @@ button:hover {
 
 /* ── Player Vault Modal list ─────────────────────────────────────────────── */
 .vault-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
   margin-top: 0.8rem;
+}
+
+.vault-header-row,
+.vault-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+}
+
+.vault-header-row {
+  border-bottom: 1px solid #1a4a80;
+  margin-bottom: 0.2rem;
+}
+
+.vault-row {
+  border-bottom: 1px solid #0f3460;
+}
+
+.vault-row:last-child {
+  border-bottom: none;
+}
+
+.vault-col-player {
+  font-size: 0.88rem;
+  color: #e0e0e0;
+}
+
+.vault-col-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6a7a90;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.vault-header-row .vault-col-player {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6a7a90;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.vault-col-date {
+  font-size: 0.8rem;
+  color: #6a7a90;
+  text-align: right;
+  white-space: nowrap;
 }
 
 /* ── Player Input Row (shared: vault modal) ──────────────────────────────── */
@@ -545,12 +594,13 @@ button:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 1.5rem;
+  padding: 0.75rem 1.2rem;
   border-bottom: 1px solid #0f3460;
+  flex-shrink: 0;
 }
 
 .session-title {
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #f5c842;
 }
@@ -560,7 +610,7 @@ button:hover {
   background: none;
   border: none;
   color: #9a9ab0;
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
   padding: 0;
@@ -572,9 +622,16 @@ button:hover {
   opacity: 1;
 }
 
+/* Mobile: single column stack */
+.modal-body {
+  display: flex;
+  flex-direction: column;
+}
+
 .modal-section {
-  padding: 1.2rem 1.5rem;
+  padding: 0.9rem 1.1rem;
   border-bottom: 1px solid #0f3460;
+  background: #16213e;
 }
 
 .modal-section:last-child {
@@ -582,39 +639,84 @@ button:hover {
 }
 
 .modal-section-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #9a9ab0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6a7a90;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.8rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.6rem;
 }
 
 .session-player-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .no-players-msg {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: #6a7a90;
   font-style: italic;
 }
 
+/* Desktop: 2-column dashboard */
+@media (min-width: 768px) {
+  .modal-overlay {
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-panel {
+    width: 92vw;
+    max-width: 1300px;
+    height: 88vh;
+    max-height: 88vh;
+    overflow: hidden;
+  }
+
+  .modal-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "playing timer"
+      "scores  music";
+    grid-template-rows: auto 1fr;
+    background: #0a1628;
+    gap: 1px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .modal-body .modal-section:nth-child(1) { grid-area: playing; }
+  .modal-body .modal-section:nth-child(2) { grid-area: scores; }
+  .modal-body .modal-section:nth-child(3) { grid-area: timer; }
+  .modal-body .modal-section:nth-child(4) { grid-area: music; }
+
+  .modal-section {
+    padding: 0.8rem 1rem;
+    border-bottom: none;
+    overflow-y: auto;
+  }
+}
+
 /* ── Timer ───────────────────────────────────────────────────────────────── */
 .timer-display {
-  font-size: 3.2rem;
+  font-size: 2rem;
   font-weight: 700;
   color: #f5c842;
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
 }
 
 .timer-controls {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.5rem;
+}
+
+.timer-controls button {
+  padding: 0.45rem 0.8rem;
+  font-size: 0.85rem;
 }
 
 #timer-toggle-btn {
@@ -626,6 +728,196 @@ button:hover {
   background: #0f3460;
   color: #9a9ab0;
   border: 1px solid #1a4a80;
+}
+
+/* ── Score Tracker ───────────────────────────────────────────────────────── */
+.score-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.score-header .modal-section-label {
+  margin-bottom: 0;
+}
+
+.score-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.score-mode-btn {
+  flex: unset;
+  padding: 0.25rem 0.7rem;
+  background: transparent;
+  border: 1px solid #4a5a70;
+  border-radius: 6px;
+  color: #9a9ab0;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.score-mode-btn:hover {
+  border-color: #9a9ab0;
+  opacity: 1;
+}
+
+.low-score-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #9a9ab0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.low-score-toggle input {
+  accent-color: #f5c842;
+  cursor: pointer;
+}
+
+.score-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.6rem;
+}
+
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.score-player {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.score-player .player-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.score-adj {
+  flex: unset;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.score-adj:hover {
+  background: #1a4a80;
+  opacity: 1;
+}
+
+.score-input {
+  width: 60px;
+  text-align: center;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 1rem;
+  padding: 0.3rem 0.4rem;
+}
+
+.score-input:focus {
+  outline: none;
+  border-color: #f5c842;
+}
+
+.winlose-row {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.outcome-btn {
+  flex: 1;
+  padding: 0.6rem;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 8px;
+  color: #9a9ab0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.outcome-btn:hover {
+  opacity: 0.85;
+}
+
+.outcome-win {
+  background: #1e4d2b;
+  border-color: #5dd67a;
+  color: #5dd67a;
+}
+
+.outcome-loss {
+  background: #4d1a1a;
+  border-color: #e05252;
+  color: #e05252;
+}
+
+.end-game-btn {
+  width: 100%;
+  padding: 0.45rem;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 8px;
+  color: #9a9ab0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 0.5rem;
+}
+
+.end-game-btn:hover:not(:disabled) {
+  border-color: #f5c842;
+  color: #f5c842;
+  opacity: 1;
+}
+
+.end-game-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.winner-banner {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f5c842;
+  padding: 0.4rem;
+  border-radius: 8px;
+  background: rgba(245, 200, 66, 0.08);
 }
 
 /* ── Spotify Player ──────────────────────────────────────────────────────── */
