@@ -18,6 +18,7 @@
         <h2 class="section-label">Roll Call</h2>
         <div class="roll-call-actions">
           <button class="vault-btn" onclick="openSettings()">⚙ Settings</button>
+          <button class="vault-btn" onclick="openHistory()">History</button>
           <button class="vault-btn" onclick="openVault()">Player Vault</button>
         </div>
       </div>
@@ -258,6 +259,19 @@
           </div>
           <button id="setting-why-btn" class="toggle-btn" onclick="toggleSetting('showWhyBtn')" aria-pressed="true">On</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div id="history-modal" class="modal-overlay" onclick="closeHistory()">
+    <div class="modal-panel history-panel" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="session-title">Play History</div>
+        <button class="modal-close" onclick="closeHistory()">×</button>
+      </div>
+      <div class="history-body">
+        <div id="history-list" class="history-list"></div>
       </div>
     </div>
   </div>
