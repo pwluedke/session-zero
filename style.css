@@ -1395,3 +1395,63 @@ button:hover {
   padding: 0.3rem 0.8rem;
   cursor: pointer;
 }
+
+/* ── Settings Modal ──────────────────────────────────────────────────────── */
+body.hide-why .why-btn {
+  display: none !important;
+}
+
+.roll-call-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.settings-panel {
+  max-width: 420px;
+}
+
+.settings-body {
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.settings-group-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6a7a90;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.2rem;
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #0f3460;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.settings-row-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.settings-row-desc {
+  font-size: 0.78rem;
+  color: #6a7a90;
+}
