@@ -556,14 +556,12 @@ function saveResult(result) {
 
 // ── Session Lifecycle ──────────────────────────────────────────────────────
 function showSessionView() {
-  document.getElementById('modal-body').classList.remove('hidden');
-  document.getElementById('feedback-body').classList.add('hidden');
+  document.getElementById('left-slider').classList.remove('show-feedback');
   document.getElementById('pause-btn').classList.remove('hidden');
 }
 
 function showFeedbackView() {
-  document.getElementById('modal-body').classList.add('hidden');
-  document.getElementById('feedback-body').classList.remove('hidden');
+  document.getElementById('left-slider').classList.add('show-feedback');
   document.getElementById('pause-btn').classList.add('hidden');
 }
 

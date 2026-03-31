@@ -163,67 +163,75 @@
           <button class="modal-close" onclick="closeSession()">×</button>
         </div>
       </div>
-      <div class="modal-body" id="modal-body">
-        <div class="modal-section">
-          <div class="modal-section-label">Playing</div>
-          <div id="session-player-list" class="session-player-list"></div>
-        </div>
-        <div class="modal-section" id="score-section">
-          <div class="score-header">
-            <div class="modal-section-label">Score Tracker</div>
-            <div class="score-controls">
-              <button class="score-mode-btn" id="score-mode-btn" onclick="toggleScoreMode()"></button>
-              <label class="low-score-toggle" id="low-score-label">
-                <input type="checkbox" id="low-score-wins" onchange="updateWinner()" />
-                Low score wins
-              </label>
+      <div class="modal-cols">
+        <div class="modal-left-col">
+          <div class="left-slider" id="left-slider">
+            <div class="session-panels">
+              <div class="modal-section">
+                <div class="modal-section-label">Playing</div>
+                <div id="session-player-list" class="session-player-list"></div>
+              </div>
+              <div class="modal-section" id="score-section">
+                <div class="score-header">
+                  <div class="modal-section-label">Score Tracker</div>
+                  <div class="score-controls">
+                    <button class="score-mode-btn" id="score-mode-btn" onclick="toggleScoreMode()"></button>
+                    <label class="low-score-toggle" id="low-score-label">
+                      <input type="checkbox" id="low-score-wins" onchange="updateWinner()" />
+                      Low score wins
+                    </label>
+                  </div>
+                </div>
+                <div id="score-list" class="score-list"></div>
+                <button class="end-game-btn" id="end-game-btn" onclick="endGame()">End Game</button>
+                <div id="winner-banner" class="winner-banner hidden"></div>
+              </div>
+            </div>
+            <div class="feedback-body" id="feedback-body">
+              <div class="feedback-section">
+                <div class="modal-section-label">Session Summary</div>
+                <div id="feedback-summary" class="feedback-summary"></div>
+              </div>
+              <div class="feedback-section">
+                <div class="modal-section-label">Rate This Session</div>
+                <div id="star-rating" class="star-rating"></div>
+              </div>
+              <div class="feedback-section">
+                <div class="modal-section-label">Play Again?</div>
+                <div class="play-again-btns">
+                  <button class="play-again-btn" id="pa-yes"   onclick="setPlayAgain('yes')">👍 Yes</button>
+                  <button class="play-again-btn" id="pa-maybe" onclick="setPlayAgain('maybe')">🤔 Maybe</button>
+                  <button class="play-again-btn" id="pa-no"    onclick="setPlayAgain('no')">👎 No</button>
+                </div>
+              </div>
+              <div class="feedback-section">
+                <div class="modal-section-label">Notes</div>
+                <textarea id="session-notes" class="session-notes" placeholder="Highlights, house rules, memorable moments…"></textarea>
+              </div>
+              <div class="feedback-actions">
+                <button class="back-btn" onclick="backToSession()">← Back</button>
+                <div class="feedback-finalize">
+                  <p class="finalize-note">Finalize to save all results and feedback.</p>
+                  <button class="finalize-session-btn" onclick="finalizeSession()">Finalize Session</button>
+                </div>
+              </div>
             </div>
           </div>
-          <div id="score-list" class="score-list"></div>
-          <button class="end-game-btn" id="end-game-btn" onclick="endGame()">End Game</button>
-          <div id="winner-banner" class="winner-banner hidden"></div>
         </div>
-        <div class="modal-section">
-          <div class="modal-section-label">Timer</div>
-          <div id="timer-display" class="timer-display">0:00:00</div>
-          <div class="timer-controls">
-            <button id="timer-toggle-btn" onclick="toggleTimer()">Start</button>
-            <button class="timer-reset-btn" onclick="resetTimer()">Reset</button>
+        <div class="modal-right-col">
+          <div class="modal-section">
+            <div class="modal-section-label">Timer</div>
+            <div id="timer-display" class="timer-display">0:00:00</div>
+            <div class="timer-controls">
+              <button id="timer-toggle-btn" onclick="toggleTimer()">Start</button>
+              <button class="timer-reset-btn" onclick="resetTimer()">Reset</button>
+            </div>
           </div>
-        </div>
-        <div class="modal-section">
-          <div class="modal-section-label">Music</div>
-          <div id="spotify-container" class="spotify-container">
-            <p class="no-players-msg">Finding music…</p>
-          </div>
-        </div>
-      </div>
-      <div class="feedback-body hidden" id="feedback-body">
-        <div class="feedback-section">
-          <div class="modal-section-label">Session Summary</div>
-          <div id="feedback-summary" class="feedback-summary"></div>
-        </div>
-        <div class="feedback-section">
-          <div class="modal-section-label">Rate This Session</div>
-          <div id="star-rating" class="star-rating"></div>
-        </div>
-        <div class="feedback-section">
-          <div class="modal-section-label">Play Again?</div>
-          <div class="play-again-btns">
-            <button class="play-again-btn" id="pa-yes"   onclick="setPlayAgain('yes')">👍 Yes</button>
-            <button class="play-again-btn" id="pa-maybe" onclick="setPlayAgain('maybe')">🤔 Maybe</button>
-            <button class="play-again-btn" id="pa-no"    onclick="setPlayAgain('no')">👎 No</button>
-          </div>
-        </div>
-        <div class="feedback-section">
-          <div class="modal-section-label">Notes</div>
-          <textarea id="session-notes" class="session-notes" placeholder="Highlights, house rules, memorable moments…"></textarea>
-        </div>
-        <div class="feedback-actions">
-          <button class="back-btn" onclick="backToSession()">← Back</button>
-          <div class="feedback-finalize">
-            <p class="finalize-note">Finalize to save all results and feedback.</p>
-            <button class="finalize-session-btn" onclick="finalizeSession()">Finalize Session</button>
+          <div class="modal-section">
+            <div class="modal-section-label">Music</div>
+            <div id="spotify-container" class="spotify-container">
+              <p class="no-players-msg">Finding music…</p>
+            </div>
           </div>
         </div>
       </div>
