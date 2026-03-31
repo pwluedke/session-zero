@@ -193,21 +193,13 @@
                 <div id="feedback-summary" class="feedback-summary"></div>
               </div>
               <div class="feedback-section">
-                <div class="modal-section-label">Rate This Session</div>
-                <div id="star-rating" class="star-rating"></div>
-              </div>
-              <div class="feedback-section">
-                <div class="modal-section-label">Play Again?</div>
-                <div class="play-again-btns">
-                  <button class="play-again-btn" id="pa-yes"   onclick="setPlayAgain('yes')">👍 Yes</button>
-                  <button class="play-again-btn" id="pa-maybe" onclick="setPlayAgain('maybe')">🤔 Maybe</button>
-                  <button class="play-again-btn" id="pa-no"    onclick="setPlayAgain('no')">👎 No</button>
+                <div class="feedback-player-header">
+                  <div class="modal-section-label">Player Feedback</div>
+                  <div class="feedback-progress" id="feedback-progress"></div>
                 </div>
+                <div id="feedback-player-chips" class="feedback-player-chips"></div>
               </div>
-              <div class="feedback-section">
-                <div class="modal-section-label">Notes</div>
-                <textarea id="session-notes" class="session-notes" placeholder="Highlights, house rules, memorable moments…"></textarea>
-              </div>
+              <div id="feedback-player-form" class="feedback-player-form"></div>
               <div class="feedback-actions">
                 <button class="back-btn" onclick="backToSession()">← Back</button>
                 <div class="feedback-finalize">
