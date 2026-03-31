@@ -628,6 +628,12 @@ button:hover {
   border: 1px solid #1a4a80;
 }
 
+/* ── Spotify Player ──────────────────────────────────────────────────────── */
+.spotify-container iframe {
+  border-radius: 10px;
+  display: block;
+}
+
 /* ── Emoji Picker ────────────────────────────────────────────────────────── */
 .emoji-picker {
   background: #16213e;

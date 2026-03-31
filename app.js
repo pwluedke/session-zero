@@ -345,7 +345,35 @@ function openSession(index) {
   document.getElementById('session-game-title').textContent = sessionGame.name;
   renderSessionPlayers();
   resetTimer();
+  loadSpotifyPlaylist(sessionGame);
   document.getElementById('session-modal').classList.add('active');
+}
+
+async function loadSpotifyPlaylist(game) {
+  const container = document.getElementById('spotify-container');
+  container.innerHTML = '<p class="no-players-msg">Finding music…</p>';
+  try {
+    const res = await fetch(
+      `/api/spotify/playlist?game=${encodeURIComponent(game.name)}&type=${encodeURIComponent(game.type)}`
+    );
+    const data = await res.json();
+    if (data.embedUrl) {
+      container.innerHTML = `
+        <iframe
+          src="${data.embedUrl}"
+          width="100%"
+          height="152"
+          frameborder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy">
+        </iframe>
+      `;
+    } else {
+      container.innerHTML = '<p class="no-players-msg">No playlist found for this game.</p>';
+    }
+  } catch {
+    container.innerHTML = '<p class="no-players-msg">Could not load music.</p>';
+  }
 }
 
 function closeSession() {
