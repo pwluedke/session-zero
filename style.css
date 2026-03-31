@@ -274,3 +274,409 @@ button:hover {
   border-radius: 10px;
   border: 1px solid #0f3460;
 }
+
+/* ── Roll Call ───────────────────────────────────────────────────────────── */
+.roll-call {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #0f3460;
+}
+
+.roll-call-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.section-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #9a9ab0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vault-btn {
+  flex: unset;
+  padding: 0.35rem 0.9rem;
+  background: transparent;
+  border: 1px solid #f5c842;
+  border-radius: 6px;
+  color: #f5c842;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vault-btn:hover {
+  background: rgba(245, 200, 66, 0.1);
+  opacity: 1;
+}
+
+.roll-call-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.roll-call-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 20px;
+  padding: 0.3rem 0.7rem 0.3rem 0.3rem;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.roll-call-chip:hover {
+  opacity: 0.75;
+}
+
+.roll-call-chip.active {
+  opacity: 1;
+  border-color: #f5c842;
+}
+
+.roll-call-chip.active:hover {
+  opacity: 0.85;
+}
+
+.check {
+  font-size: 0.75rem;
+  color: #f5c842;
+  font-weight: 700;
+}
+
+/* ── Player Vault Modal list ─────────────────────────────────────────────── */
+.vault-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+/* ── Player Input Row (shared: vault modal) ──────────────────────────────── */
+.player-input-row {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.player-input-row input[type="text"] {
+  flex: 1;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 1rem;
+  padding: 0.6rem 0.8rem;
+}
+
+.player-input-row input[type="text"]:focus {
+  outline: none;
+  border-color: #f5c842;
+}
+
+.player-input-row input[type="text"].input-error {
+  border-color: #e05252;
+  animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-6px); }
+  75%       { transform: translateX(6px); }
+}
+
+#add-vault-btn {
+  flex: unset;
+  padding: 0.6rem 1.2rem;
+  background: #f5c842;
+  color: #1a1a2e;
+}
+
+.player-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 20px;
+  padding: 0.25rem 0.6rem 0.25rem 0.25rem;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+  transition: opacity 0.15s;
+}
+
+.avatar:hover {
+  opacity: 0.8;
+}
+
+.avatar-initials {
+  color: #1a1a2e;
+}
+
+.avatar-emoji {
+  background: #1a3060;
+  font-size: 1rem;
+}
+
+.player-name {
+  font-size: 0.9rem;
+  color: #e0e0e0;
+}
+
+.player-remove {
+  flex: unset;
+  background: none;
+  border: none;
+  color: #6a7a90;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: auto;
+  transition: color 0.15s;
+}
+
+.player-remove:hover {
+  color: #e05252;
+  opacity: 1;
+}
+
+/* ── Expanded Game Card ──────────────────────────────────────────────────── */
+.game-card {
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.game-card:hover {
+  border-color: #1a4a80;
+}
+
+.game-card.expanded {
+  border-color: #f5c842;
+}
+
+.game-detail {
+  border-top: 1px solid #0f3460;
+  padding-top: 0.8rem;
+  margin-top: 0.4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.game-detail-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: #9a9ab0;
+}
+
+.lets-play-btn {
+  flex: unset;
+  white-space: nowrap;
+  padding: 0.5rem 1.4rem;
+  background: #f5c842;
+  color: #1a1a2e;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lets-play-btn:hover {
+  opacity: 0.9;
+}
+
+/* ── Modal Overlay ───────────────────────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 20, 0.88);
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+/* ── Session Modal ───────────────────────────────────────────────────────── */
+.modal-panel {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid #0f3460;
+}
+
+.session-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f5c842;
+}
+
+.modal-close {
+  flex: unset;
+  background: none;
+  border: none;
+  color: #9a9ab0;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: auto;
+}
+
+.modal-close:hover {
+  color: #e0e0e0;
+  opacity: 1;
+}
+
+.modal-section {
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid #0f3460;
+}
+
+.modal-section:last-child {
+  border-bottom: none;
+}
+
+.modal-section-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #9a9ab0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.8rem;
+}
+
+.session-player-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.no-players-msg {
+  font-size: 0.88rem;
+  color: #6a7a90;
+  font-style: italic;
+}
+
+/* ── Timer ───────────────────────────────────────────────────────────────── */
+.timer-display {
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: #f5c842;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 1rem;
+}
+
+.timer-controls {
+  display: flex;
+  gap: 0.6rem;
+}
+
+#timer-toggle-btn {
+  background: #f5c842;
+  color: #1a1a2e;
+}
+
+.timer-reset-btn {
+  background: #0f3460;
+  color: #9a9ab0;
+  border: 1px solid #1a4a80;
+}
+
+/* ── Emoji Picker ────────────────────────────────────────────────────────── */
+.emoji-picker {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+  padding: 1.2rem;
+  width: 300px;
+  text-align: center;
+}
+
+.emoji-picker-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #9a9ab0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.8rem;
+}
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.emoji-option {
+  flex: unset;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 8px;
+  font-size: 1.3rem;
+  padding: 0.35rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.emoji-option:hover {
+  background: #1a4a80;
+  opacity: 1;
+}
+
+.emoji-clear-btn {
+  flex: unset;
+  background: transparent;
+  border: 1px solid #4a5a70;
+  color: #9a9ab0;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+}
