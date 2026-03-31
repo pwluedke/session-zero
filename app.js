@@ -18,6 +18,9 @@ let sessionGame = null;
 let sessionPlayers = [];
 let timerInterval = null;
 let timerSeconds = 0;
+let scoreMode = 'points'; // 'points' | 'winlose'
+let sessionScores = {};   // { playerId: number }
+let sessionOutcome = null; // 'win' | 'loss' (winlose mode only)
 
 // ── Init ───────────────────────────────────────────────────────────────────
 fetch("games.json")
@@ -344,6 +347,7 @@ function openSession(index) {
   sessionPlayers = vault.filter(p => rollCall.has(p.id));
   document.getElementById('session-game-title').textContent = sessionGame.name;
   renderSessionPlayers();
+  initScoreTracker();
   resetTimer();
   loadSpotifyPlaylist(sessionGame);
   document.getElementById('session-modal').classList.add('active');
@@ -399,6 +403,157 @@ function renderSessionPlayers() {
       <button class="player-remove" onclick="removeSessionPlayer(${i})">×</button>
     </div>
   `).join('');
+}
+
+// ── Score Tracker ──────────────────────────────────────────────────────────
+function initScoreTracker() {
+  scoreMode = sessionGame.cooperative ? 'winlose' : 'points';
+  sessionScores = {};
+  sessionOutcome = null;
+  sessionPlayers.forEach(p => { sessionScores[p.id] = 0; });
+  document.getElementById('winner-banner').classList.add('hidden');
+  document.getElementById('winner-banner').textContent = '';
+  document.getElementById('end-game-btn').disabled = false;
+  document.getElementById('low-score-wins').checked = false;
+  renderScoreTracker();
+}
+
+function renderScoreTracker() {
+  const modeBtn = document.getElementById('score-mode-btn');
+  const lowScoreLabel = document.getElementById('low-score-label');
+  const scoreList = document.getElementById('score-list');
+
+  modeBtn.textContent = scoreMode === 'points' ? 'Switch to Win/Loss' : 'Switch to Points';
+  lowScoreLabel.classList.toggle('hidden', scoreMode !== 'points');
+
+  if (scoreMode === 'winlose') {
+    scoreList.innerHTML = `
+      <div class="winlose-row">
+        <button class="outcome-btn ${sessionOutcome === 'win' ? 'outcome-win' : ''}"
+                onclick="setOutcome('win')">Victory</button>
+        <button class="outcome-btn ${sessionOutcome === 'loss' ? 'outcome-loss' : ''}"
+                onclick="setOutcome('loss')">Defeat</button>
+      </div>
+    `;
+    return;
+  }
+
+  scoreList.innerHTML = sessionPlayers.map(p => `
+    <div class="score-row">
+      <div class="score-player">
+        ${avatarHtml(p)}
+        <span class="player-name">${p.name}</span>
+      </div>
+      <div class="score-controls-row">
+        <button class="score-adj" onclick="adjustScore('${p.id}', -1)">−</button>
+        <input class="score-input" type="number" value="${sessionScores[p.id] ?? 0}"
+               onchange="setScore('${p.id}', this.value)"
+               oninput="setScore('${p.id}', this.value)" />
+        <button class="score-adj" onclick="adjustScore('${p.id}', 1)">+</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleScoreMode() {
+  scoreMode = scoreMode === 'points' ? 'winlose' : 'points';
+  sessionOutcome = null;
+  renderScoreTracker();
+  document.getElementById('winner-banner').classList.add('hidden');
+}
+
+function adjustScore(playerId, delta) {
+  sessionScores[playerId] = (sessionScores[playerId] ?? 0) + delta;
+  renderScoreTracker();
+  updateWinner();
+}
+
+function setScore(playerId, value) {
+  const n = parseInt(value);
+  sessionScores[playerId] = isNaN(n) ? 0 : n;
+  updateWinner();
+}
+
+function setOutcome(outcome) {
+  sessionOutcome = outcome;
+  renderScoreTracker();
+}
+
+function updateWinner() {
+  if (scoreMode !== 'points' || sessionPlayers.length === 0) return;
+  const lowWins = document.getElementById('low-score-wins').checked;
+  const sorted = [...sessionPlayers].sort((a, b) =>
+    lowWins
+      ? (sessionScores[a.id] ?? 0) - (sessionScores[b.id] ?? 0)
+      : (sessionScores[b.id] ?? 0) - (sessionScores[a.id] ?? 0)
+  );
+  // Only show live leader if scores differ
+  const scores = sessionPlayers.map(p => sessionScores[p.id] ?? 0);
+  const allSame = scores.every(s => s === scores[0]);
+  const banner = document.getElementById('winner-banner');
+  if (!allSame) {
+    banner.classList.remove('hidden');
+    banner.textContent = `Leading: ${sorted[0].name} (${sessionScores[sorted[0].id]})`;
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+function endGame() {
+  const lowWins = document.getElementById('low-score-wins').checked;
+  let result;
+
+  if (scoreMode === 'winlose') {
+    if (!sessionOutcome) {
+      document.getElementById('winner-banner').classList.remove('hidden');
+      document.getElementById('winner-banner').textContent = 'Select Victory or Defeat first.';
+      return;
+    }
+    result = {
+      id: Date.now().toString(),
+      date: new Date().toISOString().split('T')[0],
+      game: sessionGame.name,
+      mode: 'winlose',
+      outcome: sessionOutcome,
+      players: sessionPlayers.map(p => ({ id: p.id, name: p.name })),
+    };
+  } else {
+    const sorted = [...sessionPlayers].sort((a, b) =>
+      lowWins
+        ? (sessionScores[a.id] ?? 0) - (sessionScores[b.id] ?? 0)
+        : (sessionScores[b.id] ?? 0) - (sessionScores[a.id] ?? 0)
+    );
+    result = {
+      id: Date.now().toString(),
+      date: new Date().toISOString().split('T')[0],
+      game: sessionGame.name,
+      mode: 'points',
+      lowScoreWins: lowWins,
+      players: sorted.map((p, i) => ({
+        id: p.id,
+        name: p.name,
+        score: sessionScores[p.id] ?? 0,
+        winner: i === 0,
+      })),
+    };
+  }
+
+  saveResult(result);
+
+  const banner = document.getElementById('winner-banner');
+  banner.classList.remove('hidden');
+  if (scoreMode === 'winlose') {
+    banner.textContent = sessionOutcome === 'win' ? '🎉 Victory!' : '💀 Defeated.';
+  } else {
+    banner.textContent = `🏆 ${result.players[0].name} wins!`;
+  }
+  document.getElementById('end-game-btn').disabled = true;
+}
+
+function saveResult(result) {
+  const history = JSON.parse(localStorage.getItem('sz-history') || '[]');
+  history.unshift(result);
+  localStorage.setItem('sz-history', JSON.stringify(history));
 }
 
 // ── Timer ──────────────────────────────────────────────────────────────────
