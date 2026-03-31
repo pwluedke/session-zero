@@ -16,7 +16,10 @@
     <section class="roll-call">
       <div class="roll-call-header">
         <h2 class="section-label">Roll Call</h2>
-        <button class="vault-btn" onclick="openVault()">Player Vault</button>
+        <div class="roll-call-actions">
+          <button class="vault-btn" onclick="openHistory()">History</button>
+          <button class="vault-btn" onclick="openVault()">Player Vault</button>
+        </div>
       </div>
       <div id="roll-call-chips" class="roll-call-chips"></div>
     </section>
@@ -236,6 +239,19 @@
       <div class="emoji-picker-label">Choose your avatar</div>
       <div id="emoji-grid" class="emoji-grid"></div>
       <button class="emoji-clear-btn" onclick="clearPlayerEmoji()">Use Initials</button>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div id="history-modal" class="modal-overlay" onclick="closeHistory()">
+    <div class="modal-panel history-panel" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="session-title">Play History</div>
+        <button class="modal-close" onclick="closeHistory()">×</button>
+      </div>
+      <div class="history-body">
+        <div id="history-list" class="history-list"></div>
+      </div>
     </div>
   </div>
 

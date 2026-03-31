@@ -1395,3 +1395,90 @@ button:hover {
   padding: 0.3rem 0.8rem;
   cursor: pointer;
 }
+
+/* ── Roll Call header actions ────────────────────────────────────────────── */
+.roll-call-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ── Play History Modal ──────────────────────────────────────────────────── */
+.history-panel {
+  max-width: 560px;
+}
+
+.history-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 1rem 1.2rem;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.history-card {
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.history-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.history-game {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.history-date {
+  font-size: 0.75rem;
+  color: #6a7a90;
+  white-space: nowrap;
+}
+
+.history-players {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.history-result {
+  font-size: 0.82rem;
+  color: #9a9ab0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem;
+}
+
+.history-winner {
+  color: #f5c842;
+  font-weight: 700;
+}
+
+.history-sep {
+  color: #4a5a70;
+}
+
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.78rem;
+  color: #6a7a90;
+}
+
+.history-stars {
+  color: #f5c842;
+  letter-spacing: 0.02em;
+}
