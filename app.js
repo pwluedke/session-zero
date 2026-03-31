@@ -967,6 +967,31 @@ function renderTimerDisplay() {
   if (el) el.textContent = `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+// ── Quick Search ───────────────────────────────────────────────────────────
+function onSearchInput() {
+  const query = document.getElementById('search-input').value.trim();
+  const clearBtn = document.getElementById('search-clear-btn');
+  clearBtn.classList.toggle('hidden', query.length === 0);
+
+  if (query.length === 0) {
+    document.getElementById('results').classList.add('hidden');
+    document.getElementById('no-results').classList.add('hidden');
+    return;
+  }
+
+  const lower = query.toLowerCase();
+  const matches = games.filter(g => g.name.toLowerCase().includes(lower));
+  renderResults(matches, `${matches.length} match${matches.length !== 1 ? 'es' : ''} for "${query}"`);
+}
+
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear-btn').classList.add('hidden');
+  document.getElementById('results').classList.add('hidden');
+  document.getElementById('no-results').classList.add('hidden');
+  document.getElementById('search-input').focus();
+}
+
 // ── Suggest / Surprise ─────────────────────────────────────────────────────
 function suggest() {
   const filters = getFilters();

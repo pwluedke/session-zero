@@ -1537,3 +1537,49 @@ body.hide-why .why-btn {
   color: #f5c842;
   letter-spacing: 0.02em;
 }
+
+/* ── Quick Search ────────────────────────────────────────────────────────── */
+.quick-search {
+  margin-bottom: 1rem;
+}
+
+.quick-search-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.quick-search-row input[type="text"] {
+  width: 100%;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+  color: #e0e0e0;
+  font-size: 1rem;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  transition: border-color 0.15s;
+}
+
+.quick-search-row input[type="text"]:focus {
+  outline: none;
+  border-color: #f5c842;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 0.75rem;
+  flex: unset;
+  background: none;
+  border: none;
+  color: #6a7a90;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: auto;
+}
+
+.search-clear-btn:hover {
+  color: #e0e0e0;
+  opacity: 1;
+}
