@@ -21,6 +21,11 @@ let timerSeconds = 0;
 let scoreMode = 'points'; // 'points' | 'winlose'
 let sessionScores = {};   // { playerId: number }
 let sessionOutcome = null; // 'win' | 'loss' (winlose mode only)
+let currentSessionId = null;
+
+// Feedback
+let feedbackRating = 0;
+let feedbackPlayAgain = null;
 
 // ── Init ───────────────────────────────────────────────────────────────────
 fetch("games.json")
@@ -29,6 +34,7 @@ fetch("games.json")
   .catch(() => console.error("Could not load games.json"));
 
 renderRollCall();
+renderGamesInProgress();
 
 // ── Player Vault ───────────────────────────────────────────────────────────
 function openVault() {
@@ -361,7 +367,9 @@ async function askWhy(btn, game, filters) {
 function openSession(index) {
   sessionGame = renderedGames[index];
   sessionPlayers = vault.filter(p => rollCall.has(p.id));
+  currentSessionId = Date.now().toString();
   document.getElementById('session-game-title').textContent = sessionGame.name;
+  showSessionView();
   renderSessionPlayers();
   initScoreTracker();
   resetTimer();
@@ -517,51 +525,26 @@ function updateWinner() {
 
 function endGame() {
   const lowWins = document.getElementById('low-score-wins').checked;
-  let result;
 
   if (scoreMode === 'winlose') {
     if (!sessionOutcome) {
-      document.getElementById('winner-banner').classList.remove('hidden');
-      document.getElementById('winner-banner').textContent = 'Select Victory or Defeat first.';
+      const banner = document.getElementById('winner-banner');
+      banner.classList.remove('hidden');
+      banner.textContent = 'Select Victory or Defeat first.';
       return;
     }
-    result = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().split('T')[0],
-      game: sessionGame.name,
-      mode: 'winlose',
-      outcome: sessionOutcome,
-      players: sessionPlayers.map(p => ({ id: p.id, name: p.name })),
-    };
+    const banner = document.getElementById('winner-banner');
+    banner.classList.remove('hidden');
+    banner.textContent = sessionOutcome === 'win' ? '🎉 Victory!' : '💀 Defeated.';
   } else {
     const sorted = [...sessionPlayers].sort((a, b) =>
       lowWins
         ? (sessionScores[a.id] ?? 0) - (sessionScores[b.id] ?? 0)
         : (sessionScores[b.id] ?? 0) - (sessionScores[a.id] ?? 0)
     );
-    result = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().split('T')[0],
-      game: sessionGame.name,
-      mode: 'points',
-      lowScoreWins: lowWins,
-      players: sorted.map((p, i) => ({
-        id: p.id,
-        name: p.name,
-        score: sessionScores[p.id] ?? 0,
-        winner: i === 0,
-      })),
-    };
-  }
-
-  saveResult(result);
-
-  const banner = document.getElementById('winner-banner');
-  banner.classList.remove('hidden');
-  if (scoreMode === 'winlose') {
-    banner.textContent = sessionOutcome === 'win' ? '🎉 Victory!' : '💀 Defeated.';
-  } else {
-    banner.textContent = `🏆 ${result.players[0].name} wins!`;
+    const banner = document.getElementById('winner-banner');
+    banner.classList.remove('hidden');
+    banner.textContent = `🏆 ${sorted[0].name} wins!`;
   }
   document.getElementById('end-game-btn').disabled = true;
 }
@@ -577,6 +560,210 @@ function saveResult(result) {
     if (vp) vp.lastPlayed = result.date;
   });
   saveVault();
+}
+
+// ── Session Lifecycle ──────────────────────────────────────────────────────
+function showSessionView() {
+  document.getElementById('modal-body').classList.remove('hidden');
+  document.getElementById('feedback-body').classList.add('hidden');
+  document.getElementById('pause-btn').classList.remove('hidden');
+  document.getElementById('finalize-btn').classList.remove('hidden');
+}
+
+function showFeedbackView() {
+  document.getElementById('modal-body').classList.add('hidden');
+  document.getElementById('feedback-body').classList.remove('hidden');
+  document.getElementById('pause-btn').classList.add('hidden');
+  document.getElementById('finalize-btn').classList.add('hidden');
+}
+
+function pauseSession() {
+  stopTimer();
+  const state = {
+    id: currentSessionId,
+    game: sessionGame,
+    players: sessionPlayers,
+    scores: { ...sessionScores },
+    scoreMode,
+    lowScoreWins: document.getElementById('low-score-wins').checked,
+    outcome: sessionOutcome,
+    timerSeconds,
+    pausedAt: new Date().toISOString(),
+  };
+  const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
+  const idx = sessions.findIndex(s => s.id === state.id);
+  if (idx >= 0) sessions[idx] = state;
+  else sessions.push(state);
+  localStorage.setItem('sz-active-sessions', JSON.stringify(sessions));
+  document.getElementById('session-modal').classList.remove('active');
+  renderGamesInProgress();
+}
+
+function resumeSession(sessionId) {
+  const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
+  const state = sessions.find(s => s.id === sessionId);
+  if (!state) return;
+
+  currentSessionId   = state.id;
+  sessionGame        = state.game;
+  sessionPlayers     = state.players;
+  sessionScores      = state.scores;
+  scoreMode          = state.scoreMode;
+  sessionOutcome     = state.outcome;
+  timerSeconds       = state.timerSeconds;
+
+  document.getElementById('session-game-title').textContent = sessionGame.name;
+  document.getElementById('low-score-wins').checked = state.lowScoreWins;
+
+  showSessionView();
+  renderSessionPlayers();
+  renderScoreTracker();
+  renderTimerDisplay();
+  loadSpotifyPlaylist(sessionGame);
+  document.getElementById('session-modal').classList.add('active');
+}
+
+function renderGamesInProgress() {
+  const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
+  const section = document.getElementById('games-in-progress');
+  const list = document.getElementById('gip-list');
+  if (!section || !list) return;
+
+  if (sessions.length === 0) {
+    section.classList.add('hidden');
+    return;
+  }
+
+  section.classList.remove('hidden');
+  list.innerHTML = sessions.map(s => {
+    const h = Math.floor(s.timerSeconds / 3600);
+    const m = Math.floor((s.timerSeconds % 3600) / 60);
+    const elapsed = `${h}:${String(m).padStart(2, '0')}`;
+    const avatars = s.players.map(p => avatarHtml(p)).join('');
+    return `
+      <div class="gip-card">
+        <div class="gip-info">
+          <div class="gip-game">${s.game.name}</div>
+          <div class="gip-meta">
+            <div class="gip-players">${avatars}</div>
+            <span class="gip-time">⏱ ${elapsed}</span>
+          </div>
+        </div>
+        <button class="resume-btn" onclick="resumeSession('${s.id}')">Resume Session</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function finalizeSession() {
+  stopTimer();
+  feedbackRating = 0;
+  feedbackPlayAgain = null;
+  renderFeedbackView();
+  showFeedbackView();
+}
+
+function renderFeedbackView() {
+  const h = Math.floor(timerSeconds / 3600);
+  const m = Math.floor((timerSeconds % 3600) / 60);
+  const s = timerSeconds % 60;
+  const duration = `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+  let resultLine = '';
+  if (scoreMode === 'winlose') {
+    resultLine = sessionOutcome
+      ? (sessionOutcome === 'win' ? '🎉 Victory' : '💀 Defeat')
+      : 'Not recorded';
+  } else {
+    const lowWins = document.getElementById('low-score-wins')?.checked ?? false;
+    const sorted = [...sessionPlayers].sort((a, b) =>
+      lowWins
+        ? (sessionScores[a.id] ?? 0) - (sessionScores[b.id] ?? 0)
+        : (sessionScores[b.id] ?? 0) - (sessionScores[a.id] ?? 0)
+    );
+    resultLine = sorted.map(p => `${p.name}: ${sessionScores[p.id] ?? 0}`).join(' · ');
+  }
+
+  document.getElementById('feedback-summary').innerHTML = `
+    <div class="summary-row"><span>Players</span><span>${sessionPlayers.map(p => p.name).join(', ')}</span></div>
+    <div class="summary-row"><span>Duration</span><span>${duration}</span></div>
+    <div class="summary-row"><span>Result</span><span>${resultLine}</span></div>
+  `;
+
+  document.getElementById('session-notes').value = '';
+  renderStars(0);
+  renderPlayAgain(null);
+}
+
+function renderStars(rating) {
+  const container = document.getElementById('star-rating');
+  if (!container) return;
+  container.innerHTML = [1, 2, 3, 4, 5].map(i =>
+    `<button class="star-btn ${i <= rating ? 'star-on' : ''}" onclick="setRating(${i})">★</button>`
+  ).join('');
+}
+
+function setRating(n) {
+  feedbackRating = n;
+  renderStars(n);
+}
+
+function renderPlayAgain(val) {
+  ['yes', 'maybe', 'no'].forEach(v => {
+    const btn = document.getElementById(`pa-${v}`);
+    if (btn) btn.classList.toggle('play-again-active', val === v);
+  });
+}
+
+function setPlayAgain(val) {
+  feedbackPlayAgain = val;
+  renderPlayAgain(val);
+}
+
+function endSession() {
+  const lowWins = document.getElementById('low-score-wins')?.checked ?? false;
+  let players;
+
+  if (scoreMode === 'winlose') {
+    players = sessionPlayers.map(p => ({ id: p.id, name: p.name }));
+  } else {
+    const sorted = [...sessionPlayers].sort((a, b) =>
+      lowWins
+        ? (sessionScores[a.id] ?? 0) - (sessionScores[b.id] ?? 0)
+        : (sessionScores[b.id] ?? 0) - (sessionScores[a.id] ?? 0)
+    );
+    players = sorted.map((p, i) => ({
+      id: p.id, name: p.name,
+      score: sessionScores[p.id] ?? 0,
+      winner: i === 0,
+    }));
+  }
+
+  const result = {
+    id: currentSessionId,
+    date: new Date().toISOString().split('T')[0],
+    game: sessionGame.name,
+    mode: scoreMode,
+    ...(scoreMode === 'winlose' ? { outcome: sessionOutcome } : { lowScoreWins: lowWins }),
+    players,
+    timerSeconds,
+    rating: feedbackRating || null,
+    playAgain: feedbackPlayAgain,
+    notes: document.getElementById('session-notes')?.value.trim() || null,
+  };
+
+  saveResult(result);
+
+  // Remove from active sessions
+  const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
+  localStorage.setItem('sz-active-sessions',
+    JSON.stringify(sessions.filter(s => s.id !== currentSessionId))
+  );
+
+  currentSessionId = null;
+  document.getElementById('session-modal').classList.remove('active');
+  showSessionView();
+  renderGamesInProgress();
 }
 
 // ── Timer ──────────────────────────────────────────────────────────────────
