@@ -118,7 +118,16 @@ git commit -m "Add Spotify playlist embed to game cards"
 ## Project Board
 
 All planned and in-progress work is tracked at:
-[github.com/pwluedke/game-night/issues](https://github.com/pwluedke/game-night/issues)
+[github.com/pwluedke/session-zero/issues](https://github.com/pwluedke/session-zero/issues)
+
+### Epics
+
+| # | Epic |
+|---|---|
+| #18 | Recommendation Engine |
+| #19 | Session & Tournament Management |
+| #20 | Library & Collection Management |
+| #21 | Infrastructure & Quality |
 
 ### Current Backlog
 
@@ -140,6 +149,16 @@ All planned and in-progress work is tracked at:
 | #14 | Unit and end-to-end tests |
 | #15 | BGG collection sync |
 | #16 | BGG multi-list support |
+| #17 | Player profiles and per-player game feedback |
+| #22 | Session modal — "Let's Play" UI shell |
+| #23 | Session panel — timer |
+| #24 | Session panel — live score tracker |
+| #25 | Session panel — seating chart & arrangement randomizer |
+| #26 | Session panel — wheel of names |
+| #27 | Session panel — virtual dice roller |
+| #28 | Session panel — photo upload |
+| #29 | Session panel — notes and house rules |
+| #30 | Session panel — rules reference and BGG link |
 
 ---
 
