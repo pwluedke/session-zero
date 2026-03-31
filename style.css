@@ -1,0 +1,276 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+h1 {
+  font-size: 2.2rem;
+  color: #f5c842;
+  margin-bottom: 0.4rem;
+}
+
+.subtitle {
+  color: #9a9ab0;
+  font-size: 1rem;
+}
+
+.filters {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border: 1px solid #0f3460;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #9a9ab0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+input[type="number"],
+select {
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 1rem;
+  padding: 0.6rem 0.8rem;
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+input[type="number"]:focus,
+select:focus {
+  outline: none;
+  border-color: #f5c842;
+}
+
+input::placeholder {
+  color: #4a5a70;
+}
+
+.field-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.toggle-btn {
+  flex: unset;
+  padding: 0.6rem 0.8rem;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 8px;
+  color: #9a9ab0;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.toggle-btn.toggle-on {
+  background: #1e4d2b;
+  border-color: #5dd67a;
+  color: #5dd67a;
+}
+
+.type-tag {
+  font-size: 0.78rem;
+  color: #6a7a90;
+}
+
+.buttons {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 0.2rem;
+}
+
+button {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+#suggest-btn {
+  background: #f5c842;
+  color: #1a1a2e;
+}
+
+#surprise-btn {
+  background: #e05252;
+  color: #fff;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.results h2 {
+  font-size: 1.1rem;
+  color: #9a9ab0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+#game-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.game-card {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.game-card-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.game-card-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.why-btn {
+  flex: unset;
+  padding: 0.3rem 0.75rem;
+  background: transparent;
+  border: 1px solid #f5c842;
+  border-radius: 6px;
+  color: #f5c842;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.why-btn:hover:not(:disabled) {
+  background: rgba(245, 200, 66, 0.12);
+}
+
+.why-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.why-text {
+  font-size: 0.9rem;
+  color: #c0c8d8;
+  line-height: 1.5;
+  border-top: 1px solid #0f3460;
+  padding-top: 0.6rem;
+}
+
+.game-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 0.3rem;
+}
+
+.game-meta {
+  font-size: 0.85rem;
+  color: #9a9ab0;
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-low    { background: #1e4d2b; color: #5dd67a; }
+.badge-medium { background: #4d3a1a; color: #f5a842; }
+.badge-high   { background: #4d1a1a; color: #f55252; }
+
+.game-rating {
+  font-size: 0.8rem;
+  color: #f5c842;
+  letter-spacing: 0.05em;
+}
+
+.coop-tag {
+  font-size: 0.78rem;
+  color: #5dd67a;
+}
+
+.hidden {
+  display: none;
+}
+
+.no-results p {
+  text-align: center;
+  color: #9a9ab0;
+  font-size: 1rem;
+  padding: 1.5rem;
+  background: #16213e;
+  border-radius: 10px;
+  border: 1px solid #0f3460;
+}

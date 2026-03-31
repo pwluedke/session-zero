@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Night Planner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎲 Game Night Planner</h1>
+      <p class="subtitle">Find the perfect game for your group</p>
+    </header>
+
+    <section class="filters">
+      <div class="filter-row">
+        <div class="field">
+          <label for="players">Players</label>
+          <input type="number" id="players" min="1" max="20" placeholder="e.g. 4" />
+        </div>
+
+        <div class="field">
+          <label for="playtime">Max Play Time</label>
+          <select id="playtime">
+            <option value="">Any</option>
+            <option value="15">15 min</option>
+            <option value="30">30 min</option>
+            <option value="45">45 min</option>
+            <option value="60">1 hour</option>
+            <option value="90">90 min</option>
+            <option value="120">2 hours</option>
+            <option value="9999">No limit</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="complexity">Complexity</label>
+          <select id="complexity">
+            <option value="">Any</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div class="field">
+          <label for="type">Game Type</label>
+          <select id="type">
+            <option value="">Any</option>
+            <option value="Abstract">Abstract</option>
+            <option value="Board">Board</option>
+            <option value="Card">Card</option>
+            <option value="Dice">Dice</option>
+            <option value="Mystery">Mystery</option>
+            <option value="Narrative">Narrative</option>
+            <option value="Party">Party</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="age">Min Age ≤</label>
+          <select id="age">
+            <option value="">Any</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="10">10</option>
+            <option value="12">12</option>
+            <option value="14">14</option>
+          </select>
+        </div>
+
+        <div class="field field-toggle">
+          <label>New to Us</label>
+          <button id="new-only-btn" class="toggle-btn" onclick="toggleNewOnly()" aria-pressed="false">Off</button>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div class="field">
+          <label for="setup">Max Setup</label>
+          <select id="setup">
+            <option value="">Any</option>
+            <option value="5">≤ 5 min</option>
+            <option value="15">≤ 15 min</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="min-rating">Min Rating</label>
+          <select id="min-rating">
+            <option value="">Any</option>
+            <option value="3">★★★+</option>
+            <option value="4">★★★★+</option>
+            <option value="5">★★★★★</option>
+          </select>
+        </div>
+
+        <div class="field field-toggle">
+          <label>Co-op Only</label>
+          <button id="coop-btn" class="toggle-btn" onclick="toggleCoop()" aria-pressed="false">Off</button>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button id="suggest-btn" onclick="suggest()">Find Games</button>
+        <button id="surprise-btn" onclick="surprise()">🎲 Surprise Me</button>
+      </div>
+    </section>
+
+    <section id="results" class="results hidden">
+      <h2 id="results-heading">Suggested Games</h2>
+      <ul id="game-list"></ul>
+    </section>
+
+    <section id="no-results" class="no-results hidden">
+      <p>No games matched your filters. Try loosening the constraints!</p>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
