@@ -524,29 +524,21 @@ function updateWinner() {
 }
 
 function endGame() {
-  const lowWins = document.getElementById('low-score-wins').checked;
-
-  if (scoreMode === 'winlose') {
-    if (!sessionOutcome) {
-      const banner = document.getElementById('winner-banner');
-      banner.classList.remove('hidden');
-      banner.textContent = 'Select Victory or Defeat first.';
-      return;
-    }
+  if (scoreMode === 'winlose' && !sessionOutcome) {
     const banner = document.getElementById('winner-banner');
     banner.classList.remove('hidden');
-    banner.textContent = sessionOutcome === 'win' ? '🎉 Victory!' : '💀 Defeated.';
-  } else {
-    const sorted = [...sessionPlayers].sort((a, b) =>
-      lowWins
-        ? (sessionScores[a.id] ?? 0) - (sessionScores[b.id] ?? 0)
-        : (sessionScores[b.id] ?? 0) - (sessionScores[a.id] ?? 0)
-    );
-    const banner = document.getElementById('winner-banner');
-    banner.classList.remove('hidden');
-    banner.textContent = `🏆 ${sorted[0].name} wins!`;
+    banner.textContent = 'Select Victory or Defeat first.';
+    return;
   }
-  document.getElementById('end-game-btn').disabled = true;
+  stopTimer();
+  feedbackRating = 0;
+  feedbackPlayAgain = null;
+  renderFeedbackView();
+  showFeedbackView();
+}
+
+function backToSession() {
+  showSessionView();
 }
 
 function saveResult(result) {
@@ -567,14 +559,12 @@ function showSessionView() {
   document.getElementById('modal-body').classList.remove('hidden');
   document.getElementById('feedback-body').classList.add('hidden');
   document.getElementById('pause-btn').classList.remove('hidden');
-  document.getElementById('finalize-btn').classList.remove('hidden');
 }
 
 function showFeedbackView() {
   document.getElementById('modal-body').classList.add('hidden');
   document.getElementById('feedback-body').classList.remove('hidden');
   document.getElementById('pause-btn').classList.add('hidden');
-  document.getElementById('finalize-btn').classList.add('hidden');
 }
 
 function pauseSession() {
@@ -656,11 +646,48 @@ function renderGamesInProgress() {
 }
 
 function finalizeSession() {
-  stopTimer();
-  feedbackRating = 0;
-  feedbackPlayAgain = null;
-  renderFeedbackView();
-  showFeedbackView();
+  const lowWins = document.getElementById('low-score-wins')?.checked ?? false;
+  let players;
+
+  if (scoreMode === 'winlose') {
+    players = sessionPlayers.map(p => ({ id: p.id, name: p.name }));
+  } else {
+    const sorted = [...sessionPlayers].sort((a, b) =>
+      lowWins
+        ? (sessionScores[a.id] ?? 0) - (sessionScores[b.id] ?? 0)
+        : (sessionScores[b.id] ?? 0) - (sessionScores[a.id] ?? 0)
+    );
+    players = sorted.map((p, i) => ({
+      id: p.id, name: p.name,
+      score: sessionScores[p.id] ?? 0,
+      winner: i === 0,
+    }));
+  }
+
+  const result = {
+    id: currentSessionId,
+    date: new Date().toISOString().split('T')[0],
+    game: sessionGame.name,
+    mode: scoreMode,
+    ...(scoreMode === 'winlose' ? { outcome: sessionOutcome } : { lowScoreWins: lowWins }),
+    players,
+    timerSeconds,
+    rating: feedbackRating || null,
+    playAgain: feedbackPlayAgain,
+    notes: document.getElementById('session-notes')?.value.trim() || null,
+  };
+
+  saveResult(result);
+
+  const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
+  localStorage.setItem('sz-active-sessions',
+    JSON.stringify(sessions.filter(s => s.id !== currentSessionId))
+  );
+
+  currentSessionId = null;
+  document.getElementById('session-modal').classList.remove('active');
+  showSessionView();
+  renderGamesInProgress();
 }
 
 function renderFeedbackView() {
@@ -720,51 +747,6 @@ function setPlayAgain(val) {
   renderPlayAgain(val);
 }
 
-function endSession() {
-  const lowWins = document.getElementById('low-score-wins')?.checked ?? false;
-  let players;
-
-  if (scoreMode === 'winlose') {
-    players = sessionPlayers.map(p => ({ id: p.id, name: p.name }));
-  } else {
-    const sorted = [...sessionPlayers].sort((a, b) =>
-      lowWins
-        ? (sessionScores[a.id] ?? 0) - (sessionScores[b.id] ?? 0)
-        : (sessionScores[b.id] ?? 0) - (sessionScores[a.id] ?? 0)
-    );
-    players = sorted.map((p, i) => ({
-      id: p.id, name: p.name,
-      score: sessionScores[p.id] ?? 0,
-      winner: i === 0,
-    }));
-  }
-
-  const result = {
-    id: currentSessionId,
-    date: new Date().toISOString().split('T')[0],
-    game: sessionGame.name,
-    mode: scoreMode,
-    ...(scoreMode === 'winlose' ? { outcome: sessionOutcome } : { lowScoreWins: lowWins }),
-    players,
-    timerSeconds,
-    rating: feedbackRating || null,
-    playAgain: feedbackPlayAgain,
-    notes: document.getElementById('session-notes')?.value.trim() || null,
-  };
-
-  saveResult(result);
-
-  // Remove from active sessions
-  const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
-  localStorage.setItem('sz-active-sessions',
-    JSON.stringify(sessions.filter(s => s.id !== currentSessionId))
-  );
-
-  currentSessionId = null;
-  document.getElementById('session-modal').classList.remove('active');
-  showSessionView();
-  renderGamesInProgress();
-}
 
 // ── Timer ──────────────────────────────────────────────────────────────────
 function toggleTimer() {

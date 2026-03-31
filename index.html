@@ -160,7 +160,6 @@
         <div id="session-game-title" class="session-title"></div>
         <div class="modal-header-actions">
           <button class="pause-btn" id="pause-btn" onclick="pauseSession()">Pause</button>
-          <button class="finalize-btn" id="finalize-btn" onclick="finalizeSession()">Finalize Session</button>
           <button class="modal-close" onclick="closeSession()">×</button>
         </div>
       </div>
@@ -220,7 +219,13 @@
           <div class="modal-section-label">Notes</div>
           <textarea id="session-notes" class="session-notes" placeholder="Highlights, house rules, memorable moments…"></textarea>
         </div>
-        <button class="end-session-btn" onclick="endSession()">End Session</button>
+        <div class="feedback-actions">
+          <button class="back-btn" onclick="backToSession()">← Back</button>
+          <div class="feedback-finalize">
+            <p class="finalize-note">Finalize to save all results and feedback.</p>
+            <button class="finalize-session-btn" onclick="finalizeSession()">Finalize Session</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

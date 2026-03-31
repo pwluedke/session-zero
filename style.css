@@ -706,21 +706,6 @@ button:hover {
   opacity: 1;
 }
 
-.finalize-btn {
-  flex: unset;
-  padding: 0.3rem 0.75rem;
-  background: #f5c842;
-  border: none;
-  border-radius: 6px;
-  color: #1a1a2e;
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.finalize-btn:hover {
-  opacity: 0.88;
-}
 
 .modal-close {
   flex: unset;
@@ -1154,20 +1139,62 @@ button:hover {
   border-color: #f5c842;
 }
 
-.end-session-btn {
-  width: 100%;
-  padding: 0.7rem;
+.feedback-actions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 0.8rem;
+}
+
+.back-btn {
+  flex: unset;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid #4a5a70;
+  border-radius: 8px;
+  color: #9a9ab0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.back-btn:hover {
+  border-color: #9a9ab0;
+  color: #e0e0e0;
+  opacity: 1;
+}
+
+.feedback-finalize {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.finalize-note {
+  font-size: 0.72rem;
+  color: #6a7a90;
+  font-style: italic;
+  text-align: right;
+}
+
+.finalize-session-btn {
+  flex: unset;
+  padding: 0.55rem 1.2rem;
   background: #f5c842;
   border: none;
   border-radius: 8px;
   color: #1a1a2e;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
-  margin-top: auto;
+  white-space: nowrap;
 }
 
-.end-session-btn:hover {
+.finalize-session-btn:hover {
   opacity: 0.9;
 }
 
