@@ -20,6 +20,42 @@ Built as a portfolio project to demonstrate full-stack development, AI integrati
 
 ---
 
+## Application Pages & States
+
+### Pages
+
+| Name | Description |
+|---|---|
+| **Home** | Main page. Roll Call, Games in Progress, filters, and game results. |
+
+### Modal States
+
+| Name | Trigger | Description |
+|---|---|---|
+| **Player Vault** | "Player Vault" button | Permanent player registry. Add, remove, and set avatars. |
+| **Session Dashboard** | "Let's Play!" on a game card | Active session. Panels: Playing, Score Tracker, Timer, Music. |
+| **Session Feedback** | "End Game" in Score Tracker | Post-game form: star rating, Play Again, and notes. |
+
+### Home Sections
+
+| Name | Condition | Description |
+|---|---|---|
+| **Roll Call** | Always visible | Toggle vault players in/out for tonight's session. |
+| **Games in Progress** | Paused sessions exist | Cards for paused sessions with a Resume Session button. |
+
+### Key Actions
+
+| Action | Context | What it does |
+|---|---|---|
+| **Let's Play!** | Expanded game card | Opens Session Dashboard |
+| **Pause** | Session Dashboard header | Saves session state, returns to Home. Card appears in Games in Progress. |
+| **Resume Session** | Games in Progress | Restores Session Dashboard to its exact prior state |
+| **End Game** | Score Tracker panel | Validates scores, stops timer, opens Session Feedback |
+| **← Back** | Session Feedback | Returns to Session Dashboard with all state intact |
+| **Finalize Session** | Session Feedback | Saves all results and feedback to history, closes modal, returns to Home |
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |

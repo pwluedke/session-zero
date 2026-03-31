@@ -262,7 +262,7 @@ button:hover {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .no-results p {
@@ -273,6 +273,83 @@ button:hover {
   background: #16213e;
   border-radius: 10px;
   border: 1px solid #0f3460;
+}
+
+/* ── Games in Progress ───────────────────────────────────────────────────── */
+.games-in-progress {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #f5a842;
+}
+
+.games-in-progress .section-label {
+  margin-bottom: 0.8rem;
+  color: #f5a842;
+}
+
+.gip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.gip-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+}
+
+.gip-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.gip-game {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.gip-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.gip-players {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.gip-time {
+  font-size: 0.78rem;
+  color: #9a9ab0;
+}
+
+.resume-btn {
+  flex: unset;
+  white-space: nowrap;
+  padding: 0.4rem 0.9rem;
+  background: #f5a842;
+  color: #1a1a2e;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resume-btn:hover {
+  opacity: 0.9;
 }
 
 /* ── Roll Call ───────────────────────────────────────────────────────────── */
@@ -605,6 +682,31 @@ button:hover {
   color: #f5c842;
 }
 
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pause-btn {
+  flex: unset;
+  padding: 0.3rem 0.75rem;
+  background: transparent;
+  border: 1px solid #4a5a70;
+  border-radius: 6px;
+  color: #9a9ab0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pause-btn:hover {
+  border-color: #9a9ab0;
+  color: #e0e0e0;
+  opacity: 1;
+}
+
+
 .modal-close {
   flex: unset;
   background: none;
@@ -622,8 +724,28 @@ button:hover {
   opacity: 1;
 }
 
-/* Mobile: single column stack */
-.modal-body {
+/* ── Modal Columns / Slider Layout ──────────────────────────────────────── */
+.modal-cols {
+  overflow: hidden;
+}
+
+.modal-left-col {
+  overflow: hidden;
+}
+
+.left-slider {
+  display: flex;
+  width: 200%;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.left-slider.show-feedback {
+  transform: translateX(-50%);
+}
+
+.session-panels {
+  width: 50%;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
 }
@@ -674,23 +796,57 @@ button:hover {
     overflow: hidden;
   }
 
-  .modal-body {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "playing timer"
-      "scores  music";
-    grid-template-rows: auto 1fr;
+  .modal-cols {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    min-height: 0;
     background: #0a1628;
     gap: 1px;
+  }
+
+  .modal-left-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: #0a1628;
+    gap: 1px;
+  }
+
+  .left-slider {
     flex: 1;
     min-height: 0;
   }
 
-  .modal-body .modal-section:nth-child(1) { grid-area: playing; }
-  .modal-body .modal-section:nth-child(2) { grid-area: scores; }
-  .modal-body .modal-section:nth-child(3) { grid-area: timer; }
-  .modal-body .modal-section:nth-child(4) { grid-area: music; }
+  .session-panels {
+    overflow-y: auto;
+  }
+
+  .session-panels .modal-section:last-child {
+    flex: 1;
+    min-height: 0;
+    border-bottom: none;
+  }
+
+  .feedback-body {
+    overflow-y: auto;
+  }
+
+  .modal-right-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: #0a1628;
+    gap: 1px;
+  }
+
+  .modal-right-col .modal-section:last-child {
+    flex: 1;
+    min-height: 0;
+    border-bottom: none;
+  }
 
   .modal-section {
     padding: 0.8rem 1rem;
@@ -918,6 +1074,179 @@ button:hover {
   padding: 0.4rem;
   border-radius: 8px;
   background: rgba(245, 200, 66, 0.08);
+}
+
+/* ── Feedback View ───────────────────────────────────────────────────────── */
+.feedback-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 1.2rem 1.5rem;
+  width: 50%;
+  flex-shrink: 0;
+}
+
+.feedback-section {
+  margin-bottom: 1.2rem;
+}
+
+.feedback-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: #0f3460;
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.summary-row span:first-child {
+  color: #6a7a90;
+  flex-shrink: 0;
+}
+
+.summary-row span:last-child {
+  color: #e0e0e0;
+  text-align: right;
+}
+
+.star-rating {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.star-btn {
+  flex: unset;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: #2a3a5a;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.1s, transform 0.1s;
+}
+
+.star-btn:hover,
+.star-btn.star-on {
+  color: #f5c842;
+  opacity: 1;
+}
+
+.star-btn:active {
+  transform: scale(1.2);
+}
+
+.play-again-btns {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.play-again-btn {
+  flex: 1;
+  padding: 0.5rem;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 8px;
+  color: #9a9ab0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.play-again-btn:hover {
+  border-color: #9a9ab0;
+  opacity: 1;
+}
+
+.play-again-active {
+  border-color: #f5c842 !important;
+  color: #f5c842 !important;
+  background: rgba(245, 200, 66, 0.08) !important;
+}
+
+.session-notes {
+  width: 100%;
+  min-height: 80px;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 0.88rem;
+  font-family: inherit;
+  padding: 0.6rem 0.8rem;
+  resize: vertical;
+}
+
+.session-notes:focus {
+  outline: none;
+  border-color: #f5c842;
+}
+
+.feedback-actions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 0.8rem;
+}
+
+.back-btn {
+  flex: unset;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid #4a5a70;
+  border-radius: 8px;
+  color: #9a9ab0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.back-btn:hover {
+  border-color: #9a9ab0;
+  color: #e0e0e0;
+  opacity: 1;
+}
+
+.feedback-finalize {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.finalize-note {
+  font-size: 0.72rem;
+  color: #6a7a90;
+  font-style: italic;
+  text-align: right;
+}
+
+.finalize-session-btn {
+  flex: unset;
+  padding: 0.55rem 1.2rem;
+  background: #f5c842;
+  border: none;
+  border-radius: 8px;
+  color: #1a1a2e;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.finalize-session-btn:hover {
+  opacity: 0.9;
 }
 
 /* ── Spotify Player ──────────────────────────────────────────────────────── */
