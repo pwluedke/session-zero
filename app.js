@@ -52,12 +52,18 @@ function addToVault() {
     return;
   }
   const color = AVATAR_COLORS[vault.length % AVATAR_COLORS.length];
-  vault.push({ id: Date.now().toString(), name, emoji: null, color });
+  vault.push({ id: Date.now().toString(), name, emoji: null, color, lastPlayed: null });
+  vault.sort((a, b) => a.name.localeCompare(b.name));
   saveVault();
   renderVaultList();
   renderRollCall();
   input.value = '';
   input.focus();
+}
+
+function formatLastPlayed(dateStr) {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
 }
 
 function removeFromVault(id) {
@@ -80,13 +86,23 @@ function renderVaultList() {
     container.innerHTML = '<p class="no-players-msg">No players yet — add your game group above.</p>';
     return;
   }
-  container.innerHTML = vault.map(p => `
-    <div class="player-chip">
-      ${avatarHtml(p, true)}
-      <span class="player-name">${p.name}</span>
-      <button class="player-remove" onclick="removeFromVault('${p.id}')">×</button>
+  const sorted = [...vault].sort((a, b) => a.name.localeCompare(b.name));
+  container.innerHTML = `
+    <div class="vault-header-row">
+      <span></span>
+      <span class="vault-col-player">Player</span>
+      <span class="vault-col-label">Last at the Table</span>
+      <span></span>
     </div>
-  `).join('');
+    ${sorted.map(p => `
+      <div class="vault-row">
+        ${avatarHtml(p, true)}
+        <span class="vault-col-player">${p.name}</span>
+        <span class="vault-col-date">${formatLastPlayed(p.lastPlayed)}</span>
+        <button class="player-remove" onclick="removeFromVault('${p.id}')">×</button>
+      </div>
+    `).join('')}
+  `;
 }
 
 // ── Roll Call ──────────────────────────────────────────────────────────────
@@ -554,6 +570,13 @@ function saveResult(result) {
   const history = JSON.parse(localStorage.getItem('sz-history') || '[]');
   history.unshift(result);
   localStorage.setItem('sz-history', JSON.stringify(history));
+
+  // Stamp lastPlayed on each participating vault player
+  result.players.forEach(rp => {
+    const vp = vault.find(v => v.id === rp.id);
+    if (vp) vp.lastPlayed = result.date;
+  });
+  saveVault();
 }
 
 // ── Timer ──────────────────────────────────────────────────────────────────
