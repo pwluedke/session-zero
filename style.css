@@ -541,12 +541,41 @@ button:hover {
   flex-direction: column;
 }
 
+/* Desktop dashboard layout */
+@media (min-width: 768px) {
+  .modal-panel {
+    max-width: 95vw;
+    max-height: 95vh;
+    overflow-y: hidden;
+  }
+
+  .modal-body {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    background: #0f3460;
+    gap: 1px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .modal-section {
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modal-body {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 1.5rem;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid #0f3460;
+  flex-shrink: 0;
 }
 
 .session-title {
@@ -572,9 +601,15 @@ button:hover {
   opacity: 1;
 }
 
+.modal-body {
+  display: flex;
+  flex-direction: column;
+}
+
 .modal-section {
   padding: 1.2rem 1.5rem;
   border-bottom: 1px solid #0f3460;
+  background: #16213e;
 }
 
 .modal-section:last-child {
@@ -822,6 +857,12 @@ button:hover {
 .spotify-container iframe {
   border-radius: 10px;
   display: block;
+}
+
+@media (min-width: 768px) {
+  .spotify-container iframe {
+    height: 352px;
+  }
 }
 
 /* ── Emoji Picker ────────────────────────────────────────────────────────── */
