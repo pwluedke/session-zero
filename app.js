@@ -24,8 +24,8 @@ let sessionOutcome = null; // 'win' | 'loss' (winlose mode only)
 let currentSessionId = null;
 
 // Feedback
-let feedbackRating = 0;
-let feedbackPlayAgain = null;
+let feedbackByPlayer = {};     // { [playerId]: { rating, playAgain, notes } }
+let activeFeedbackPlayer = null;
 
 // ── Init ───────────────────────────────────────────────────────────────────
 fetch("games.json")
@@ -531,8 +531,8 @@ function endGame() {
     return;
   }
   stopTimer();
-  feedbackRating = 0;
-  feedbackPlayAgain = null;
+  feedbackByPlayer = {};
+  activeFeedbackPlayer = null;
   renderFeedbackView();
   showFeedbackView();
 }
@@ -670,9 +670,13 @@ function finalizeSession() {
     ...(scoreMode === 'winlose' ? { outcome: sessionOutcome } : { lowScoreWins: lowWins }),
     players,
     timerSeconds,
-    rating: feedbackRating || null,
-    playAgain: feedbackPlayAgain,
-    notes: document.getElementById('session-notes')?.value.trim() || null,
+    feedback: Object.fromEntries(
+      Object.entries(feedbackByPlayer).map(([id, fb]) => [id, {
+        rating: fb.rating || null,
+        playAgain: fb.playAgain,
+        notes: fb.notes.trim() || null,
+      }])
+    ),
   };
 
   saveResult(result);
@@ -715,34 +719,102 @@ function renderFeedbackView() {
     <div class="summary-row"><span>Result</span><span>${resultLine}</span></div>
   `;
 
-  document.getElementById('session-notes').value = '';
-  renderStars(0);
-  renderPlayAgain(null);
+  // Initialize per-player feedback state
+  sessionPlayers.forEach(p => {
+    if (!feedbackByPlayer[p.id]) {
+      feedbackByPlayer[p.id] = { rating: 0, playAgain: null, notes: '' };
+    }
+  });
+  activeFeedbackPlayer = sessionPlayers[0]?.id ?? null;
+
+  renderFeedbackPlayerChips();
+  renderPlayerFeedbackForm();
 }
 
-function renderStars(rating) {
-  const container = document.getElementById('star-rating');
-  if (!container) return;
-  container.innerHTML = [1, 2, 3, 4, 5].map(i =>
-    `<button class="star-btn ${i <= rating ? 'star-on' : ''}" onclick="setRating(${i})">★</button>`
+function renderFeedbackPlayerChips() {
+  const chips = document.getElementById('feedback-player-chips');
+  const progress = document.getElementById('feedback-progress');
+  if (!chips || !progress) return;
+
+  const doneCount = sessionPlayers.filter(p => {
+    const fb = feedbackByPlayer[p.id];
+    return fb && (fb.rating > 0 || fb.playAgain !== null);
+  }).length;
+  progress.textContent = `${doneCount} of ${sessionPlayers.length} done`;
+
+  chips.innerHTML = sessionPlayers.map(p => {
+    const fb = feedbackByPlayer[p.id];
+    const done = fb && (fb.rating > 0 || fb.playAgain !== null);
+    const active = p.id === activeFeedbackPlayer;
+    return `
+      <div class="feedback-chip ${active ? 'active' : ''} ${done ? 'done' : ''}"
+           onclick="selectFeedbackPlayer('${p.id}')">
+        ${avatarHtml(p)}
+        <span class="player-name">${p.name}</span>
+        ${done ? '<span class="feedback-chip-check">✓</span>' : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPlayerFeedbackForm() {
+  const player = sessionPlayers.find(p => p.id === activeFeedbackPlayer);
+  const container = document.getElementById('feedback-player-form');
+  if (!player || !container) return;
+
+  const fb = feedbackByPlayer[player.id];
+  const stars = [1, 2, 3, 4, 5].map(i =>
+    `<button class="star-btn ${i <= fb.rating ? 'star-on' : ''}" onclick="setRating(${i})">★</button>`
   ).join('');
+
+  container.innerHTML = `
+    <div class="feedback-active-player">
+      ${avatarHtml(player)}
+      <span class="feedback-active-name">${player.name}</span>
+    </div>
+    <div class="feedback-field">
+      <div class="modal-section-label">Rating</div>
+      <div class="star-rating">${stars}</div>
+    </div>
+    <div class="feedback-field">
+      <div class="modal-section-label">Play Again?</div>
+      <div class="play-again-btns">
+        <button class="play-again-btn ${fb.playAgain === 'yes'   ? 'play-again-active' : ''}" onclick="setPlayAgain('yes')">👍 Yes</button>
+        <button class="play-again-btn ${fb.playAgain === 'maybe' ? 'play-again-active' : ''}" onclick="setPlayAgain('maybe')">🤔 Maybe</button>
+        <button class="play-again-btn ${fb.playAgain === 'no'    ? 'play-again-active' : ''}" onclick="setPlayAgain('no')">👎 No</button>
+      </div>
+    </div>
+    <div class="feedback-field">
+      <div class="modal-section-label">Notes</div>
+      <textarea class="session-notes" oninput="saveFeedbackNotes(this.value)"
+                placeholder="Highlights, house rules, memorable moments…">${fb.notes}</textarea>
+    </div>
+  `;
+}
+
+function selectFeedbackPlayer(id) {
+  activeFeedbackPlayer = id;
+  renderFeedbackPlayerChips();
+  renderPlayerFeedbackForm();
 }
 
 function setRating(n) {
-  feedbackRating = n;
-  renderStars(n);
-}
-
-function renderPlayAgain(val) {
-  ['yes', 'maybe', 'no'].forEach(v => {
-    const btn = document.getElementById(`pa-${v}`);
-    if (btn) btn.classList.toggle('play-again-active', val === v);
-  });
+  if (!activeFeedbackPlayer) return;
+  feedbackByPlayer[activeFeedbackPlayer].rating = n;
+  renderPlayerFeedbackForm();
+  renderFeedbackPlayerChips();
 }
 
 function setPlayAgain(val) {
-  feedbackPlayAgain = val;
-  renderPlayAgain(val);
+  if (!activeFeedbackPlayer) return;
+  feedbackByPlayer[activeFeedbackPlayer].playAgain = val;
+  renderPlayerFeedbackForm();
+  renderFeedbackPlayerChips();
+}
+
+function saveFeedbackNotes(val) {
+  if (!activeFeedbackPlayer) return;
+  feedbackByPlayer[activeFeedbackPlayer].notes = val;
 }
 
 
