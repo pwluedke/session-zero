@@ -27,6 +27,10 @@ let currentSessionId = null;
 let feedbackByPlayer = {};     // { [playerId]: { rating, playAgain, notes } }
 let activeFeedbackPlayer = null;
 
+// Settings
+const SETTINGS_DEFAULTS = { showWhyBtn: true };
+let settings = { ...SETTINGS_DEFAULTS, ...JSON.parse(localStorage.getItem('sz-settings') || '{}') };
+
 // ── Init ───────────────────────────────────────────────────────────────────
 fetch("games.json")
   .then(res => res.json())
@@ -35,6 +39,7 @@ fetch("games.json")
 
 renderRollCall();
 renderGamesInProgress();
+applySettings();
 
 // ── Player Vault ───────────────────────────────────────────────────────────
 function openVault() {
@@ -195,6 +200,35 @@ function clearPlayerEmoji() {
 function closeEmojiPicker() {
   emojiPickerTarget = null;
   document.getElementById('emoji-picker-overlay').classList.remove('active');
+}
+
+// ── Settings ───────────────────────────────────────────────────────────────
+function openSettings() {
+  renderSettingsModal();
+  document.getElementById('settings-modal').classList.add('active');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('active');
+}
+
+function renderSettingsModal() {
+  const btn = document.getElementById('setting-why-btn');
+  if (!btn) return;
+  btn.textContent = settings.showWhyBtn ? 'On' : 'Off';
+  btn.setAttribute('aria-pressed', settings.showWhyBtn);
+  btn.classList.toggle('toggle-on', settings.showWhyBtn);
+}
+
+function toggleSetting(key) {
+  settings[key] = !settings[key];
+  localStorage.setItem('sz-settings', JSON.stringify(settings));
+  applySettings();
+  renderSettingsModal();
+}
+
+function applySettings() {
+  document.body.classList.toggle('hide-why', !settings.showWhyBtn);
 }
 
 // ── Filters ────────────────────────────────────────────────────────────────

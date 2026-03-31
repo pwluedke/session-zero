@@ -15,8 +15,9 @@
 
     <section class="roll-call">
       <div class="roll-call-header">
-        <h2 class="section-label">Roll Call</h2>
+        <h2 class="section-label">🎲 Roll Call</h2>
         <div class="roll-call-actions">
+          <button class="vault-btn" onclick="openSettings()">⚙ Settings</button>
           <button class="vault-btn" onclick="openHistory()">History</button>
           <button class="vault-btn" onclick="openVault()">Player Vault</button>
         </div>
@@ -239,6 +240,26 @@
       <div class="emoji-picker-label">Choose your avatar</div>
       <div id="emoji-grid" class="emoji-grid"></div>
       <button class="emoji-clear-btn" onclick="clearPlayerEmoji()">Use Initials</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal-overlay" onclick="closeSettings()">
+    <div class="modal-panel settings-panel" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="session-title">Settings</div>
+        <button class="modal-close" onclick="closeSettings()">×</button>
+      </div>
+      <div class="settings-body">
+        <div class="settings-group-label">AI Features</div>
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="settings-row-label">Why? Button</div>
+            <div class="settings-row-desc">Ask Claude why a game fits tonight's group</div>
+          </div>
+          <button id="setting-why-btn" class="toggle-btn" onclick="toggleSetting('showWhyBtn')" aria-pressed="true">On</button>
+        </div>
+      </div>
     </div>
   </div>
 
