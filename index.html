@@ -263,14 +263,12 @@
         <div class="settings-group-label">BoardGameGeek</div>
         <div class="settings-row settings-row-column">
           <div class="settings-row-info">
-            <div class="settings-row-label">BGG Username</div>
-            <div class="settings-row-desc">Sync your owned collection from BoardGameGeek</div>
+            <div class="settings-row-label">Import Collection (CSV)</div>
+            <div class="settings-row-desc">On BGG: go to your collection → Export → CSV. Import that file here.</div>
           </div>
-          <div class="bgg-input-row">
-            <input type="text" id="bgg-username-input" placeholder="your BGG username"
-                   value="" autocomplete="off" />
-            <button id="bgg-sync-btn" onclick="syncBGGCollection()">Sync</button>
-          </div>
+          <label class="bgg-file-label" for="bgg-csv-input">Choose CSV file</label>
+          <input type="file" id="bgg-csv-input" accept=".csv" class="bgg-file-input"
+                 onchange="handleBGGImport(this)" />
           <div id="bgg-sync-status" class="bgg-sync-status"></div>
         </div>
 

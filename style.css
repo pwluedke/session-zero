@@ -1800,42 +1800,24 @@ body.hide-why .why-btn {
   gap: 0.5rem;
 }
 
-.bgg-input-row {
-  display: flex;
-  gap: 0.5rem;
-  width: 100%;
+.bgg-file-input {
+  display: none;
 }
 
-.bgg-input-row input[type="text"] {
-  flex: 1;
-  background: #0f3460;
-  border: 1px solid #1a4a80;
-  border-radius: 8px;
-  color: #e0e0e0;
-  font-size: 0.9rem;
-  padding: 0.5rem 0.75rem;
-}
-
-.bgg-input-row input[type="text"]:focus {
-  outline: none;
-  border-color: #f5c842;
-}
-
-.bgg-input-row button {
-  flex: unset;
+.bgg-file-label {
+  display: inline-block;
   padding: 0.5rem 1rem;
   background: #f5c842;
   color: #1a1a2e;
-  border: none;
   border-radius: 8px;
   font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
+  user-select: none;
 }
 
-.bgg-input-row button:disabled {
-  opacity: 0.5;
-  cursor: default;
+.bgg-file-label:hover {
+  background: #ffd966;
 }
 
 .bgg-sync-status {
