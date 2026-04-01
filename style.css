@@ -1343,6 +1343,38 @@ button:hover {
   display: block;
 }
 
+.spotify-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin-top: 0.35rem;
+}
+
+.spotify-option-btn {
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: #6a7a90;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.4rem;
+  cursor: pointer;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotify-option-btn:hover {
+  color: #e0e0e0;
+  border-color: #1a4a80;
+}
+
+.spotify-option-btn.active {
+  color: #f5c842;
+  border-color: #1a4a80;
+}
+
 .spotify-meta {
   display: flex;
   align-items: center;
@@ -1350,14 +1382,6 @@ button:hover {
   margin-top: 0.4rem;
 }
 
-.spotify-playlist-name {
-  flex: 1;
-  font-size: 0.72rem;
-  color: #6a7a90;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 .spotify-actions {
   display: flex;

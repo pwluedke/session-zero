@@ -70,11 +70,12 @@ async function handleSpotifyPlaylist(req, res) {
       res.end(JSON.stringify({ error: "No playlist found" }));
       return;
     }
-    const playlist = playlists[0];
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({
-      embedUrl: `https://open.spotify.com/embed/playlist/${playlist.id}?utm_source=generator&theme=0`,
-      name: playlist.name,
+      playlists: playlists.slice(0, 5).map(p => ({
+        embedUrl: `https://open.spotify.com/embed/playlist/${p.id}?utm_source=generator&theme=0`,
+        name: p.name,
+      })),
     }));
   } catch (err) {
     console.error(err);

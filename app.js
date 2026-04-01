@@ -28,7 +28,8 @@ let feedbackByPlayer = {};     // { [playerId]: { rating, playAgain, notes } }
 let activeFeedbackPlayer = null;
 
 // Spotify
-let currentSpotifyData = null; // { embedUrl, name } — the playlist currently showing
+let currentSpotifyData = null;    // { embedUrl, name } — the playlist currently showing
+let currentSpotifyOptions = [];   // full list returned by last fetch
 
 // Settings
 const SETTINGS_DEFAULTS = { showWhyBtn: true };
@@ -554,11 +555,12 @@ function openSession(index) {
 async function loadSpotifyPlaylist(game) {
   const container = document.getElementById('spotify-container');
   currentSpotifyData = null;
+  currentSpotifyOptions = [];
 
   // Use saved playlist if available
   if (game.spotifyEmbedUrl) {
     currentSpotifyData = { embedUrl: game.spotifyEmbedUrl, name: game.spotifyPlaylistName || '' };
-    renderSpotifyEmbed(container, currentSpotifyData, true);
+    renderSpotifyOptions(container, [currentSpotifyData], 0, true);
     return;
   }
 
@@ -568,9 +570,8 @@ async function loadSpotifyPlaylist(game) {
       `/api/spotify/playlist?game=${encodeURIComponent(game.name)}&type=${encodeURIComponent(game.type)}`
     );
     const data = await res.json();
-    if (data.embedUrl) {
-      currentSpotifyData = data;
-      renderSpotifyEmbed(container, data, false);
+    if (data.playlists?.length) {
+      renderSpotifyOptions(container, data.playlists, 0, false);
     } else {
       renderSpotifyNoResult(container);
     }
@@ -579,19 +580,29 @@ async function loadSpotifyPlaylist(game) {
   }
 }
 
-function renderSpotifyEmbed(container, data, isSaved) {
-  const safeName = data.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function renderSpotifyOptions(container, options, selectedIdx, isSaved) {
+  currentSpotifyOptions = options;
+  currentSpotifyData = options[selectedIdx];
+
+  const optionsHtml = options.length > 1
+    ? `<div class="spotify-options">${options.map((opt, i) => {
+        const safe = opt.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return `<button class="spotify-option-btn${i === selectedIdx ? ' active' : ''}"
+          onclick="selectSpotifyOption(${i})" title="${safe}">${safe}</button>`;
+      }).join('')}</div>`
+    : '';
+
   container.innerHTML = `
-    <iframe
-      src="${data.embedUrl}"
+    <iframe id="spotify-iframe"
+      src="${options[selectedIdx].embedUrl}"
       width="100%"
       height="152"
       frameborder="0"
       allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
       loading="lazy">
     </iframe>
+    ${optionsHtml}
     <div class="spotify-meta">
-      <span class="spotify-playlist-name" title="${safeName}">${safeName}</span>
       <div class="spotify-actions">
         <button class="spotify-change-btn" onclick="showSpotifySearch()">Change</button>
         <button class="spotify-save-btn${isSaved ? ' saved' : ''}" onclick="saveSpotifyPlaylist()">
@@ -605,6 +616,21 @@ function renderSpotifyEmbed(container, data, isSaved) {
       <button onclick="searchSpotifyQuery()">Search</button>
     </div>
   `;
+}
+
+function selectSpotifyOption(idx) {
+  currentSpotifyData = currentSpotifyOptions[idx];
+  const iframe = document.getElementById('spotify-iframe');
+  if (iframe) iframe.src = currentSpotifyData.embedUrl;
+  document.querySelectorAll('.spotify-option-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === idx);
+  });
+  const saveBtn = document.querySelector('.spotify-save-btn');
+  if (saveBtn) {
+    const isSaved = sessionGame?.spotifyEmbedUrl === currentSpotifyData.embedUrl;
+    saveBtn.textContent = isSaved ? 'Saved ✓' : 'Save';
+    saveBtn.classList.toggle('saved', isSaved);
+  }
 }
 
 function renderSpotifyNoResult(container) {
@@ -634,19 +660,15 @@ async function searchSpotifyQuery() {
   if (!query) return;
 
   const container = document.getElementById('spotify-container');
-  const searchRow = document.getElementById('spotify-search-row');
   const queryValue = query;
 
-  // Swap iframe for a loading message but keep search row markup so we can restore it
   container.innerHTML = '<p class="no-players-msg">Searching…</p>';
 
   try {
     const res = await fetch(`/api/spotify/playlist?query=${encodeURIComponent(queryValue)}`);
     const data = await res.json();
-    if (data.embedUrl) {
-      currentSpotifyData = data;
-      renderSpotifyEmbed(container, data, false);
-      // Re-show search row with previous query
+    if (data.playlists?.length) {
+      renderSpotifyOptions(container, data.playlists, 0, false);
       showSpotifySearch();
       const newInput = document.getElementById('spotify-query-input');
       if (newInput) { newInput.value = queryValue; newInput.focus(); }
