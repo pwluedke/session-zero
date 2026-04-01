@@ -292,8 +292,20 @@
         <div class="session-title">Player Stats</div>
         <button class="modal-close" onclick="closeStats()">×</button>
       </div>
-      <div class="stats-body">
+      <div class="stats-tabs">
+        <button class="stats-tab active" id="tab-players" onclick="switchStatsTab('players')">Players</button>
+        <button class="stats-tab" id="tab-h2h" onclick="switchStatsTab('h2h')">Head-to-Head</button>
+      </div>
+      <div class="stats-body" id="stats-body-players">
         <div id="stats-list" class="stats-list"></div>
+      </div>
+      <div class="stats-body hidden" id="stats-body-h2h">
+        <div class="h2h-selectors">
+          <div class="h2h-selector" id="h2h-selector-a"></div>
+          <div class="h2h-vs">vs.</div>
+          <div class="h2h-selector" id="h2h-selector-b"></div>
+        </div>
+        <div id="h2h-result" class="h2h-result"></div>
       </div>
     </div>
   </div>

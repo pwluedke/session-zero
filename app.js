@@ -759,13 +759,26 @@ function renderHistory() {
 }
 
 // ── Player Stats ───────────────────────────────────────────────────────────
+let activeStatsTab = 'players';
+let h2hSelected = { a: null, b: null };
+
 function openStats() {
+  switchStatsTab('players');
   renderStats();
   document.getElementById('stats-modal').classList.add('active');
 }
 
 function closeStats() {
   document.getElementById('stats-modal').classList.remove('active');
+}
+
+function switchStatsTab(tab) {
+  activeStatsTab = tab;
+  document.getElementById('stats-body-players').classList.toggle('hidden', tab !== 'players');
+  document.getElementById('stats-body-h2h').classList.toggle('hidden', tab !== 'h2h');
+  document.getElementById('tab-players').classList.toggle('active', tab === 'players');
+  document.getElementById('tab-h2h').classList.toggle('active', tab === 'h2h');
+  if (tab === 'h2h') renderH2HSelectors();
 }
 
 function computePlayerStats(playerId) {
@@ -860,6 +873,106 @@ function renderStats() {
       </div>
     `;
   }).join('');
+}
+
+function renderH2HSelectors() {
+  ['a', 'b'].forEach(side => {
+    const container = document.getElementById(`h2h-selector-${side}`);
+    if (!container) return;
+    const selectedId = h2hSelected[side];
+    container.innerHTML = vault.map(p => `
+      <div class="h2h-chip ${p.id === selectedId ? 'active' : ''}"
+           onclick="selectH2HPlayer('${side}', '${p.id}')">
+        ${avatarHtml(p)}
+        <span class="player-name">${p.name}</span>
+      </div>
+    `).join('');
+  });
+  renderH2HResult();
+}
+
+function selectH2HPlayer(side, id) {
+  h2hSelected[side] = h2hSelected[side] === id ? null : id;
+  renderH2HSelectors();
+}
+
+function computeHeadToHead(idA, idB) {
+  const history = JSON.parse(localStorage.getItem('sz-history') || '[]');
+  const shared = history.filter(e =>
+    e.players.some(p => p.id === idA) && e.players.some(p => p.id === idB)
+  );
+
+  let winsA = 0, winsB = 0, ties = 0, coop = 0;
+
+  shared.forEach(e => {
+    if (e.mode === 'winlose') {
+      coop++;
+      return;
+    }
+    const pA = e.players.find(p => p.id === idA);
+    const pB = e.players.find(p => p.id === idB);
+    const scoreA = pA?.score ?? 0;
+    const scoreB = pB?.score ?? 0;
+    const lowWins = e.lowScoreWins ?? false;
+
+    if (scoreA === scoreB) {
+      ties++;
+    } else if (lowWins ? scoreA < scoreB : scoreA > scoreB) {
+      winsA++;
+    } else {
+      winsB++;
+    }
+  });
+
+  return { total: shared.length, winsA, winsB, ties, coop };
+}
+
+function renderH2HResult() {
+  const container = document.getElementById('h2h-result');
+  if (!container) return;
+  const { a: idA, b: idB } = h2hSelected;
+
+  if (!idA || !idB) {
+    container.innerHTML = '<p class="no-players-msg">Select two players to see their record.</p>';
+    return;
+  }
+  if (idA === idB) {
+    container.innerHTML = '<p class="no-players-msg">Select two different players.</p>';
+    return;
+  }
+
+  const playerA = vault.find(p => p.id === idA);
+  const playerB = vault.find(p => p.id === idB);
+  const r = computeHeadToHead(idA, idB);
+
+  if (r.total === 0) {
+    container.innerHTML = '<p class="no-players-msg">These players haven\'t played together yet.</p>';
+    return;
+  }
+
+  const competitive = r.total - r.coop;
+
+  container.innerHTML = `
+    <div class="h2h-scoreboard">
+      <div class="h2h-player">
+        ${avatarHtml(playerA)}
+        <span class="h2h-name">${playerA.name}</span>
+        <span class="h2h-score ${r.winsA > r.winsB ? 'h2h-leader' : ''}">${r.winsA}</span>
+      </div>
+      <div class="h2h-divider">–</div>
+      <div class="h2h-player h2h-player-right">
+        <span class="h2h-score ${r.winsB > r.winsA ? 'h2h-leader' : ''}">${r.winsB}</span>
+        <span class="h2h-name">${playerB.name}</span>
+        ${avatarHtml(playerB)}
+      </div>
+    </div>
+    <div class="h2h-meta">
+      <span>${r.total} session${r.total !== 1 ? 's' : ''} together</span>
+      ${competitive > 0 ? `<span>${competitive} competitive</span>` : ''}
+      ${r.ties > 0 ? `<span>${r.ties} tie${r.ties !== 1 ? 's' : ''}</span>` : ''}
+      ${r.coop > 0 ? `<span>${r.coop} co-op</span>` : ''}
+    </div>
+  `;
 }
 
 function finalizeSession() {

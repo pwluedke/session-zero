@@ -1662,3 +1662,133 @@ body.hide-why .why-btn {
 .stats-muted {
   color: #6a7a90;
 }
+
+/* ── Stats Tabs ──────────────────────────────────────────────────────────── */
+.stats-tabs {
+  display: flex;
+  border-bottom: 1px solid #0f3460;
+  flex-shrink: 0;
+}
+
+.stats-tab {
+  flex: 1;
+  padding: 0.55rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #6a7a90;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: color 0.15s;
+  margin-bottom: -1px;
+}
+
+.stats-tab:hover {
+  color: #9a9ab0;
+  opacity: 1;
+}
+
+.stats-tab.active {
+  color: #f5c842;
+  border-bottom-color: #f5c842;
+}
+
+/* ── Head-to-Head ────────────────────────────────────────────────────────── */
+.h2h-selectors {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.h2h-selector {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.h2h-vs {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #6a7a90;
+  padding-top: 0.3rem;
+  flex-shrink: 0;
+}
+
+.h2h-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 20px;
+  padding: 0.25rem 0.6rem 0.25rem 0.25rem;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.h2h-chip:hover { opacity: 0.75; }
+.h2h-chip.active { opacity: 1; border-color: #f5c842; }
+
+.h2h-scoreboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid #0f3460;
+}
+
+.h2h-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.h2h-player-right {
+  align-items: center;
+}
+
+.h2h-name {
+  font-size: 0.82rem;
+  color: #9a9ab0;
+  text-align: center;
+}
+
+.h2h-score {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #4a5a70;
+  line-height: 1;
+}
+
+.h2h-leader {
+  color: #f5c842;
+}
+
+.h2h-divider {
+  font-size: 1.5rem;
+  color: #4a5a70;
+  flex-shrink: 0;
+}
+
+.h2h-meta {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #6a7a90;
+  padding-bottom: 0.5rem;
+}
+
+.h2h-result {
+  min-height: 60px;
+}
