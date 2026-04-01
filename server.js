@@ -52,23 +52,30 @@ async function handleSpotifyPlaylist(req, res) {
   const url = new URL(req.url, "http://localhost");
   const game = url.searchParams.get("game") || "";
   const type = url.searchParams.get("type") || "";
+  const customQuery = url.searchParams.get("query") || "";
   try {
     const token = await getSpotifyToken();
-    let playlists = await searchPlaylist(token, `${game} board game music`);
-    if (playlists.length === 0) {
-      const fallback = TYPE_PLAYLIST_QUERIES[type] || "board game night music";
-      playlists = await searchPlaylist(token, fallback);
+    let playlists;
+    if (customQuery) {
+      playlists = await searchPlaylist(token, customQuery);
+    } else {
+      playlists = await searchPlaylist(token, `${game} board game music`);
+      if (playlists.length === 0) {
+        const fallback = TYPE_PLAYLIST_QUERIES[type] || "board game night music";
+        playlists = await searchPlaylist(token, fallback);
+      }
     }
     if (playlists.length === 0) {
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "No playlist found" }));
       return;
     }
-    const playlist = playlists[0];
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({
-      embedUrl: `https://open.spotify.com/embed/playlist/${playlist.id}?utm_source=generator&theme=0`,
-      name: playlist.name,
+      playlists: playlists.slice(0, 5).map(p => ({
+        embedUrl: `https://open.spotify.com/embed/playlist/${p.id}?utm_source=generator&theme=0`,
+        name: p.name,
+      })),
     }));
   } catch (err) {
     console.error(err);
