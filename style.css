@@ -1583,3 +1583,82 @@ body.hide-why .why-btn {
   color: #e0e0e0;
   opacity: 1;
 }
+
+/* ── Player Stats Modal ──────────────────────────────────────────────────── */
+.stats-panel {
+  max-width: 520px;
+}
+
+.stats-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 1rem 1.2rem;
+}
+
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.stats-card {
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stats-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stats-player-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e0e0e0;
+  flex: 1;
+}
+
+.stats-games-played {
+  font-size: 0.75rem;
+  color: #6a7a90;
+  white-space: nowrap;
+}
+
+.stats-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-top: 1px solid #1a4a80;
+  padding-top: 0.5rem;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.82rem;
+}
+
+.stats-row span:first-child {
+  color: #6a7a90;
+  flex-shrink: 0;
+}
+
+.stats-row span:last-child {
+  color: #e0e0e0;
+  text-align: right;
+}
+
+.stats-stars {
+  color: #f5c842;
+}
+
+.stats-muted {
+  color: #6a7a90;
+}

@@ -758,6 +758,110 @@ function renderHistory() {
   }).join('');
 }
 
+// ── Player Stats ───────────────────────────────────────────────────────────
+function openStats() {
+  renderStats();
+  document.getElementById('stats-modal').classList.add('active');
+}
+
+function closeStats() {
+  document.getElementById('stats-modal').classList.remove('active');
+}
+
+function computePlayerStats(playerId) {
+  const history = JSON.parse(localStorage.getItem('sz-history') || '[]');
+  const sessions = history.filter(e => e.players.some(p => p.id === playerId));
+  const gamesPlayed = sessions.length;
+
+  const wins = sessions.filter(e => {
+    if (e.mode === 'winlose') return e.outcome === 'win';
+    return e.players.find(p => p.id === playerId)?.winner === true;
+  }).length;
+
+  const winRate = gamesPlayed > 0 ? Math.round((wins / gamesPlayed) * 100) : null;
+
+  const gameCounts = {};
+  sessions.forEach(e => { gameCounts[e.game] = (gameCounts[e.game] || 0) + 1; });
+  const favoriteEntry = Object.entries(gameCounts).sort((a, b) => b[1] - a[1])[0];
+
+  const ratings = sessions.map(e => e.feedback?.[playerId]?.rating).filter(Boolean);
+  const avgRating = ratings.length
+    ? Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length)
+    : 0;
+
+  const paCounts = { yes: 0, maybe: 0, no: 0 };
+  sessions.forEach(e => {
+    const pa = e.feedback?.[playerId]?.playAgain;
+    if (pa) paCounts[pa]++;
+  });
+
+  return { gamesPlayed, wins, winRate, favoriteEntry, avgRating, paCounts };
+}
+
+function renderStats() {
+  const container = document.getElementById('stats-list');
+  if (!container) return;
+
+  if (vault.length === 0) {
+    container.innerHTML = '<p class="no-players-msg">No players in the vault yet.</p>';
+    return;
+  }
+
+  container.innerHTML = vault.map(player => {
+    const s = computePlayerStats(player.id);
+
+    if (s.gamesPlayed === 0) {
+      return `
+        <div class="stats-card">
+          <div class="stats-card-header">
+            ${avatarHtml(player)}
+            <span class="stats-player-name">${player.name}</span>
+          </div>
+          <p class="no-players-msg">No sessions recorded yet.</p>
+        </div>
+      `;
+    }
+
+    const winRateHtml = s.winRate !== null
+      ? `<div class="stats-row"><span>Win Rate</span><span>${s.winRate}% (${s.wins} of ${s.gamesPlayed})</span></div>`
+      : '';
+
+    const favoriteHtml = s.favoriteEntry
+      ? `<div class="stats-row"><span>Favorite Game</span><span>${s.favoriteEntry[0]} <span class="stats-muted">(${s.favoriteEntry[1]}×)</span></span></div>`
+      : '';
+
+    const ratingHtml = s.avgRating
+      ? `<div class="stats-row"><span>Avg Rating Given</span><span class="stats-stars">${'★'.repeat(s.avgRating)}${'☆'.repeat(5 - s.avgRating)}</span></div>`
+      : '';
+
+    const paTotal = s.paCounts.yes + s.paCounts.maybe + s.paCounts.no;
+    const paHtml = paTotal > 0
+      ? `<div class="stats-row"><span>Play Again</span><span>${
+          [s.paCounts.yes   ? `${s.paCounts.yes} 👍`   : '',
+           s.paCounts.maybe ? `${s.paCounts.maybe} 🤔` : '',
+           s.paCounts.no    ? `${s.paCounts.no} 👎`    : '']
+          .filter(Boolean).join(' · ')
+        }</span></div>`
+      : '';
+
+    return `
+      <div class="stats-card">
+        <div class="stats-card-header">
+          ${avatarHtml(player)}
+          <span class="stats-player-name">${player.name}</span>
+          <span class="stats-games-played">${s.gamesPlayed} session${s.gamesPlayed !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="stats-rows">
+          ${winRateHtml}
+          ${favoriteHtml}
+          ${ratingHtml}
+          ${paHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 function finalizeSession() {
   const lowWins = document.getElementById('low-score-wins')?.checked ?? false;
   let players;

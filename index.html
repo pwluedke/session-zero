@@ -19,6 +19,7 @@
         <div class="roll-call-actions">
           <button class="vault-btn" onclick="openSettings()">⚙ Settings</button>
           <button class="vault-btn" onclick="openHistory()">History</button>
+          <button class="vault-btn" onclick="openStats()">Stats</button>
           <button class="vault-btn" onclick="openVault()">Player Vault</button>
         </div>
       </div>
@@ -280,6 +281,19 @@
       </div>
       <div class="history-body">
         <div id="history-list" class="history-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Modal -->
+  <div id="stats-modal" class="modal-overlay" onclick="closeStats()">
+    <div class="modal-panel stats-panel" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="session-title">Player Stats</div>
+        <button class="modal-close" onclick="closeStats()">×</button>
+      </div>
+      <div class="stats-body">
+        <div id="stats-list" class="stats-list"></div>
       </div>
     </div>
   </div>
