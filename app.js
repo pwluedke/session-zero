@@ -27,6 +27,9 @@ let currentSessionId = null;
 let feedbackByPlayer = {};     // { [playerId]: { rating, playAgain, notes } }
 let activeFeedbackPlayer = null;
 
+// Spotify
+let currentSpotifyData = null; // { embedUrl, name } — the playlist currently showing
+
 // Settings
 const SETTINGS_DEFAULTS = { showWhyBtn: true };
 let settings = { ...SETTINGS_DEFAULTS, ...JSON.parse(localStorage.getItem('sz-settings') || '{}') };
@@ -413,6 +416,15 @@ function openSession(index) {
 
 async function loadSpotifyPlaylist(game) {
   const container = document.getElementById('spotify-container');
+  currentSpotifyData = null;
+
+  // Use saved playlist if available
+  if (game.spotifyEmbedUrl) {
+    currentSpotifyData = { embedUrl: game.spotifyEmbedUrl, name: game.spotifyPlaylistName || '' };
+    renderSpotifyEmbed(container, currentSpotifyData, true);
+    return;
+  }
+
   container.innerHTML = '<p class="no-players-msg">Finding music…</p>';
   try {
     const res = await fetch(
@@ -420,22 +432,108 @@ async function loadSpotifyPlaylist(game) {
     );
     const data = await res.json();
     if (data.embedUrl) {
-      container.innerHTML = `
-        <iframe
-          src="${data.embedUrl}"
-          width="100%"
-          height="152"
-          frameborder="0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy">
-        </iframe>
-      `;
+      currentSpotifyData = data;
+      renderSpotifyEmbed(container, data, false);
     } else {
-      container.innerHTML = '<p class="no-players-msg">No playlist found for this game.</p>';
+      renderSpotifyNoResult(container);
     }
   } catch {
     container.innerHTML = '<p class="no-players-msg">Could not load music.</p>';
   }
+}
+
+function renderSpotifyEmbed(container, data, isSaved) {
+  const safeName = data.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  container.innerHTML = `
+    <iframe
+      src="${data.embedUrl}"
+      width="100%"
+      height="152"
+      frameborder="0"
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      loading="lazy">
+    </iframe>
+    <div class="spotify-meta">
+      <span class="spotify-playlist-name" title="${safeName}">${safeName}</span>
+      <div class="spotify-actions">
+        <button class="spotify-change-btn" onclick="showSpotifySearch()">Change</button>
+        <button class="spotify-save-btn${isSaved ? ' saved' : ''}" onclick="saveSpotifyPlaylist()">
+          ${isSaved ? 'Saved ✓' : 'Save'}
+        </button>
+      </div>
+    </div>
+    <div class="spotify-search-row hidden" id="spotify-search-row">
+      <input type="text" id="spotify-query-input" placeholder="Search Spotify…"
+             onkeydown="if(event.key==='Enter') searchSpotifyQuery()" />
+      <button onclick="searchSpotifyQuery()">Search</button>
+    </div>
+  `;
+}
+
+function renderSpotifyNoResult(container) {
+  container.innerHTML = `
+    <p class="no-players-msg">No playlist found — try a custom search.</p>
+    <div class="spotify-search-row" id="spotify-search-row">
+      <input type="text" id="spotify-query-input" placeholder="Search Spotify…"
+             onkeydown="if(event.key==='Enter') searchSpotifyQuery()" />
+      <button onclick="searchSpotifyQuery()">Search</button>
+    </div>
+  `;
+  document.getElementById('spotify-query-input')?.focus();
+}
+
+function showSpotifySearch() {
+  const row = document.getElementById('spotify-search-row');
+  if (!row) return;
+  row.classList.toggle('hidden');
+  if (!row.classList.contains('hidden')) {
+    document.getElementById('spotify-query-input')?.focus();
+  }
+}
+
+async function searchSpotifyQuery() {
+  const input = document.getElementById('spotify-query-input');
+  const query = input?.value.trim();
+  if (!query) return;
+
+  const container = document.getElementById('spotify-container');
+  const searchRow = document.getElementById('spotify-search-row');
+  const queryValue = query;
+
+  // Swap iframe for a loading message but keep search row markup so we can restore it
+  container.innerHTML = '<p class="no-players-msg">Searching…</p>';
+
+  try {
+    const res = await fetch(`/api/spotify/playlist?query=${encodeURIComponent(queryValue)}`);
+    const data = await res.json();
+    if (data.embedUrl) {
+      currentSpotifyData = data;
+      renderSpotifyEmbed(container, data, false);
+      // Re-show search row with previous query
+      showSpotifySearch();
+      const newInput = document.getElementById('spotify-query-input');
+      if (newInput) { newInput.value = queryValue; newInput.focus(); }
+    } else {
+      renderSpotifyNoResult(container);
+      const newInput = document.getElementById('spotify-query-input');
+      if (newInput) newInput.value = queryValue;
+    }
+  } catch {
+    container.innerHTML = '<p class="no-players-msg">Search failed — check your connection.</p>';
+  }
+}
+
+function saveSpotifyPlaylist() {
+  if (!currentSpotifyData || !sessionGame) return;
+  const idx = games.findIndex(g => g.name === sessionGame.name);
+  if (idx >= 0) {
+    games[idx].spotifyEmbedUrl = currentSpotifyData.embedUrl;
+    games[idx].spotifyPlaylistName = currentSpotifyData.name;
+    localStorage.setItem('sz-games', JSON.stringify(games));
+    sessionGame = games[idx];
+  }
+  const btn = document.querySelector('.spotify-save-btn');
+  if (btn) { btn.textContent = 'Saved ✓'; btn.classList.add('saved'); }
 }
 
 function closeSession() {
