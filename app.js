@@ -1430,6 +1430,199 @@ function saveFeedbackNotes(val) {
 }
 
 
+// ── Game Library ───────────────────────────────────────────────────────────
+let librarySortKey = 'name';
+let librarySortDir = 1;   // 1 = asc, -1 = desc
+let libraryDisplayed = []; // { game, idx } — maps display rows back to games[]
+
+const GAME_TYPES       = ['Abstract','Board','Card','Dice','Mystery','Narrative','Party'];
+const GAME_COMPLEXITIES = ['Low','Medium','High'];
+
+function openLibrary() {
+  renderLibrary();
+  document.getElementById('library-modal').classList.add('active');
+  document.getElementById('library-search').focus();
+}
+
+function closeLibrary() {
+  document.getElementById('library-modal').classList.remove('active');
+  const form = document.getElementById('add-game-form');
+  if (form) form.classList.add('hidden');
+}
+
+function setLibrarySort(key) {
+  if (librarySortKey === key) {
+    librarySortDir *= -1;
+  } else {
+    librarySortKey = key;
+    librarySortDir = key === 'rating' ? -1 : 1; // rating defaults desc
+  }
+  document.querySelectorAll('.lib-sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`lib-sort-${key}`)?.classList.add('active');
+  renderLibrary();
+}
+
+function renderLibrary() {
+  const query = document.getElementById('library-search')?.value.trim().toLowerCase() || '';
+
+  let list = games.map((game, idx) => ({ game, idx }));
+
+  if (query) {
+    list = list.filter(({ game }) => game.name.toLowerCase().includes(query));
+  }
+
+  list.sort((a, b) => {
+    let va, vb;
+    if (librarySortKey === 'name')    { va = a.game.name; vb = b.game.name; return librarySortDir * va.localeCompare(vb); }
+    if (librarySortKey === 'rating')  { va = a.game.rating ?? 0; vb = b.game.rating ?? 0; }
+    if (librarySortKey === 'players') { va = a.game.maxPlayers; vb = b.game.maxPlayers; }
+    if (librarySortKey === 'time')    { va = a.game.playTime; vb = b.game.playTime; }
+    return librarySortDir * (va - vb);
+  });
+
+  libraryDisplayed = list;
+
+  const countEl = document.getElementById('library-count');
+  if (countEl) countEl.textContent = `${list.length} of ${games.length} game${games.length !== 1 ? 's' : ''}`;
+
+  const container = document.getElementById('library-list');
+  if (!container) return;
+
+  if (list.length === 0) {
+    container.innerHTML = '<p class="no-players-msg">No games match your search.</p>';
+    return;
+  }
+
+  container.innerHTML = list.map(({ game, idx }, di) => {
+    const thumb = game.thumbnail
+      ? `<img class="lib-thumb" src="${game.thumbnail}" alt="" loading="lazy" />`
+      : `<div class="lib-thumb lib-thumb-initials">${game.name.charAt(0).toUpperCase()}</div>`;
+
+    const stars = [1,2,3,4,5].map(n =>
+      `<span class="lib-star${(game.rating ?? 0) >= n ? ' filled' : ''}" onclick="setGameRating(${di}, ${n})"
+        title="${n} star${n>1?'s':''}">★</span>`
+    ).join('');
+
+    const players = game.minPlayers === game.maxPlayers
+      ? `${game.minPlayers}p`
+      : `${game.minPlayers}–${game.maxPlayers}p`;
+
+    const time = game.playTime >= 999 ? '∞' : `${game.playTime}m`;
+
+    const spotifyBadge = game.spotifyPlaylistName
+      ? `<span class="lib-badge lib-spotify-badge" title="${game.spotifyPlaylistName.replace(/"/g,'&quot;')}">♫</span>`
+      : '';
+
+    const bggLink = game.bggId
+      ? `<a class="lib-badge lib-bgg-badge" href="https://boardgamegeek.com/boardgame/${game.bggId}" target="_blank" rel="noopener">BGG↗</a>`
+      : '';
+
+    return `
+      <div class="lib-row">
+        ${thumb}
+        <div class="lib-info">
+          <div class="lib-name">${game.name}</div>
+          <div class="lib-meta">${players} · ${time} · Ages ${game.age}+</div>
+        </div>
+        <div class="lib-controls">
+          <div class="lib-rating">${stars}</div>
+          <button class="lib-tag lib-type-tag" onclick="cycleGameField(${di},'type')" title="Click to change type">${game.type}</button>
+          <button class="lib-tag lib-complexity-tag lib-complexity-${(game.complexity||'Medium').toLowerCase()}" onclick="cycleGameField(${di},'complexity')" title="Click to change complexity">${game.complexity}</button>
+          <button class="lib-toggle${game.cooperative ? ' on' : ''}" onclick="toggleGameField(${di},'cooperative')">Co-op</button>
+          <button class="lib-toggle${game.played ? ' on' : ''}" onclick="toggleGameField(${di},'played')">Played</button>
+          ${spotifyBadge}${bggLink}
+          <button class="lib-delete" onclick="deleteGame(${di})" title="Remove from library">×</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function saveGames() {
+  localStorage.setItem('sz-games', JSON.stringify(games));
+}
+
+function setGameRating(displayIdx, n) {
+  const { game, idx } = libraryDisplayed[displayIdx];
+  // clicking the same star again clears the rating
+  games[idx].rating = game.rating === n ? null : n;
+  saveGames();
+  renderLibrary();
+}
+
+function cycleGameField(displayIdx, field) {
+  const { game, idx } = libraryDisplayed[displayIdx];
+  if (field === 'type') {
+    const i = GAME_TYPES.indexOf(game.type);
+    games[idx].type = GAME_TYPES[(i + 1) % GAME_TYPES.length];
+  } else if (field === 'complexity') {
+    const i = GAME_COMPLEXITIES.indexOf(game.complexity);
+    games[idx].complexity = GAME_COMPLEXITIES[(i + 1) % GAME_COMPLEXITIES.length];
+  }
+  saveGames();
+  renderLibrary();
+}
+
+function toggleGameField(displayIdx, field) {
+  const { idx } = libraryDisplayed[displayIdx];
+  games[idx][field] = !games[idx][field];
+  saveGames();
+  renderLibrary();
+}
+
+function deleteGame(displayIdx) {
+  const { game, idx } = libraryDisplayed[displayIdx];
+  if (!confirm(`Remove "${game.name}" from your library?`)) return;
+  games.splice(idx, 1);
+  saveGames();
+  renderLibrary();
+}
+
+function toggleAddGameForm() {
+  const form = document.getElementById('add-game-form');
+  const isHidden = form.classList.toggle('hidden');
+  if (!isHidden) document.getElementById('ag-name')?.focus();
+}
+
+function submitAddGame() {
+  const name = document.getElementById('ag-name')?.value.trim();
+  if (!name) {
+    document.getElementById('ag-name')?.classList.add('input-error');
+    setTimeout(() => document.getElementById('ag-name')?.classList.remove('input-error'), 1200);
+    return;
+  }
+  if (games.some(g => g.name.toLowerCase() === name.toLowerCase())) {
+    alert(`"${name}" is already in your library.`);
+    return;
+  }
+  const minPlayers = parseInt(document.getElementById('ag-min-players')?.value) || 2;
+  const maxPlayers = parseInt(document.getElementById('ag-max-players')?.value) || minPlayers;
+  games.push({
+    name,
+    type:       document.getElementById('ag-type')?.value || 'Board',
+    complexity: document.getElementById('ag-complexity')?.value || 'Medium',
+    minPlayers,
+    maxPlayers,
+    playTime:   parseInt(document.getElementById('ag-playtime')?.value) || 60,
+    age:        parseInt(document.getElementById('ag-age')?.value) || 0,
+    setupTime:  10,
+    cooperative: document.getElementById('ag-coop')?.checked || false,
+    rating:     null,
+    played:     false,
+    thumbnail:  null,
+    bggId:      null,
+  });
+  saveGames();
+  // reset form
+  ['ag-name','ag-min-players','ag-max-players','ag-playtime','ag-age'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('ag-coop').checked = false;
+  toggleAddGameForm();
+  // sort by name and re-render
+  librarySortKey = 'name'; librarySortDir = 1;
+  renderLibrary();
+}
+
 // ── Timer ──────────────────────────────────────────────────────────────────
 function toggleTimer() {
   if (timerInterval) {
