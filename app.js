@@ -32,10 +32,15 @@ const SETTINGS_DEFAULTS = { showWhyBtn: true };
 let settings = { ...SETTINGS_DEFAULTS, ...JSON.parse(localStorage.getItem('sz-settings') || '{}') };
 
 // ── Init ───────────────────────────────────────────────────────────────────
-fetch("games.json")
-  .then(res => res.json())
-  .then(data => { games = data; })
-  .catch(() => console.error("Could not load games.json"));
+const storedGames = localStorage.getItem('sz-games');
+if (storedGames) {
+  games = JSON.parse(storedGames);
+} else {
+  fetch("games.json")
+    .then(res => res.json())
+    .then(data => { games = data; })
+    .catch(() => console.error("Could not load games.json"));
+}
 
 renderRollCall();
 renderGamesInProgress();
@@ -214,10 +219,60 @@ function closeSettings() {
 
 function renderSettingsModal() {
   const btn = document.getElementById('setting-why-btn');
-  if (!btn) return;
-  btn.textContent = settings.showWhyBtn ? 'On' : 'Off';
-  btn.setAttribute('aria-pressed', settings.showWhyBtn);
-  btn.classList.toggle('toggle-on', settings.showWhyBtn);
+  if (btn) {
+    btn.textContent = settings.showWhyBtn ? 'On' : 'Off';
+    btn.setAttribute('aria-pressed', settings.showWhyBtn);
+    btn.classList.toggle('toggle-on', settings.showWhyBtn);
+  }
+  const usernameInput = document.getElementById('bgg-username-input');
+  if (usernameInput) usernameInput.value = settings.bggUsername || '';
+
+  const statusEl = document.getElementById('bgg-sync-status');
+  if (statusEl && settings.bggLastSync) {
+    const count = JSON.parse(localStorage.getItem('sz-games') || '[]').length;
+    statusEl.textContent = `${count} games synced · ${settings.bggLastSync}`;
+    statusEl.className = 'bgg-sync-status bgg-sync-ok';
+  }
+}
+
+async function syncBGGCollection() {
+  const input = document.getElementById('bgg-username-input');
+  const statusEl = document.getElementById('bgg-sync-status');
+  const syncBtn = document.getElementById('bgg-sync-btn');
+  const username = input?.value.trim();
+
+  if (!username) {
+    statusEl.textContent = 'Enter a BGG username first.';
+    statusEl.className = 'bgg-sync-status bgg-sync-error';
+    return;
+  }
+
+  syncBtn.disabled = true;
+  statusEl.textContent = 'Syncing… this can take a few seconds.';
+  statusEl.className = 'bgg-sync-status';
+
+  try {
+    const res = await fetch(`/api/bgg/collection?username=${encodeURIComponent(username)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Sync failed');
+
+    games = data.games;
+    localStorage.setItem('sz-games', JSON.stringify(games));
+
+    settings.bggUsername = username;
+    settings.bggLastSync = new Date().toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: '2-digit',
+    });
+    localStorage.setItem('sz-settings', JSON.stringify(settings));
+
+    statusEl.textContent = `${data.count} games synced · ${settings.bggLastSync}`;
+    statusEl.className = 'bgg-sync-status bgg-sync-ok';
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.className = 'bgg-sync-status bgg-sync-error';
+  } finally {
+    syncBtn.disabled = false;
+  }
 }
 
 function toggleSetting(key) {

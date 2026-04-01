@@ -77,6 +77,110 @@ async function handleSpotifyPlaylist(req, res) {
   }
 }
 
+// ── BGG Collection ─────────────────────────────────────────────────────────
+async function fetchBGGWithRetry(url, retries = 3, delayMs = 3000) {
+  for (let i = 0; i < retries; i++) {
+    const res = await fetch(url);
+    if (res.status === 200) return res.text();
+    if (res.status === 202) {
+      // BGG is queuing the request — wait and retry
+      await new Promise(r => setTimeout(r, delayMs));
+      continue;
+    }
+    throw new Error(`BGG returned ${res.status}`);
+  }
+  throw new Error('BGG collection not ready after retries — try again in a moment');
+}
+
+function parseBGGCollection(xml) {
+  const games = [];
+  const itemRegex = /<item[^>]+objecttype="thing"[^>]+objectid="(\d+)"[^>]*>([\s\S]*?)<\/item>/g;
+  let match;
+
+  while ((match = itemRegex.exec(xml)) !== null) {
+    const block = match[2];
+
+    const get = (tag) => {
+      const m = block.match(new RegExp(`<${tag}[^>]*>([^<]*)<\/${tag}>`));
+      return m ? m[1].trim() : '';
+    };
+    const getAttr = (tag, attr) => {
+      const m = block.match(new RegExp(`<${tag}[^>]*${attr}="([^"]*)"`));
+      return m ? m[1].trim() : '';
+    };
+
+    // Skip expansions
+    const subtype = getAttr('item', 'subtype') || block.match(/subtype="([^"]*)"/)?.[1] || '';
+    if (subtype === 'boardgameexpansion') continue;
+
+    // Skip items not marked as owned
+    const ownEl = block.match(/<own>(\d)<\/own>/);
+    if (!ownEl || ownEl[1] !== '1') continue;
+
+    const name = get('name');
+    if (!name) continue;
+
+    const minPlayers = parseInt(get('minplayers')) || 1;
+    const maxPlayers = parseInt(get('maxplayers')) || minPlayers;
+    const minPlaytime = parseInt(get('minplaytime')) || 0;
+    const maxPlaytime = parseInt(get('maxplaytime')) || 0;
+    const playTime = maxPlaytime || minPlaytime || 60;
+    const age = parseInt(get('age')) || 0;
+    const thumbnail = get('thumbnail');
+
+    // BGG user rating
+    const ratingVal = parseFloat(getAttr('rating', 'value'));
+    const rating = !isNaN(ratingVal) && ratingVal > 0
+      ? Math.min(5, Math.max(1, Math.round(ratingVal / 2)))
+      : null;
+
+    // Average community rating for complexity proxy
+    const avgWeight = parseFloat(block.match(/<averageweight value="([^"]*)"/)?.[1] || '0');
+    let complexity = 'Medium';
+    if (avgWeight > 0 && avgWeight <= 1.8) complexity = 'Low';
+    else if (avgWeight >= 3.2) complexity = 'High';
+
+    games.push({
+      name,
+      minPlayers,
+      maxPlayers,
+      playTime: playTime >= 999 ? 999 : playTime,
+      complexity,
+      type: 'Board',
+      age,
+      setupTime: 10,
+      rating,
+      played: false,
+      cooperative: false,
+      thumbnail: thumbnail || null,
+      bggId: parseInt(match[1]),
+    });
+  }
+
+  return games.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function handleBGGCollection(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const username = url.searchParams.get('username')?.trim();
+  if (!username) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'username is required' }));
+    return;
+  }
+  try {
+    const bggUrl = `https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(username)}&own=1&excludesubtype=boardgameexpansion&stats=1`;
+    const xml = await fetchBGGWithRetry(bggUrl);
+    const games = parseBGGCollection(xml);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ games, count: games.length }));
+  } catch (err) {
+    console.error(err);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: err.message }));
+  }
+}
+
 const MIME_TYPES = {
   ".html": "text/html",
   ".css": "text/css",
@@ -153,6 +257,8 @@ const server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.method === "POST" && req.url === "/api/why") {
     handleWhy(req, res);
+  } else if (req.method === "GET" && req.url.startsWith("/api/bgg/collection")) {
+    handleBGGCollection(req, res);
   } else if (req.method === "GET" && req.url.startsWith("/api/spotify/playlist")) {
     handleSpotifyPlaylist(req, res);
   } else {
