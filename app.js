@@ -703,12 +703,35 @@ function closeSession() {
 function removeSessionPlayer(index) {
   sessionPlayers.splice(index, 1);
   renderSessionPlayers();
+  renderScoreTracker();
+}
+
+function addSessionPlayer(select) {
+  const id = select.value;
+  if (!id) return;
+  const player = vault.find(p => p.id === id);
+  if (!player || sessionPlayers.some(p => p.id === id)) return;
+  sessionPlayers.push(player);
+  if (!(player.id in sessionScores)) sessionScores[player.id] = 0;
+  renderSessionPlayers();
+  renderScoreTracker();
 }
 
 function renderSessionPlayers() {
   const container = document.getElementById('session-player-list');
+  const sessionIds = new Set(sessionPlayers.map(p => p.id));
+  const available = vault.filter(p => !sessionIds.has(p.id));
+
+  const addRow = available.length > 0 ? `
+    <div class="add-player-row">
+      <select onchange="addSessionPlayer(this)">
+        <option value="">＋ Add player…</option>
+        ${available.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+      </select>
+    </div>` : '';
+
   if (sessionPlayers.length === 0) {
-    container.innerHTML = '<p class="no-players-msg">No players on the Roll Call — tap players above to add them.</p>';
+    container.innerHTML = `<p class="no-players-msg">No players — add someone below.</p>${addRow}`;
     return;
   }
   container.innerHTML = sessionPlayers.map((p, i) => `
@@ -717,7 +740,7 @@ function renderSessionPlayers() {
       <span class="player-name">${p.name}</span>
       <button class="player-remove" onclick="removeSessionPlayer(${i})">×</button>
     </div>
-  `).join('');
+  `).join('') + addRow;
 }
 
 // ── Score Tracker ──────────────────────────────────────────────────────────

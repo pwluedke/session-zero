@@ -589,6 +589,27 @@ button:hover {
   opacity: 1;
 }
 
+.add-player-row {
+  margin-top: 0.4rem;
+}
+
+.add-player-row select {
+  width: 100%;
+  background: #0f3460;
+  border: 1px dashed #1a4a80;
+  border-radius: 8px;
+  color: #6a7a90;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+}
+
+.add-player-row select:focus {
+  outline: none;
+  border-color: #f5c842;
+  color: #e0e0e0;
+}
+
 /* ── Expanded Game Card ──────────────────────────────────────────────────── */
 .game-card {
   cursor: pointer;
