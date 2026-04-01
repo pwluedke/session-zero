@@ -260,7 +260,19 @@
         <button class="modal-close" onclick="closeSettings()">×</button>
       </div>
       <div class="settings-body">
-        <div class="settings-group-label">AI Features</div>
+        <div class="settings-group-label">BoardGameGeek</div>
+        <div class="settings-row settings-row-column">
+          <div class="settings-row-info">
+            <div class="settings-row-label">Import Collection (CSV)</div>
+            <div class="settings-row-desc">On BGG: go to your collection → Export → CSV. Import that file here.</div>
+          </div>
+          <label class="bgg-file-label" for="bgg-csv-input">Choose CSV file</label>
+          <input type="file" id="bgg-csv-input" accept=".csv" class="bgg-file-input"
+                 onchange="handleBGGImport(this)" />
+          <div id="bgg-sync-status" class="bgg-sync-status"></div>
+        </div>
+
+        <div class="settings-group-label" style="margin-top:1rem">AI Features</div>
         <div class="settings-row">
           <div class="settings-row-info">
             <div class="settings-row-label">Why? Button</div>

@@ -32,10 +32,15 @@ const SETTINGS_DEFAULTS = { showWhyBtn: true };
 let settings = { ...SETTINGS_DEFAULTS, ...JSON.parse(localStorage.getItem('sz-settings') || '{}') };
 
 // ── Init ───────────────────────────────────────────────────────────────────
-fetch("games.json")
-  .then(res => res.json())
-  .then(data => { games = data; })
-  .catch(() => console.error("Could not load games.json"));
+const storedGames = localStorage.getItem('sz-games');
+if (storedGames) {
+  games = JSON.parse(storedGames);
+} else {
+  fetch("games.json")
+    .then(res => res.json())
+    .then(data => { games = data; })
+    .catch(() => console.error("Could not load games.json"));
+}
 
 renderRollCall();
 renderGamesInProgress();
@@ -214,10 +219,142 @@ function closeSettings() {
 
 function renderSettingsModal() {
   const btn = document.getElementById('setting-why-btn');
-  if (!btn) return;
-  btn.textContent = settings.showWhyBtn ? 'On' : 'Off';
-  btn.setAttribute('aria-pressed', settings.showWhyBtn);
-  btn.classList.toggle('toggle-on', settings.showWhyBtn);
+  if (btn) {
+    btn.textContent = settings.showWhyBtn ? 'On' : 'Off';
+    btn.setAttribute('aria-pressed', settings.showWhyBtn);
+    btn.classList.toggle('toggle-on', settings.showWhyBtn);
+  }
+
+  const statusEl = document.getElementById('bgg-sync-status');
+  if (statusEl && settings.bggLastSync) {
+    const count = JSON.parse(localStorage.getItem('sz-games') || '[]').length;
+    statusEl.textContent = `${count} games imported · ${settings.bggLastSync}`;
+    statusEl.className = 'bgg-sync-status bgg-sync-ok';
+  }
+}
+
+function parseCsvRow(row) {
+  const fields = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < row.length; i++) {
+    const ch = row[i];
+    if (ch === '"') {
+      if (inQuotes && row[i + 1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      fields.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  fields.push(cur);
+  return fields;
+}
+
+function parseBGGCsv(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  if (lines.length < 2) return [];
+
+  const headers = parseCsvRow(lines[0]).map(h => h.trim().toLowerCase());
+  const col = name => headers.indexOf(name);
+
+  const iObjectId    = col('objectid');
+  const iName        = col('objectname');
+  const iSubtype     = col('subtype');
+  const iOwn         = col('own');
+  const iMinPlayers  = col('minplayers');
+  const iMaxPlayers  = col('maxplayers');
+  const iMinPlaytime = col('minplaytime');
+  const iMaxPlaytime = col('maxplaytime');
+  const iAge         = col('minage');
+  const iRating      = col('rating');
+  const iThumbnail   = col('thumbnail');
+
+  const games = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const f = parseCsvRow(line);
+
+    if (iSubtype >= 0 && f[iSubtype]?.trim() === 'boardgameexpansion') continue;
+    if (iOwn >= 0 && f[iOwn]?.trim() !== '1') continue;
+
+    const name = iName >= 0 ? f[iName]?.trim() : '';
+    if (!name) continue;
+
+    const minPlayers  = parseInt(f[iMinPlayers])  || 1;
+    const maxPlayers  = parseInt(f[iMaxPlayers])  || minPlayers;
+    const minPlaytime = parseInt(f[iMinPlaytime]) || 0;
+    const maxPlaytime = parseInt(f[iMaxPlaytime]) || 0;
+    const playTime    = maxPlaytime || minPlaytime || 60;
+    const age         = parseInt(f[iAge]) || 0;
+    const thumbnail   = iThumbnail >= 0 ? f[iThumbnail]?.trim() : '';
+
+    const ratingRaw = parseFloat(f[iRating]);
+    const rating = !isNaN(ratingRaw) && ratingRaw > 0
+      ? Math.min(5, Math.max(1, Math.round(ratingRaw / 2)))
+      : null;
+
+    games.push({
+      name,
+      minPlayers,
+      maxPlayers,
+      playTime: playTime >= 999 ? 999 : playTime,
+      complexity: 'Medium',
+      type: 'Board',
+      age,
+      setupTime: 10,
+      rating,
+      played: false,
+      cooperative: false,
+      thumbnail: thumbnail || null,
+      bggId: iObjectId >= 0 ? parseInt(f[iObjectId]) : null,
+    });
+  }
+
+  return games.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function handleBGGImport(input) {
+  const statusEl = document.getElementById('bgg-sync-status');
+  const file = input.files[0];
+  if (!file) return;
+
+  statusEl.textContent = 'Reading file…';
+  statusEl.className = 'bgg-sync-status';
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const imported = parseBGGCsv(e.target.result);
+      if (imported.length === 0) {
+        statusEl.textContent = 'No owned games found. Make sure you exported "owned" games.';
+        statusEl.className = 'bgg-sync-status bgg-sync-error';
+        return;
+      }
+      games = imported;
+      localStorage.setItem('sz-games', JSON.stringify(games));
+
+      settings.bggLastSync = new Date().toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: '2-digit',
+      });
+      localStorage.setItem('sz-settings', JSON.stringify(settings));
+
+      statusEl.textContent = `${imported.length} games imported · ${settings.bggLastSync}`;
+      statusEl.className = 'bgg-sync-status bgg-sync-ok';
+    } catch (err) {
+      statusEl.textContent = 'Failed to parse CSV: ' + err.message;
+      statusEl.className = 'bgg-sync-status bgg-sync-error';
+    }
+    input.value = '';
+  };
+  reader.onerror = () => {
+    statusEl.textContent = 'Could not read file.';
+    statusEl.className = 'bgg-sync-status bgg-sync-error';
+  };
+  reader.readAsText(file);
 }
 
 function toggleSetting(key) {
