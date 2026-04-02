@@ -4,7 +4,8 @@
   "description": "So many games, so little night.",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +14,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "dotenv": "^17.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
   }
 }
