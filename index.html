@@ -20,6 +20,7 @@
           <button class="vault-btn" onclick="openSettings()">⚙ Settings</button>
           <button class="vault-btn" onclick="openHistory()">History</button>
           <button class="vault-btn" onclick="openStats()">Stats</button>
+          <button class="vault-btn" onclick="openLibrary()">My Games</button>
           <button class="vault-btn" onclick="openVault()">Player Vault</button>
         </div>
       </div>
@@ -319,6 +320,56 @@
         </div>
         <div id="h2h-result" class="h2h-result"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Library Modal -->
+  <div id="library-modal" class="modal-overlay" onclick="closeLibrary()">
+    <div class="modal-panel library-panel" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="session-title">My Games</div>
+        <button class="modal-close" onclick="closeLibrary()">×</button>
+      </div>
+      <div class="library-toolbar">
+        <input type="text" id="library-search" placeholder="🔍 Search…" oninput="renderLibrary()" autocomplete="off" />
+        <div class="library-sort-btns">
+          <button class="lib-sort-btn active" id="lib-sort-name" onclick="setLibrarySort('name')">Name</button>
+          <button class="lib-sort-btn" id="lib-sort-rating" onclick="setLibrarySort('rating')">Rating</button>
+          <button class="lib-sort-btn" id="lib-sort-players" onclick="setLibrarySort('players')">Players</button>
+          <button class="lib-sort-btn" id="lib-sort-time" onclick="setLibrarySort('time')">Time</button>
+        </div>
+        <button class="lib-add-btn" onclick="toggleAddGameForm()">+ Add Game</button>
+      </div>
+      <div id="add-game-form" class="add-game-form hidden">
+        <div class="add-game-fields">
+          <input type="text" id="ag-name" placeholder="Game name*" />
+          <select id="ag-type">
+            <option value="Board">Board</option>
+            <option value="Card">Card</option>
+            <option value="Party">Party</option>
+            <option value="Abstract">Abstract</option>
+            <option value="Dice">Dice</option>
+            <option value="Mystery">Mystery</option>
+            <option value="Narrative">Narrative</option>
+          </select>
+          <select id="ag-complexity">
+            <option value="Low">Low</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+          </select>
+          <input type="number" id="ag-min-players" min="1" max="20" placeholder="Min players" />
+          <input type="number" id="ag-max-players" min="1" max="20" placeholder="Max players" />
+          <input type="number" id="ag-playtime" min="0" placeholder="Play time (min)" />
+          <input type="number" id="ag-age" min="0" placeholder="Min age" />
+          <label class="ag-coop-label"><input type="checkbox" id="ag-coop" /> Co-op</label>
+        </div>
+        <div class="add-game-actions">
+          <button class="ag-submit-btn" onclick="submitAddGame()">Add Game</button>
+          <button class="ag-cancel-btn" onclick="toggleAddGameForm()">Cancel</button>
+        </div>
+      </div>
+      <div id="library-count" class="library-count"></div>
+      <div id="library-list" class="library-list"></div>
     </div>
   </div>
 
