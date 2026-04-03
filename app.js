@@ -115,11 +115,11 @@ function renderVaultList() {
       <span></span>
     </div>
     ${sorted.map(p => `
-      <div class="vault-row">
+      <div class="vault-row" data-testid="vault-player" data-player-id="${p.id}">
         ${avatarHtml(p, true)}
         <span class="vault-col-player">${p.name}</span>
         <span class="vault-col-date">${formatLastPlayed(p.lastPlayed)}</span>
-        <button class="player-remove" onclick="removeFromVault('${p.id}')">×</button>
+        <button class="player-remove" data-testid="vault-remove" onclick="removeFromVault('${p.id}')">×</button>
       </div>
     `).join('')}
   `;
@@ -146,7 +146,7 @@ function renderRollCall() {
   container.innerHTML = vault.map(p => {
     const active = rollCall.has(p.id);
     return `
-      <div class="roll-call-chip ${active ? 'active' : ''}" onclick="toggleRollCall('${p.id}')">
+      <div class="roll-call-chip ${active ? 'active' : ''}" data-testid="roll-call-chip" data-player-id="${p.id}" onclick="toggleRollCall('${p.id}')">
         ${avatarHtml(p)}
         <span class="player-name">${p.name}</span>
         ${active ? '<span class="check">✓</span>' : ''}
@@ -467,10 +467,11 @@ function renderResults(picked, heading) {
 
     const li = document.createElement("li");
     li.className = "game-card";
+    li.setAttribute('data-testid', 'game-card');
     li.innerHTML = `
       <div class="game-card-main">
         <div>
-          <div class="game-name">${game.name}</div>
+          <div class="game-name" data-testid="game-name">${game.name}</div>
           <div class="game-meta">
             <span>👥 ${playerCount}</span>
             <span>⏱ ${formatPlayTime(game.playTime)}</span>
@@ -482,7 +483,7 @@ function renderResults(picked, heading) {
         <div class="game-card-right">
           ${ratingHtml}
           <span class="badge ${badgeClass}">${game.complexity}</span>
-          <button class="why-btn" onclick="event.stopPropagation(); askWhy(this, ${JSON.stringify(game).replace(/"/g, '&quot;')}, ${JSON.stringify(filters).replace(/"/g, '&quot;')})">Why?</button>
+          <button class="why-btn" data-testid="why-btn" onclick="event.stopPropagation(); askWhy(this, ${JSON.stringify(game).replace(/"/g, '&quot;')}, ${JSON.stringify(filters).replace(/"/g, '&quot;')})">Why?</button>
         </div>
       </div>
       <div class="game-detail hidden">
@@ -491,7 +492,7 @@ function renderResults(picked, heading) {
           ${game.cooperative ? '<span class="coop-tag">🤝 Co-op</span>' : ''}
           <span>${game.played ? '✓ Played before' : '✨ New to us'}</span>
         </div>
-        <button class="lets-play-btn" onclick="event.stopPropagation(); openSession(${index})">Let's Play!</button>
+        <button class="lets-play-btn" data-testid="lets-play-btn" onclick="event.stopPropagation(); openSession(${index})">Let's Play!</button>
       </div>
       <div class="why-text hidden"></div>
     `;
@@ -1499,7 +1500,7 @@ function renderLibrary() {
       : `<div class="lib-thumb lib-thumb-initials">${game.name.charAt(0).toUpperCase()}</div>`;
 
     const stars = [1,2,3,4,5].map(n =>
-      `<span class="lib-star${(game.rating ?? 0) >= n ? ' filled' : ''}" onclick="setGameRating(${di}, ${n})"
+      `<span class="lib-star${(game.rating ?? 0) >= n ? ' filled' : ''}" data-testid="lib-star" onclick="setGameRating(${di}, ${n})"
         title="${n} star${n>1?'s':''}">★</span>`
     ).join('');
 
@@ -1518,7 +1519,7 @@ function renderLibrary() {
       : '';
 
     return `
-      <div class="lib-row">
+      <div class="lib-row" data-testid="lib-row">
         ${thumb}
         <div class="lib-info">
           <div class="lib-name">${game.name}</div>
@@ -1531,7 +1532,7 @@ function renderLibrary() {
           <button class="lib-toggle${game.cooperative ? ' on' : ''}" onclick="toggleGameField(${di},'cooperative')">Co-op</button>
           <button class="lib-toggle${game.played ? ' on' : ''}" onclick="toggleGameField(${di},'played')">Played</button>
           ${spotifyBadge}${bggLink}
-          <button class="lib-delete" onclick="deleteGame(${di})" title="Remove from library">×</button>
+          <button class="lib-delete" data-testid="lib-delete" onclick="deleteGame(${di})" title="Remove from library">×</button>
         </div>
       </div>`;
   }).join('');
