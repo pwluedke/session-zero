@@ -17,14 +17,14 @@
       <div class="roll-call-header">
         <h2 class="section-label">🎲 Roll Call</h2>
         <div class="roll-call-actions">
-          <button class="vault-btn" onclick="openSettings()">⚙ Settings</button>
-          <button class="vault-btn" onclick="openHistory()">History</button>
-          <button class="vault-btn" onclick="openStats()">Stats</button>
-          <button class="vault-btn" onclick="openLibrary()">My Games</button>
-          <button class="vault-btn" onclick="openVault()">Player Vault</button>
+          <button class="vault-btn" data-testid="btn-settings" onclick="openSettings()">⚙ Settings</button>
+          <button class="vault-btn" data-testid="btn-history" onclick="openHistory()">History</button>
+          <button class="vault-btn" data-testid="btn-stats" onclick="openStats()">Stats</button>
+          <button class="vault-btn" data-testid="btn-library" onclick="openLibrary()">My Games</button>
+          <button class="vault-btn" data-testid="btn-vault" onclick="openVault()">Player Vault</button>
         </div>
       </div>
-      <div id="roll-call-chips" class="roll-call-chips"></div>
+      <div id="roll-call-chips" data-testid="roll-call-chips" class="roll-call-chips"></div>
     </section>
 
     <section class="games-in-progress hidden" id="games-in-progress">
@@ -34,9 +34,11 @@
 
     <section class="quick-search">
       <div class="quick-search-row">
-        <input type="text" id="search-input" placeholder="🔍 Search by game name…"
+        <input type="text" id="search-input" data-testid="search-input"
+               placeholder="🔍 Search by game name…"
                oninput="onSearchInput()" autocomplete="off" />
-        <button class="search-clear-btn hidden" id="search-clear-btn" onclick="clearSearch()">×</button>
+        <button class="search-clear-btn hidden" id="search-clear-btn"
+                data-testid="search-clear-btn" onclick="clearSearch()">×</button>
       </div>
     </section>
 
@@ -44,12 +46,12 @@
       <div class="filter-row">
         <div class="field">
           <label for="players">Players</label>
-          <input type="number" id="players" min="1" max="20" placeholder="e.g. 4" />
+          <input type="number" id="players" data-testid="filter-players" min="1" max="20" placeholder="e.g. 4" />
         </div>
 
         <div class="field">
           <label for="playtime">Max Play Time</label>
-          <select id="playtime">
+          <select id="playtime" data-testid="filter-playtime">
             <option value="">Any</option>
             <option value="15">15 min</option>
             <option value="30">30 min</option>
@@ -63,7 +65,7 @@
 
         <div class="field">
           <label for="complexity">Complexity</label>
-          <select id="complexity">
+          <select id="complexity" data-testid="filter-complexity">
             <option value="">Any</option>
             <option value="Low">Low</option>
             <option value="Medium">Medium</option>
@@ -75,7 +77,7 @@
       <div class="filter-row">
         <div class="field">
           <label for="type">Game Type</label>
-          <select id="type">
+          <select id="type" data-testid="filter-type">
             <option value="">Any</option>
             <option value="Abstract">Abstract</option>
             <option value="Board">Board</option>
@@ -89,7 +91,7 @@
 
         <div class="field">
           <label for="age">Min Age ≤</label>
-          <select id="age">
+          <select id="age" data-testid="filter-age">
             <option value="">Any</option>
             <option value="5">5</option>
             <option value="6">6</option>
@@ -103,14 +105,15 @@
 
         <div class="field field-toggle">
           <label>New to Us</label>
-          <button id="new-only-btn" class="toggle-btn" onclick="toggleNewOnly()" aria-pressed="false">Off</button>
+          <button id="new-only-btn" data-testid="new-only-btn" class="toggle-btn"
+                  onclick="toggleNewOnly()" aria-pressed="false">Off</button>
         </div>
       </div>
 
       <div class="filter-row">
         <div class="field">
           <label for="setup">Max Setup</label>
-          <select id="setup">
+          <select id="setup" data-testid="filter-setup">
             <option value="">Any</option>
             <option value="5">≤ 5 min</option>
             <option value="15">≤ 15 min</option>
@@ -119,7 +122,7 @@
 
         <div class="field">
           <label for="min-rating">Min Rating</label>
-          <select id="min-rating">
+          <select id="min-rating" data-testid="filter-min-rating">
             <option value="">Any</option>
             <option value="3">★★★+</option>
             <option value="4">★★★★+</option>
@@ -129,52 +132,54 @@
 
         <div class="field field-toggle">
           <label>Co-op Only</label>
-          <button id="coop-btn" class="toggle-btn" onclick="toggleCoop()" aria-pressed="false">Off</button>
+          <button id="coop-btn" data-testid="coop-btn" class="toggle-btn"
+                  onclick="toggleCoop()" aria-pressed="false">Off</button>
         </div>
       </div>
 
       <div class="buttons">
-        <button id="suggest-btn" onclick="suggest()">Find Games</button>
-        <button id="surprise-btn" onclick="surprise()">🎲 Surprise Me</button>
+        <button id="suggest-btn" data-testid="btn-find-games" onclick="suggest()">Find Games</button>
+        <button id="surprise-btn" data-testid="btn-surprise" onclick="surprise()">🎲 Surprise Me</button>
       </div>
     </section>
 
-    <section id="results" class="results hidden">
+    <section id="results" data-testid="results" class="results hidden">
       <h2 id="results-heading">Suggested Games</h2>
-      <ul id="game-list"></ul>
+      <ul id="game-list" data-testid="game-list"></ul>
     </section>
 
-    <section id="no-results" class="no-results hidden">
+    <section id="no-results" data-testid="no-results" class="no-results hidden">
       <p>No games matched your filters. Try loosening the constraints!</p>
     </section>
   </div>
 
   <!-- Player Vault Modal -->
-  <div id="vault-modal" class="modal-overlay">
+  <div id="vault-modal" data-testid="vault-modal" class="modal-overlay">
     <div class="modal-panel">
       <div class="modal-header">
         <div class="session-title">Player Vault</div>
-        <button class="modal-close" onclick="closeVault()">×</button>
+        <button class="modal-close" data-testid="vault-modal-close" onclick="closeVault()">×</button>
       </div>
       <div class="modal-section">
         <div class="player-input-row">
-          <input type="text" id="vault-name-input" placeholder="Add a player..."
+          <input type="text" id="vault-name-input" data-testid="vault-name-input"
+                 placeholder="Add a player..."
                  onkeydown="if(event.key==='Enter') addToVault()" />
-          <button id="add-vault-btn" onclick="addToVault()">Add</button>
+          <button id="add-vault-btn" data-testid="vault-add-btn" onclick="addToVault()">Add</button>
         </div>
-        <div id="vault-list" class="vault-list"></div>
+        <div id="vault-list" data-testid="vault-list" class="vault-list"></div>
       </div>
     </div>
   </div>
 
   <!-- Session Modal -->
-  <div id="session-modal" class="modal-overlay">
+  <div id="session-modal" data-testid="session-modal" class="modal-overlay">
     <div class="modal-panel">
       <div class="modal-header">
-        <div id="session-game-title" class="session-title"></div>
+        <div id="session-game-title" data-testid="session-game-title" class="session-title"></div>
         <div class="modal-header-actions">
-          <button class="pause-btn" id="pause-btn" onclick="pauseSession()">Pause</button>
-          <button class="modal-close" onclick="closeSession()">×</button>
+          <button class="pause-btn" id="pause-btn" data-testid="pause-btn" onclick="pauseSession()">Pause</button>
+          <button class="modal-close" data-testid="session-modal-close" onclick="closeSession()">×</button>
         </div>
       </div>
       <div class="modal-cols">
@@ -183,7 +188,7 @@
             <div class="session-panels">
               <div class="modal-section">
                 <div class="modal-section-label">Playing</div>
-                <div id="session-player-list" class="session-player-list"></div>
+                <div id="session-player-list" data-testid="session-player-list" class="session-player-list"></div>
               </div>
               <div class="modal-section" id="score-section">
                 <div class="score-header">
@@ -196,9 +201,9 @@
                     </label>
                   </div>
                 </div>
-                <div id="score-list" class="score-list"></div>
-                <button class="end-game-btn" id="end-game-btn" onclick="endGame()">End Game</button>
-                <div id="winner-banner" class="winner-banner hidden"></div>
+                <div id="score-list" data-testid="score-list" class="score-list"></div>
+                <button class="end-game-btn" id="end-game-btn" data-testid="end-game-btn" onclick="endGame()">End Game</button>
+                <div id="winner-banner" data-testid="winner-banner" class="winner-banner hidden"></div>
               </div>
             </div>
             <div class="feedback-body" id="feedback-body">
@@ -218,7 +223,7 @@
                 <button class="back-btn" onclick="backToSession()">← Back</button>
                 <div class="feedback-finalize">
                   <p class="finalize-note">Finalize to save all results and feedback.</p>
-                  <button class="finalize-session-btn" onclick="finalizeSession()">Finalize Session</button>
+                  <button class="finalize-session-btn" data-testid="finalize-btn" onclick="finalizeSession()">Finalize Session</button>
                 </div>
               </div>
             </div>
@@ -227,15 +232,15 @@
         <div class="modal-right-col">
           <div class="modal-section">
             <div class="modal-section-label">Timer</div>
-            <div id="timer-display" class="timer-display">0:00:00</div>
+            <div id="timer-display" data-testid="timer-display" class="timer-display">0:00:00</div>
             <div class="timer-controls">
-              <button id="timer-toggle-btn" onclick="toggleTimer()">Start</button>
-              <button class="timer-reset-btn" onclick="resetTimer()">Reset</button>
+              <button id="timer-toggle-btn" data-testid="timer-toggle-btn" onclick="toggleTimer()">Start</button>
+              <button class="timer-reset-btn" data-testid="timer-reset-btn" onclick="resetTimer()">Reset</button>
             </div>
           </div>
           <div class="modal-section">
             <div class="modal-section-label">Music</div>
-            <div id="spotify-container" class="spotify-container">
+            <div id="spotify-container" data-testid="spotify-container" class="spotify-container">
               <p class="no-players-msg">Finding music…</p>
             </div>
           </div>
@@ -254,11 +259,11 @@
   </div>
 
   <!-- Settings Modal -->
-  <div id="settings-modal" class="modal-overlay" onclick="closeSettings()">
+  <div id="settings-modal" data-testid="settings-modal" class="modal-overlay" onclick="closeSettings()">
     <div class="modal-panel settings-panel" onclick="event.stopPropagation()">
       <div class="modal-header">
         <div class="session-title">Settings</div>
-        <button class="modal-close" onclick="closeSettings()">×</button>
+        <button class="modal-close" data-testid="settings-modal-close" onclick="closeSettings()">×</button>
       </div>
       <div class="settings-body">
         <div class="settings-group-label">BoardGameGeek</div>
@@ -268,9 +273,9 @@
             <div class="settings-row-desc">On BGG: go to your collection → Export → CSV. Import that file here.</div>
           </div>
           <label class="bgg-file-label" for="bgg-csv-input">Choose CSV file</label>
-          <input type="file" id="bgg-csv-input" accept=".csv" class="bgg-file-input"
-                 onchange="handleBGGImport(this)" />
-          <div id="bgg-sync-status" class="bgg-sync-status"></div>
+          <input type="file" id="bgg-csv-input" data-testid="bgg-csv-input" accept=".csv"
+                 class="bgg-file-input" onchange="handleBGGImport(this)" />
+          <div id="bgg-sync-status" data-testid="bgg-sync-status" class="bgg-sync-status"></div>
         </div>
 
         <div class="settings-group-label" style="margin-top:1rem">AI Features</div>
@@ -279,40 +284,43 @@
             <div class="settings-row-label">Why? Button</div>
             <div class="settings-row-desc">Ask Claude why a game fits tonight's group</div>
           </div>
-          <button id="setting-why-btn" class="toggle-btn" onclick="toggleSetting('showWhyBtn')" aria-pressed="true">On</button>
+          <button id="setting-why-btn" data-testid="setting-why-btn" class="toggle-btn"
+                  onclick="toggleSetting('showWhyBtn')" aria-pressed="true">On</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- History Modal -->
-  <div id="history-modal" class="modal-overlay" onclick="closeHistory()">
+  <div id="history-modal" data-testid="history-modal" class="modal-overlay" onclick="closeHistory()">
     <div class="modal-panel history-panel" onclick="event.stopPropagation()">
       <div class="modal-header">
         <div class="session-title">Play History</div>
-        <button class="modal-close" onclick="closeHistory()">×</button>
+        <button class="modal-close" data-testid="history-modal-close" onclick="closeHistory()">×</button>
       </div>
       <div class="history-body">
-        <div id="history-list" class="history-list"></div>
+        <div id="history-list" data-testid="history-list" class="history-list"></div>
       </div>
     </div>
   </div>
 
   <!-- Stats Modal -->
-  <div id="stats-modal" class="modal-overlay" onclick="closeStats()">
+  <div id="stats-modal" data-testid="stats-modal" class="modal-overlay" onclick="closeStats()">
     <div class="modal-panel stats-panel" onclick="event.stopPropagation()">
       <div class="modal-header">
         <div class="session-title">Player Stats</div>
-        <button class="modal-close" onclick="closeStats()">×</button>
+        <button class="modal-close" data-testid="stats-modal-close" onclick="closeStats()">×</button>
       </div>
       <div class="stats-tabs">
-        <button class="stats-tab active" id="tab-players" onclick="switchStatsTab('players')">Players</button>
-        <button class="stats-tab" id="tab-h2h" onclick="switchStatsTab('h2h')">Head-to-Head</button>
+        <button class="stats-tab active" id="tab-players" data-testid="tab-players"
+                onclick="switchStatsTab('players')">Players</button>
+        <button class="stats-tab" id="tab-h2h" data-testid="tab-h2h"
+                onclick="switchStatsTab('h2h')">Head-to-Head</button>
       </div>
-      <div class="stats-body" id="stats-body-players">
+      <div class="stats-body" id="stats-body-players" data-testid="stats-body-players">
         <div id="stats-list" class="stats-list"></div>
       </div>
-      <div class="stats-body hidden" id="stats-body-h2h">
+      <div class="stats-body hidden" id="stats-body-h2h" data-testid="stats-body-h2h">
         <div class="h2h-selectors">
           <div class="h2h-selector" id="h2h-selector-a"></div>
           <div class="h2h-vs">vs.</div>
@@ -324,26 +332,31 @@
   </div>
 
   <!-- Library Modal -->
-  <div id="library-modal" class="modal-overlay" onclick="closeLibrary()">
+  <div id="library-modal" data-testid="library-modal" class="modal-overlay" onclick="closeLibrary()">
     <div class="modal-panel library-panel" onclick="event.stopPropagation()">
       <div class="modal-header">
         <div class="session-title">My Games</div>
-        <button class="modal-close" onclick="closeLibrary()">×</button>
+        <button class="modal-close" data-testid="library-modal-close" onclick="closeLibrary()">×</button>
       </div>
       <div class="library-toolbar">
-        <input type="text" id="library-search" placeholder="🔍 Search…" oninput="renderLibrary()" autocomplete="off" />
+        <input type="text" id="library-search" data-testid="library-search"
+               placeholder="🔍 Search…" oninput="renderLibrary()" autocomplete="off" />
         <div class="library-sort-btns">
-          <button class="lib-sort-btn active" id="lib-sort-name" onclick="setLibrarySort('name')">Name</button>
-          <button class="lib-sort-btn" id="lib-sort-rating" onclick="setLibrarySort('rating')">Rating</button>
-          <button class="lib-sort-btn" id="lib-sort-players" onclick="setLibrarySort('players')">Players</button>
-          <button class="lib-sort-btn" id="lib-sort-time" onclick="setLibrarySort('time')">Time</button>
+          <button class="lib-sort-btn active" id="lib-sort-name" data-testid="lib-sort-name"
+                  onclick="setLibrarySort('name')">Name</button>
+          <button class="lib-sort-btn" id="lib-sort-rating" data-testid="lib-sort-rating"
+                  onclick="setLibrarySort('rating')">Rating</button>
+          <button class="lib-sort-btn" id="lib-sort-players" data-testid="lib-sort-players"
+                  onclick="setLibrarySort('players')">Players</button>
+          <button class="lib-sort-btn" id="lib-sort-time" data-testid="lib-sort-time"
+                  onclick="setLibrarySort('time')">Time</button>
         </div>
-        <button class="lib-add-btn" onclick="toggleAddGameForm()">+ Add Game</button>
+        <button class="lib-add-btn" data-testid="btn-add-game" onclick="toggleAddGameForm()">+ Add Game</button>
       </div>
-      <div id="add-game-form" class="add-game-form hidden">
+      <div id="add-game-form" data-testid="add-game-form" class="add-game-form hidden">
         <div class="add-game-fields">
-          <input type="text" id="ag-name" placeholder="Game name*" />
-          <select id="ag-type">
+          <input type="text" id="ag-name" data-testid="ag-name" placeholder="Game name*" />
+          <select id="ag-type" data-testid="ag-type">
             <option value="Board">Board</option>
             <option value="Card">Card</option>
             <option value="Party">Party</option>
@@ -352,24 +365,24 @@
             <option value="Mystery">Mystery</option>
             <option value="Narrative">Narrative</option>
           </select>
-          <select id="ag-complexity">
+          <select id="ag-complexity" data-testid="ag-complexity">
             <option value="Low">Low</option>
             <option value="Medium" selected>Medium</option>
             <option value="High">High</option>
           </select>
-          <input type="number" id="ag-min-players" min="1" max="20" placeholder="Min players" />
-          <input type="number" id="ag-max-players" min="1" max="20" placeholder="Max players" />
-          <input type="number" id="ag-playtime" min="0" placeholder="Play time (min)" />
-          <input type="number" id="ag-age" min="0" placeholder="Min age" />
-          <label class="ag-coop-label"><input type="checkbox" id="ag-coop" /> Co-op</label>
+          <input type="number" id="ag-min-players" data-testid="ag-min-players" min="1" max="20" placeholder="Min players" />
+          <input type="number" id="ag-max-players" data-testid="ag-max-players" min="1" max="20" placeholder="Max players" />
+          <input type="number" id="ag-playtime" data-testid="ag-playtime" min="0" placeholder="Play time (min)" />
+          <input type="number" id="ag-age" data-testid="ag-age" min="0" placeholder="Min age" />
+          <label class="ag-coop-label"><input type="checkbox" id="ag-coop" data-testid="ag-coop" /> Co-op</label>
         </div>
         <div class="add-game-actions">
-          <button class="ag-submit-btn" onclick="submitAddGame()">Add Game</button>
-          <button class="ag-cancel-btn" onclick="toggleAddGameForm()">Cancel</button>
+          <button class="ag-submit-btn" data-testid="ag-submit" onclick="submitAddGame()">Add Game</button>
+          <button class="ag-cancel-btn" data-testid="ag-cancel" onclick="toggleAddGameForm()">Cancel</button>
         </div>
       </div>
-      <div id="library-count" class="library-count"></div>
-      <div id="library-list" class="library-list"></div>
+      <div id="library-count" data-testid="library-count" class="library-count"></div>
+      <div id="library-list" data-testid="library-list" class="library-list"></div>
     </div>
   </div>
 
