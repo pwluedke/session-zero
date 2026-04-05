@@ -12,8 +12,10 @@ module.exports = defineConfig({
   webServer: {
     command: 'node server.js',
     url: 'http://localhost:3000',
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     timeout: 10000,
   },
-  reporter: [['list']],
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never' }]]
+    : [['list']],
 });
