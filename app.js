@@ -229,10 +229,15 @@ function renderSettingsModal() {
     btn.classList.toggle('toggle-on', settings.showWhyBtn);
   }
 
+  const usernameInput = document.getElementById('bgg-username-input');
+  if (usernameInput && settings.bggUsername) {
+    usernameInput.value = settings.bggUsername;
+  }
+
   const statusEl = document.getElementById('bgg-sync-status');
   if (statusEl && settings.bggLastSync) {
     const count = JSON.parse(localStorage.getItem('sz-games') || '[]').length;
-    statusEl.textContent = `${count} games imported · ${settings.bggLastSync}`;
+    statusEl.textContent = `${count} games synced · ${settings.bggLastSync}`;
     statusEl.className = 'bgg-sync-status bgg-sync-ok';
   }
 }
@@ -359,6 +364,63 @@ function handleBGGImport(input) {
     statusEl.className = 'bgg-sync-status bgg-sync-error';
   };
   reader.readAsText(file);
+}
+
+async function syncBGGCollection() {
+  const input = document.getElementById('bgg-username-input');
+  const statusEl = document.getElementById('bgg-sync-status');
+  const btn = document.getElementById('bgg-sync-btn');
+  const username = input.value.trim();
+
+  if (!username) {
+    input.classList.add('input-error');
+    setTimeout(() => input.classList.remove('input-error'), 1200);
+    return;
+  }
+
+  // Save username for next time
+  settings.bggUsername = username;
+  localStorage.setItem('sz-settings', JSON.stringify(settings));
+
+  btn.disabled = true;
+  btn.textContent = 'Syncing…';
+  statusEl.textContent = 'Connecting to BoardGameGeek…';
+  statusEl.className = 'bgg-sync-status';
+
+  try {
+    const res = await fetch(`/api/bgg/collection?username=${encodeURIComponent(username)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      statusEl.textContent = data.error || 'Sync failed.';
+      statusEl.className = 'bgg-sync-status bgg-sync-error';
+      return;
+    }
+
+    if (data.games.length === 0) {
+      statusEl.textContent = 'No owned games found on BGG for that username.';
+      statusEl.className = 'bgg-sync-status bgg-sync-error';
+      return;
+    }
+
+    games = data.games;
+    localStorage.setItem('sz-games', JSON.stringify(games));
+
+    settings.bggLastSync = new Date().toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: '2-digit',
+    });
+    localStorage.setItem('sz-settings', JSON.stringify(settings));
+
+    statusEl.textContent = `${data.count} games synced · ${settings.bggLastSync}`;
+    statusEl.className = 'bgg-sync-status bgg-sync-ok';
+    renderGames();
+  } catch (err) {
+    statusEl.textContent = 'Network error — is the server running?';
+    statusEl.className = 'bgg-sync-status bgg-sync-error';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sync';
+  }
 }
 
 function toggleSetting(key) {
@@ -549,6 +611,7 @@ function openSession(index) {
   renderSessionPlayers();
   initScoreTracker();
   resetTimer();
+  resetDiceRoller();
   loadSpotifyPlaylist(sessionGame);
   document.getElementById('session-modal').classList.add('active');
 }
@@ -873,11 +936,15 @@ function saveResult(result) {
 function showSessionView() {
   document.getElementById('left-slider').classList.remove('show-feedback');
   document.getElementById('pause-btn').classList.remove('hidden');
+  const ds = document.getElementById('dice-section');
+  if (ds) ds.style.display = '';
 }
 
 function showFeedbackView() {
   document.getElementById('left-slider').classList.add('show-feedback');
   document.getElementById('pause-btn').classList.add('hidden');
+  const ds = document.getElementById('dice-section');
+  if (ds) ds.style.display = 'none';
 }
 
 function pauseSession() {
@@ -1656,6 +1723,113 @@ function renderTimerDisplay() {
   const s = timerSeconds % 60;
   const el = document.getElementById('timer-display');
   if (el) el.textContent = `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+// ── Dice Roller ────────────────────────────────────────────────────────────
+let selectedDieSides = 6;
+let diceHistory = [];
+let diceRolling = false;
+
+// Each entry: [cx, cy, r] — value 1 uses a larger pip so it reads clearly
+const D6_PIPS = {
+  1: [[32, 32, 7]],
+  2: [[18, 18, 5], [46, 46, 5]],
+  3: [[18, 18, 5], [32, 32, 5], [46, 46, 5]],
+  4: [[18, 18, 5], [46, 18, 5], [18, 46, 5], [46, 46, 5]],
+  5: [[18, 18, 5], [46, 18, 5], [32, 32, 5], [18, 46, 5], [46, 46, 5]],
+  6: [[18, 14, 5], [46, 14, 5], [18, 32, 5], [46, 32, 5], [18, 50, 5], [46, 50, 5]],
+};
+
+const DIE_CONFIG = {
+  4:  { path: 'M32,5 L61,59 L3,59 Z',                      tx: 32, ty: 47 },
+  8:  { path: 'M32,5 L59,32 L32,59 L5,32 Z',               tx: 32, ty: 35 },
+  10: { path: 'M32,5 L57,26 L48,59 L32,50 L16,59 L7,26 Z', tx: 32, ty: 36 },
+  12: { path: 'M32,5 L58,24 L49,56 L15,56 L6,24 Z',        tx: 32, ty: 38 },
+  20: { path: 'M32,5 L62,59 L2,59 Z',                      tx: 32, ty: 44 },
+};
+
+function renderDiceFace(sides, value, rolling) {
+  const svg = document.getElementById('dice-svg');
+  if (!svg) return;
+  const stroke = rolling ? '#2a3a5e' : '#f5c842';
+  const fill   = '#0f3460';
+  const ink    = rolling ? '#2a3a5e' : '#f5c842';
+
+  if (sides === 6) {
+    const pips = (value && D6_PIPS[value]) ? D6_PIPS[value] : [];
+    const dots = pips.map(([cx, cy, r]) =>
+      `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${ink}"/>`
+    ).join('');
+    svg.innerHTML =
+      `<rect x="4" y="4" width="56" height="56" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>` +
+      dots;
+  } else {
+    const cfg = DIE_CONFIG[sides];
+    if (!cfg) return;
+    const label = value != null ? String(value) : '';
+    const fs = sides === 20 && value >= 10 ? 16 : 18;
+    svg.innerHTML =
+      `<path d="${cfg.path}" fill="${fill}" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round"/>` +
+      `<text x="${cfg.tx}" y="${cfg.ty}" text-anchor="middle" dominant-baseline="middle"
+             fill="${ink}" font-size="${fs}" font-weight="700" font-family="inherit">${label}</text>`;
+  }
+}
+
+function selectDie(btn) {
+  document.querySelectorAll('.dice-die-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedDieSides = parseInt(btn.dataset.sides);
+  renderDiceFace(selectedDieSides, null, false);
+}
+
+function rollDie() {
+  if (diceRolling) return;
+  diceRolling = true;
+  const finalResult = Math.floor(Math.random() * selectedDieSides) + 1;
+  const btn = document.querySelector('.dice-roll-btn');
+  const svg = document.getElementById('dice-svg');
+  btn.disabled = true;
+
+  svg.classList.remove('dice-shaking');
+  void svg.offsetWidth;
+  svg.classList.add('dice-shaking');
+
+  let cycles = 0;
+  const interval = setInterval(() => {
+    const rand = Math.floor(Math.random() * selectedDieSides) + 1;
+    renderDiceFace(selectedDieSides, rand, true);
+    cycles++;
+    if (cycles >= 8) {
+      clearInterval(interval);
+      renderDiceFace(selectedDieSides, finalResult, false);
+      btn.disabled = false;
+      diceRolling = false;
+
+      diceHistory.unshift({ sides: selectedDieSides, result: finalResult });
+      if (diceHistory.length > 5) diceHistory.pop();
+      renderDiceHistory();
+    }
+  }, 60);
+}
+
+function renderDiceHistory() {
+  const el = document.getElementById('dice-history');
+  if (!el) return;
+  el.innerHTML = diceHistory
+    .map(r => `<span class="dice-history-chip">d${r.sides}: <strong>${r.result}</strong></span>`)
+    .join('');
+}
+
+function resetDiceRoller() {
+  selectedDieSides = 6;
+  diceHistory = [];
+  diceRolling = false;
+  document.querySelectorAll('.dice-die-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.sides === '6');
+  });
+  renderDiceFace(6, null, false);
+  const histEl = document.getElementById('dice-history');
+  if (histEl) histEl.innerHTML = '';
 }
 
 // ── Quick Search ───────────────────────────────────────────────────────────
