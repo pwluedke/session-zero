@@ -156,12 +156,144 @@ function serveStatic(req, res) {
   });
 }
 
+// ── BGG Collection Sync ────────────────────────────────────────────────────
+function parseBGGXml(xml) {
+  const games = [];
+  const parts = xml.split("<item ");
+
+  for (let i = 1; i < parts.length; i++) {
+    const block = "<item " + parts[i];
+
+    const idMatch = block.match(/objectid="(\d+)"/);
+    if (!idMatch) continue;
+    const bggId = parseInt(idMatch[1]);
+
+    const subtypeMatch = block.match(/subtype="([^"]*)"/);
+    if (subtypeMatch && subtypeMatch[1] === "boardgameexpansion") continue;
+
+    const nameMatch = block.match(/<name[^>]*>([^<]*)<\/name>/);
+    if (!nameMatch) continue;
+    const name = nameMatch[1].trim();
+
+    const thumbMatch = block.match(/<thumbnail>\s*([^<\s]+)\s*<\/thumbnail>/);
+    const thumbnail = thumbMatch
+      ? thumbMatch[1].trim().replace(/^\/\//, "https://")
+      : null;
+
+    const statsMatch = block.match(/<stats\s([^>]*)>/);
+    let minPlayers = 1, maxPlayers = 4, minPlaytime = 0, maxPlaytime = 0;
+    if (statsMatch) {
+      const sa = statsMatch[1];
+      minPlayers  = parseInt(sa.match(/minplayers="(\d+)"/)?.[1])  || 1;
+      maxPlayers  = parseInt(sa.match(/maxplayers="(\d+)"/)?.[1])  || minPlayers;
+      minPlaytime = parseInt(sa.match(/minplaytime="(\d+)"/)?.[1]) || 0;
+      maxPlaytime = parseInt(sa.match(/maxplaytime="(\d+)"/)?.[1]) || 0;
+    }
+
+    const avgMatch = block.match(/<average\s+value="([^"]*)"/);
+    let rating = null;
+    if (avgMatch && avgMatch[1] !== "N/A") {
+      const raw = parseFloat(avgMatch[1]);
+      if (!isNaN(raw) && raw > 0) {
+        rating = Math.min(5, Math.max(1, Math.round(raw / 2)));
+      }
+    }
+
+    const playsMatch = block.match(/<numplays>(\d+)<\/numplays>/);
+    const played = playsMatch ? parseInt(playsMatch[1]) > 0 : false;
+
+    const playTime = maxPlaytime || minPlaytime || 60;
+
+    games.push({
+      name,
+      minPlayers,
+      maxPlayers,
+      playTime: playTime >= 999 ? 999 : playTime,
+      complexity: "Medium",
+      type: "Board",
+      age: 0,
+      setupTime: 10,
+      rating,
+      played,
+      cooperative: false,
+      thumbnail,
+      bggId,
+    });
+  }
+
+  return games.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function handleBGGCollection(req, res) {
+  const url = new URL(req.url, "http://localhost");
+  const username = url.searchParams.get("username")?.trim();
+  if (!username) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "username required" }));
+    return;
+  }
+
+  const bggUrl =
+    `https://boardgamegeek.com/xmlapi2/collection` +
+    `?username=${encodeURIComponent(username)}&own=1` +
+    `&excludesubtype=boardgameexpansion&stats=1`;
+
+  const bggToken = process.env.BGG_API_TOKEN;
+  const headers = bggToken ? { Authorization: `Bearer ${bggToken}` } : {};
+
+  let xml = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 3000));
+    let bggRes;
+    try {
+      bggRes = await fetch(bggUrl, { headers });
+    } catch (err) {
+      res.writeHead(502, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Could not reach BoardGameGeek" }));
+      return;
+    }
+    if (bggRes.status === 202) continue; // BGG is building the response
+    if (bggRes.status === 401) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "BGG API token missing or invalid. Add BGG_API_TOKEN to your .env file." }));
+      return;
+    }
+    if (bggRes.status === 404) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: `BGG user "${username}" not found` }));
+      return;
+    }
+    if (!bggRes.ok) {
+      res.writeHead(bggRes.status, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: `BGG returned ${bggRes.status}` }));
+      return;
+    }
+    xml = await bggRes.text();
+    break;
+  }
+
+  if (!xml) {
+    res.writeHead(503, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      error: "BGG is still building your collection. Wait a moment and try again.",
+      retry: true,
+    }));
+    return;
+  }
+
+  const games = parseBGGXml(xml);
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ games, count: games.length }));
+}
+
 const server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.method === "POST" && req.url === "/api/why") {
     handleWhy(req, res);
   } else if (req.method === "GET" && req.url.startsWith("/api/spotify/playlist")) {
     handleSpotifyPlaylist(req, res);
+  } else if (req.method === "GET" && req.url.startsWith("/api/bgg/collection")) {
+    handleBGGCollection(req, res);
   } else {
     serveStatic(req, res);
   }

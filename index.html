@@ -244,6 +244,22 @@
               <p class="no-players-msg">Finding music…</p>
             </div>
           </div>
+          <div class="modal-section" id="dice-section">
+            <div class="modal-section-label">Dice Roller</div>
+            <div class="dice-die-row">
+              <button class="dice-die-btn active" data-testid="dice-btn-d6" data-sides="6" onclick="selectDie(this)">d6</button>
+              <button class="dice-die-btn" data-testid="dice-btn-d4"  data-sides="4"  onclick="selectDie(this)">d4</button>
+              <button class="dice-die-btn" data-testid="dice-btn-d8"  data-sides="8"  onclick="selectDie(this)">d8</button>
+              <button class="dice-die-btn" data-testid="dice-btn-d10" data-sides="10" onclick="selectDie(this)">d10</button>
+              <button class="dice-die-btn" data-testid="dice-btn-d12" data-sides="12" onclick="selectDie(this)">d12</button>
+              <button class="dice-die-btn" data-testid="dice-btn-d20" data-sides="20" onclick="selectDie(this)">d20</button>
+            </div>
+            <div class="dice-roll-row">
+              <svg id="dice-svg" data-testid="dice-svg" class="dice-svg" viewBox="0 0 64 64"></svg>
+              <button class="dice-roll-btn" data-testid="dice-roll-btn" onclick="rollDie()">Roll</button>
+            </div>
+            <div id="dice-history" data-testid="dice-history" class="dice-history"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -269,13 +285,26 @@
         <div class="settings-group-label">BoardGameGeek</div>
         <div class="settings-row settings-row-column">
           <div class="settings-row-info">
-            <div class="settings-row-label">Import Collection (CSV)</div>
-            <div class="settings-row-desc">On BGG: go to your collection → Export → CSV. Import that file here.</div>
+            <div class="settings-row-label">Sync Collection</div>
+            <div class="settings-row-desc">Enter your BGG username to import your owned games.</div>
+          </div>
+          <div class="bgg-username-row">
+            <input type="text" id="bgg-username-input" data-testid="bgg-username-input"
+                   class="bgg-username-input" placeholder="BGG username"
+                   onkeydown="if(event.key==='Enter')syncBGGCollection()" />
+            <button id="bgg-sync-btn" data-testid="bgg-sync-btn"
+                    class="bgg-sync-btn" onclick="syncBGGCollection()">Sync</button>
+          </div>
+          <div id="bgg-sync-status" data-testid="bgg-sync-status" class="bgg-sync-status"></div>
+        </div>
+        <div class="settings-row settings-row-column">
+          <div class="settings-row-info">
+            <div class="settings-row-label">Import from CSV</div>
+            <div class="settings-row-desc">Alternatively: on BGG go to your collection → Export → CSV.</div>
           </div>
           <label class="bgg-file-label" for="bgg-csv-input">Choose CSV file</label>
           <input type="file" id="bgg-csv-input" data-testid="bgg-csv-input" accept=".csv"
                  class="bgg-file-input" onchange="handleBGGImport(this)" />
-          <div id="bgg-sync-status" data-testid="bgg-sync-status" class="bgg-sync-status"></div>
         </div>
 
         <div class="settings-group-label" style="margin-top:1rem">AI Features</div>
