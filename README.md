@@ -10,13 +10,17 @@ Built as a portfolio project to demonstrate full-stack development, AI integrati
 ## Features
 
 - Filter games by players, playtime, complexity, type, age, setup time, rating, and co-op mode
-- Fuzzy/strict search toggle with match scoring *(planned)*
 - "Why?" button — Claude AI explains why a game fits tonight's group
 - "Surprise Me" — random pick from your full library
-- Music player — Spotify embed matched to the selected game's theme *(in progress)*
-- Player registration and tournament bracketing *(planned)*
-- BoardGameGeek collection sync *(planned)*
-- Play history, player stats, and head-to-head records *(planned)*
+- Quick search bar — live substring filtering across visible game cards
+- Music player — Spotify embed auto-matched to the selected game's theme
+- Player Vault — permanent player registry with avatars and last-played tracking
+- Roll Call — per-session check-in that automatically drives the player count filter
+- Session dashboard — score tracker, timer, dice roller, and Spotify player in one view
+- Play history, player stats, and head-to-head records
+- Game Library — full CRUD for your game collection, with BGG CSV import
+- BoardGameGeek live sync *(in progress — awaiting API token approval)*
+- Fuzzy search with match scoring *(planned)*
 
 ---
 
@@ -33,8 +37,12 @@ Built as a portfolio project to demonstrate full-stack development, AI integrati
 | Name | Trigger | Description |
 |---|---|---|
 | **Player Vault** | "Player Vault" button | Permanent player registry. Add, remove, and set avatars. |
-| **Session Dashboard** | "Let's Play!" on a game card | Active session. Panels: Playing, Score Tracker, Timer, Music. |
-| **Session Feedback** | "End Game" in Score Tracker | Post-game form: star rating, Play Again, and notes. |
+| **Session Dashboard** | "Let's Play!" on a game card | Active session. Panels: Playing, Score Tracker, Timer, Music, Dice Roller. |
+| **Session Feedback** | "End Game" in Score Tracker | Post-game form: star rating, Play Again, and notes per player. |
+| **Game Library** | "Library" button | Full game list with add, edit, delete, search, and BGG import. |
+| **Play History** | "History" button | Log of all finalized sessions with scores and feedback. |
+| **Player Stats** | "Stats" button | Per-player win rates, games played, and head-to-head records. |
+| **Settings** | "Settings" button | BGG sync, CSV import, and AI feature toggles. |
 
 ### Home Sections
 
@@ -64,8 +72,8 @@ Built as a portfolio project to demonstrate full-stack development, AI integrati
 | Backend | Node.js (built-in `http` module, no framework) |
 | AI | Anthropic Claude API (`claude-opus-4-6`) |
 | Music | Spotify Web API + Spotify Embed Player |
-| Data | Local JSON (migrating to BoardGameGeek API) |
-| Testing | Jest (unit), Playwright (end-to-end) *(planned)* |
+| Data | localStorage (migrating to persistent backend — see #32) |
+| Testing | Playwright (end-to-end, 23 tests) · Jest (unit) *(planned)* |
 | CI/CD | GitHub Actions *(planned)* |
 | Version Control | Git + GitHub |
 
@@ -87,6 +95,7 @@ Create a `.env` file in the project root:
 ANTHROPIC_API_KEY=your_anthropic_api_key
 SPOTIFY_CLIENT_ID=your_spotify_client_id
 SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+BGG_API_TOKEN=your_bgg_api_token
 ```
 
 Start the server:
@@ -96,6 +105,32 @@ node server.js
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Testing
+
+End-to-end tests run against the live server using Playwright with a Page Object Model.
+
+**23 tests across 7 Page Object files:**
+
+| Area | Coverage |
+|---|---|
+| Page load | Title, header buttons |
+| Player Vault | Add, remove, duplicate rejection |
+| Roll Call | Toggle updates player count filter |
+| Find Games / Filters | Results, player count, complexity, no-results |
+| Surprise Me | Returns exactly 1 game |
+| Quick Search | Filters visible cards by name |
+| Session Modal | Opens with game title, timer start/pause |
+| Game Library | Load, search, add game, delete game |
+| Settings | Why? button toggle |
+| History Modal | Opens and renders |
+| Stats Modal | Tab switcher |
+
+```bash
+npx playwright test
+```
 
 ---
 
@@ -113,7 +148,7 @@ This project follows a structured Git-based workflow, documented here for transp
 - Branch names follow the pattern `feature/short-description` or `fix/short-description`
 
 ```bash
-git checkout -b feature/music-player
+git checkout -b feature/dice-roller
 ```
 
 ### 3. Write the Code
@@ -122,8 +157,8 @@ git checkout -b feature/music-player
 - Code is reviewed for security, simplicity, and correctness before committing
 
 ### 4. Write Tests
-- **Jest** for unit tests — filter logic, data transformations, API helpers
-- **Playwright** for end-to-end tests — full browser automation against the running app
+- **Playwright** for end-to-end tests — full browser automation against the running app using Page Object Model
+- **Jest** for unit tests — filter logic, data transformations, API helpers *(planned)*
 - Tests are written alongside the feature, not after
 
 ### 5. Commit
@@ -132,7 +167,7 @@ git checkout -b feature/music-player
 
 ```bash
 git add <specific files>
-git commit -m "Add Spotify playlist embed to game cards"
+git commit -m "Add dice roller to session dashboard"
 ```
 
 ### 6. Open a Pull Request
@@ -165,15 +200,26 @@ All planned and in-progress work is tracked at:
 | #20 | Library & Collection Management |
 | #21 | Infrastructure & Quality |
 
-### Current Backlog
+### Shipped
 
 | # | Feature |
 |---|---|
 | #1 | Music player for selected game (Spotify) |
-| #2 | Player registration & tournament bracketing |
+| #2 | Player registration (Player Vault + Roll Call) |
 | #3 | Play history log |
 | #4 | Player stats |
 | #5 | Head-to-head records |
+| #14 | End-to-end tests (Playwright, 23 tests, Page Object Model) |
+| #17 | Per-player game feedback (post-session form) |
+| #22 | Session modal — "Let's Play" UI shell |
+| #23 | Session panel — timer |
+| #24 | Session panel — live score tracker |
+| #27 | Session panel — virtual dice roller |
+
+### Open Backlog
+
+| # | Feature |
+|---|---|
 | #6 | Smart recommendations based on ratings |
 | #7 | Player mood / vibe filter |
 | #8 | Avoid repeats filter |
@@ -182,19 +228,17 @@ All planned and in-progress work is tracked at:
 | #11 | Wishlist |
 | #12 | Loan tracker |
 | #13 | Fuzzy search with match score |
-| #14 | Unit and end-to-end tests |
-| #15 | BGG collection sync |
+| #15 | BGG collection sync *(in progress — awaiting API token)* |
 | #16 | BGG multi-list support |
-| #17 | Player profiles and per-player game feedback |
-| #22 | Session modal — "Let's Play" UI shell |
-| #23 | Session panel — timer |
-| #24 | Session panel — live score tracker |
 | #25 | Session panel — seating chart & arrangement randomizer |
-| #26 | Session panel — wheel of names |
-| #27 | Session panel — virtual dice roller |
+| #26 | Session panel — wheel of names (random player picker) |
 | #28 | Session panel — photo upload |
 | #29 | Session panel — notes and house rules |
 | #30 | Session panel — rules reference and BGG link |
+| #32 | Migrate Player Vault to persistent backend database |
+| #33 | Create site mascot art — lineart dragon playing cards |
+| #55 | BGG two-way sync |
+| #57 | TCG support — card game tournament runner |
 
 ---
 
