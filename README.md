@@ -1,4 +1,5 @@
 # Session Zero: A Game Night Planner
+[![Playwright Tests](https://github.com/pwluedke/session-zero/actions/workflows/playwright.yml/badge.svg)](https://github.com/pwluedke/session-zero/actions/workflows/playwright.yml)
 ### *So many games, so little night.*
 
 A personal web application for planning game nights with family and friends. Filter your library by players, playtime, complexity, setup time, and more — then get an AI-powered explanation of why each suggestion fits your group tonight.
