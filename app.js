@@ -657,7 +657,7 @@ function renderSpotifyOptions(container, options, selectedIdx, isSaved) {
     : '';
 
   container.innerHTML = `
-    <iframe id="spotify-iframe"
+    <iframe data-testid="spotify-iframe" id="spotify-iframe"
       src="${options[selectedIdx].embedUrl}"
       width="100%"
       height="152"
@@ -668,14 +668,14 @@ function renderSpotifyOptions(container, options, selectedIdx, isSaved) {
     ${optionsHtml}
     <div class="spotify-meta">
       <div class="spotify-actions">
-        <button class="spotify-change-btn" onclick="showSpotifySearch()">Change</button>
-        <button class="spotify-save-btn${isSaved ? ' saved' : ''}" onclick="saveSpotifyPlaylist()">
+        <button data-testid="spotify-change-btn" class="spotify-change-btn" onclick="showSpotifySearch()">Change</button>
+        <button data-testid="spotify-save-btn" class="spotify-save-btn${isSaved ? ' saved' : ''}" onclick="saveSpotifyPlaylist()">
           ${isSaved ? 'Saved ✓' : 'Save'}
         </button>
       </div>
     </div>
-    <div class="spotify-search-row hidden" id="spotify-search-row">
-      <input type="text" id="spotify-query-input" placeholder="Search Spotify…"
+    <div data-testid="spotify-search-row" class="spotify-search-row hidden" id="spotify-search-row">
+      <input data-testid="spotify-query-input" type="text" id="spotify-query-input" placeholder="Search Spotify…"
              onkeydown="if(event.key==='Enter') searchSpotifyQuery()" />
       <button onclick="searchSpotifyQuery()">Search</button>
     </div>
@@ -699,9 +699,9 @@ function selectSpotifyOption(idx) {
 
 function renderSpotifyNoResult(container) {
   container.innerHTML = `
-    <p class="no-players-msg">No playlist found — try a custom search.</p>
-    <div class="spotify-search-row" id="spotify-search-row">
-      <input type="text" id="spotify-query-input" placeholder="Search Spotify…"
+    <p data-testid="spotify-no-result" class="no-players-msg">No playlist found - try a custom search.</p>
+    <div data-testid="spotify-search-row" class="spotify-search-row" id="spotify-search-row">
+      <input data-testid="spotify-query-input" type="text" id="spotify-query-input" placeholder="Search Spotify…"
              onkeydown="if(event.key==='Enter') searchSpotifyQuery()" />
       <button onclick="searchSpotifyQuery()">Search</button>
     </div>

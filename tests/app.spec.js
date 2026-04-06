@@ -6,6 +6,16 @@ const { LibraryModal } = require('./pages/LibraryModal');
 const { SettingsModal } = require('./pages/SettingsModal');
 const { HistoryModal } = require('./pages/HistoryModal');
 const { StatsModal }   = require('./pages/StatsModal');
+const { SpotifyPanel } = require('./pages/SpotifyPanel');
+
+// Mock Spotify API response used across Spotify tests.
+// Two playlists so we can also test the options row when needed.
+const MOCK_PLAYLISTS = {
+  playlists: [
+    { embedUrl: 'https://open.spotify.com/embed/playlist/MOCK001?utm_source=generator&theme=0', name: 'Mock Board Game Music' },
+    { embedUrl: 'https://open.spotify.com/embed/playlist/MOCK002?utm_source=generator&theme=0', name: 'Mock Chill Tunes' },
+  ],
+};
 
 // Each test gets a fresh localStorage so state doesn't bleed between runs.
 // waitForLoadState('networkidle') ensures games.json fetch completes first.
@@ -226,4 +236,126 @@ test('stats modal tab switcher works', async ({ page }) => {
 
   await stats.switchToH2H();
   await stats.switchToPlayers();
+});
+
+// ── Spotify ─────────────────────────────────────────────────────────────────
+// All Spotify tests mock /api/spotify/playlist at the network level using
+// page.route() — no live Spotify API calls are made during any test run.
+
+test('Spotify embed appears in session dashboard when a game is selected', async ({ page }) => {
+  await page.route('/api/spotify/playlist*', route =>
+    route.fulfill({ contentType: 'application/json', body: JSON.stringify(MOCK_PLAYLISTS) })
+  );
+
+  const main    = new MainPage(page);
+  const spotify = new SpotifyPanel(page);
+
+  await main.findGames();
+  await main.letsPlay(0);
+
+  await spotify.waitForEmbed();
+  await expect(spotify.iframe).toHaveAttribute('src', /open\.spotify\.com\/embed/);
+});
+
+test('auto-search sends game name and type as query params, not a manual query', async ({ page }) => {
+  const requestPromise = page.waitForRequest(/\/api\/spotify\/playlist/);
+
+  await page.route('/api/spotify/playlist*', route =>
+    route.fulfill({ contentType: 'application/json', body: JSON.stringify(MOCK_PLAYLISTS) })
+  );
+
+  const main = new MainPage(page);
+  await main.findGames();
+  await main.letsPlay(0);
+
+  const request = await requestPromise;
+  const url     = new URL(request.url());
+
+  expect(url.searchParams.get('game')).toBeTruthy();
+  expect(url.searchParams.get('type')).toBeTruthy();
+  expect(url.searchParams.has('query')).toBe(false);
+});
+
+test('manual search override updates the embed and sends query param', async ({ page }) => {
+  await page.route('/api/spotify/playlist*', (route, request) => {
+    const url = new URL(request.url());
+    if (url.searchParams.has('query')) {
+      route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          playlists: [{ embedUrl: 'https://open.spotify.com/embed/playlist/OVERRIDE?utm_source=generator&theme=0', name: 'Custom Result' }],
+        }),
+      });
+    } else {
+      route.fulfill({ contentType: 'application/json', body: JSON.stringify(MOCK_PLAYLISTS) });
+    }
+  });
+
+  const main    = new MainPage(page);
+  const spotify = new SpotifyPanel(page);
+
+  await main.findGames();
+  await main.letsPlay(0);
+  await spotify.waitForEmbed();
+
+  await spotify.openSearch();
+
+  const overrideRequest = page.waitForRequest(req => req.url().includes('/api/spotify/playlist') && req.url().includes('query='));
+  await spotify.searchFor('catan ambient');
+
+  const req = await overrideRequest;
+  const url = new URL(req.url());
+  expect(url.searchParams.get('query')).toBe('catan ambient');
+
+  await expect(spotify.iframe).toHaveAttribute('src', /OVERRIDE/);
+});
+
+test('saved playlist is restored on session resume without a new API call', async ({ page }) => {
+  let callCount = 0;
+  await page.route('/api/spotify/playlist*', route => {
+    callCount++;
+    route.fulfill({ contentType: 'application/json', body: JSON.stringify(MOCK_PLAYLISTS) });
+  });
+
+  const main    = new MainPage(page);
+  const session = new SessionModal(page);
+  const spotify = new SpotifyPanel(page);
+
+  await main.findGames();
+  await main.letsPlay(0);
+  await spotify.waitForEmbed();
+  expect(callCount).toBe(1);
+
+  await spotify.save();
+  await expect(spotify.saveBtn).toHaveClass(/saved/);
+
+  // Pause the session
+  await session.pauseBtn.click();
+  await expect(session.modal).not.toHaveClass(/active/);
+
+  // Resume via Games in Progress
+  const resumeBtn = page.locator('.resume-btn').first();
+  await expect(resumeBtn).toBeVisible();
+  await resumeBtn.click();
+
+  // Embed should reload from saved URL — no new API call
+  await spotify.waitForEmbed();
+  expect(callCount).toBe(1);
+  await expect(spotify.saveBtn).toHaveClass(/saved/);
+});
+
+test('shows no-result message and search input when Spotify returns no playlists', async ({ page }) => {
+  await page.route('/api/spotify/playlist*', route =>
+    route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ error: 'No playlist found' }) })
+  );
+
+  const main    = new MainPage(page);
+  const spotify = new SpotifyPanel(page);
+
+  await main.findGames();
+  await main.letsPlay(0);
+
+  await expect(spotify.noResult).toBeVisible();
+  await expect(spotify.searchRow).toBeVisible();
+  await expect(spotify.iframe).not.toBeAttached();
 });
