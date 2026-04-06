@@ -74,7 +74,7 @@ Built as a portfolio project to demonstrate full-stack development, AI integrati
 | AI | Anthropic Claude API (`claude-opus-4-6`) |
 | Music | Spotify Web API + Spotify Embed Player |
 | Data | localStorage (migrating to persistent backend, see #32) |
-| Testing | Playwright (end-to-end, 23 tests) · Jest (unit) *(planned)* |
+| Testing | Playwright (end-to-end, 19 tests) · Jest (unit) *(planned)* |
 | CI/CD | GitHub Actions (PR #66 open) |
 | Version Control | Git + GitHub |
 
@@ -113,7 +113,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 End-to-end tests run against the live server using Playwright with a Page Object Model.
 
-**23 tests across 7 Page Object files:**
+**19 tests across 7 Page Object files:**
 
 | Area | Coverage |
 |---|---|
