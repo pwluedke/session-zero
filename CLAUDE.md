@@ -22,6 +22,8 @@ Session Zero is a vanilla HTML/CSS/JS + Node.js game night planning web app. Pla
 - Test files use Page Object Model - no raw selectors in test files
 - External APIs are mocked in tests using page.route() - never hit live APIs in tests
 - Never use em dashes in any file. Use commas, semicolons, colons, regular dashes, or parentheses instead.
+- Always ask "show me your plan first" before any new feature implementation
+- New features follow TDD loop: write failing test first, then implement until green
 
 ## Files You Should Never Modify Directly
 - .env (environment variables - never touch)
@@ -34,3 +36,5 @@ Session Zero is a vanilla HTML/CSS/JS + Node.js game night planning web app. Pla
 - Run tests after implementation - PRs only get opened when tests pass
 - Scope stays focused - one feature or fix per session
 - Use /compact when the session gets long to preserve output quality
+- When creating GitHub Issues, follow the template in /prompts/create-github-issues.md
+- The prompt library lives in /prompts/ -- check it before starting any repeatable task
