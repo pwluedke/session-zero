@@ -2,7 +2,7 @@
 [![Playwright Tests](https://github.com/pwluedke/session-zero/actions/workflows/playwright.yml/badge.svg)](https://github.com/pwluedke/session-zero/actions/workflows/playwright.yml)
 ### *So many games, so little night.*
 
-A personal web application for planning game nights with family and friends. Filter your library by players, playtime, complexity, setup time, and more — then get an AI-powered explanation of why each suggestion fits your group tonight.
+A personal web application for planning game nights with family and friends. Filter your library by players, playtime, complexity, setup time, and more, then get an AI-powered explanation of why each suggestion fits your group tonight.
 
 Built as a portfolio project to demonstrate full-stack development, AI integration, and engineering workflow practices.
 
@@ -11,16 +11,16 @@ Built as a portfolio project to demonstrate full-stack development, AI integrati
 ## Features
 
 - Filter games by players, playtime, complexity, type, age, setup time, rating, and co-op mode
-- "Why?" button — Claude AI explains why a game fits tonight's group
-- "Surprise Me" — random pick from your full library
-- Quick search bar — live substring filtering across visible game cards
-- Music player — Spotify embed auto-matched to the selected game's theme
-- Player Vault — permanent player registry with avatars and last-played tracking
-- Roll Call — per-session check-in that automatically drives the player count filter
-- Session dashboard — score tracker, timer, dice roller, and Spotify player in one view
+- "Why?" button: Claude AI explains why a game fits tonight's group
+- "Surprise Me": random pick from your full library
+- Quick search bar: live substring filtering across visible game cards
+- Music player: Spotify embed auto-matched to the selected game's theme
+- Player Vault: permanent player registry with avatars and last-played tracking
+- Roll Call: per-session check-in that automatically drives the player count filter
+- Session dashboard: score tracker, timer, dice roller, and Spotify player in one view
 - Play history, player stats, and head-to-head records
-- Game Library — full CRUD for your game collection, with BGG CSV import
-- BoardGameGeek live sync *(in progress — awaiting API token approval)*
+- Game Library: full CRUD for your game collection, with BGG CSV import
+- BoardGameGeek live sync *(in progress - awaiting API token approval)*
 - Fuzzy search with match scoring *(planned)*
 
 ---
@@ -60,7 +60,7 @@ Built as a portfolio project to demonstrate full-stack development, AI integrati
 | **Pause** | Session Dashboard header | Saves session state, returns to Home. Card appears in Games in Progress. |
 | **Resume Session** | Games in Progress | Restores Session Dashboard to its exact prior state |
 | **End Game** | Score Tracker panel | Validates scores, stops timer, opens Session Feedback |
-| **← Back** | Session Feedback | Returns to Session Dashboard with all state intact |
+| **Back** | Session Feedback | Returns to Session Dashboard with all state intact |
 | **Finalize Session** | Session Feedback | Saves all results and feedback to history, closes modal, returns to Home |
 
 ---
@@ -73,9 +73,9 @@ Built as a portfolio project to demonstrate full-stack development, AI integrati
 | Backend | Node.js (built-in `http` module, no framework) |
 | AI | Anthropic Claude API (`claude-opus-4-6`) |
 | Music | Spotify Web API + Spotify Embed Player |
-| Data | localStorage (migrating to persistent backend — see #32) |
+| Data | localStorage (migrating to persistent backend, see #32) |
 | Testing | Playwright (end-to-end, 23 tests) · Jest (unit) *(planned)* |
-| CI/CD | GitHub Actions *(planned)* |
+| CI/CD | GitHub Actions (PR #66 open) |
 | Version Control | Git + GitHub |
 
 ---
@@ -137,7 +137,7 @@ npx playwright test
 
 ## Development Workflow
 
-This project follows a structured Git-based workflow, documented here for transparency and reproducibility.
+This project follows a structured engineering process documented in [docs/process.md](docs/process.md).
 
 ### 1. Pick an Issue
 - All features, bugs, and tasks are tracked as **GitHub Issues**
@@ -154,12 +154,12 @@ git checkout -b feature/dice-roller
 
 ### 3. Write the Code
 - Development happens in **Cursor** with **Claude Code** assistance
-- Changes are kept focused — one feature or fix per branch
+- Changes are kept focused; one feature or fix per branch
 - Code is reviewed for security, simplicity, and correctness before committing
 
 ### 4. Write Tests
-- **Playwright** for end-to-end tests — full browser automation against the running app using Page Object Model
-- **Jest** for unit tests — filter logic, data transformations, API helpers *(planned)*
+- **Playwright** for end-to-end tests: full browser automation against the running app using Page Object Model
+- **Jest** for unit tests: filter logic, data transformations, API helpers *(planned)*
 - Tests are written alongside the feature, not after
 
 ### 5. Commit
@@ -177,9 +177,9 @@ git commit -m "Add dice roller to session dashboard"
 - PR description includes a summary of changes and a testing checklist
 
 ### 7. Review and Merge
-- Diff is reviewed before merging — even on a solo project
-- GitHub Actions runs the test suite automatically on every PR *(once configured)*
-- Merges into `main` only after review passes
+- Diff is reviewed before merging, even on a solo project
+- GitHub Actions runs the full Playwright suite automatically on every PR
+- Merges into `main` only after review and CI pass
 
 ### 8. Issue Closes Automatically
 - GitHub detects the `Closes #n` in the merged PR and closes the linked issue
@@ -211,11 +211,10 @@ All planned and in-progress work is tracked at:
 | #4 | Player stats |
 | #5 | Head-to-head records |
 | #14 | End-to-end tests (Playwright, 23 tests, Page Object Model) |
-| #17 | Per-player game feedback (post-session form) |
-| #22 | Session modal — "Let's Play" UI shell |
-| #23 | Session panel — timer |
-| #24 | Session panel — live score tracker |
-| #27 | Session panel — virtual dice roller |
+| #22 | Session modal: "Let's Play" UI shell |
+| #23 | Session panel: timer |
+| #24 | Session panel: live score tracker |
+| #27 | Session panel: virtual dice roller |
 
 ### Open Backlog
 
@@ -229,17 +228,25 @@ All planned and in-progress work is tracked at:
 | #11 | Wishlist |
 | #12 | Loan tracker |
 | #13 | Fuzzy search with match score |
-| #15 | BGG collection sync *(in progress — awaiting API token)* |
+| #15 | BGG collection sync *(in progress - awaiting API token)* |
 | #16 | BGG multi-list support |
-| #25 | Session panel — seating chart & arrangement randomizer |
-| #26 | Session panel — wheel of names (random player picker) |
-| #28 | Session panel — photo upload |
-| #29 | Session panel — notes and house rules |
-| #30 | Session panel — rules reference and BGG link |
+| #17 | Player feedback influencing game suggestions |
+| #25 | Session panel: seating chart & arrangement randomizer |
+| #26 | Session panel: wheel of names (random player picker) |
+| #28 | Session panel: photo upload |
+| #29 | Session panel: notes and house rules |
+| #30 | Session panel: rules reference and BGG link |
 | #32 | Migrate Player Vault to persistent backend database |
-| #33 | Create site mascot art — lineart dragon playing cards |
+| #33 | Create site mascot art (lineart dragon playing cards) |
 | #55 | BGG two-way sync |
-| #57 | TCG support — card game tournament runner |
+| #57 | TCG support: card game tournament runner |
+| #60 | GitHub Actions workflow for Playwright CI *(PR #66 open)* |
+| #61 | GitHub Actions secrets for API keys |
+| #62 | Branch protection: require CI to pass before merge |
+| #63 | Upload Playwright report as artifact on failure |
+| #64 | Cache Playwright browser binaries in CI |
+| #65 | Playwright CI status badge in README |
+| #67 | User accounts and authentication *(placeholder - not ready for implementation)* |
 
 ---
 
