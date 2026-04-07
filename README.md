@@ -179,6 +179,7 @@ git commit -m "Add dice roller to session dashboard"
 ### 7. Review and Merge
 - Diff is reviewed before merging, even on a solo project
 - GitHub Actions runs the full Playwright suite automatically on every PR
+- Branch protection on `main` requires the Playwright CI check to pass before merging - PRs are blocked until CI is green
 - Merges into `main` only after review and CI pass
 
 ### 8. Issue Closes Automatically
