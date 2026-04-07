@@ -1,4 +1,7 @@
 name: Playwright Tests
+# This workflow is configured as a required status check in GitHub branch protection settings
+# (Settings > Branches > main). PRs targeting main cannot be merged until this job passes.
+# To update the required check, go to Settings > Branches and edit the protection rule for main.
 
 on:
   pull_request:
