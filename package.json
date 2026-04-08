@@ -2,8 +2,9 @@
   "name": "session-zero",
   "version": "1.0.0",
   "description": "So many games, so little night.",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "playwright test",
     "test:ui": "playwright test --ui"
   },
