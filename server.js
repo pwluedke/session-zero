@@ -140,9 +140,10 @@ Be enthusiastic and specific. Mention one standout feature of the game. If it's 
 }
 
 function serveStatic(req, res) {
+  const pathname = new URL(req.url, "http://localhost").pathname;
   const filePath = path.join(
     __dirname,
-    req.url === "/" ? "index.html" : req.url
+    pathname === "/" ? "index.html" : pathname
   );
   const ext = path.extname(filePath);
   fs.readFile(filePath, (err, data) => {
@@ -288,11 +289,12 @@ async function handleBGGCollection(req, res) {
 
 const server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  if (req.method === "POST" && req.url === "/api/why") {
+  const pathname = new URL(req.url, "http://localhost").pathname;
+  if (req.method === "POST" && pathname === "/api/why") {
     handleWhy(req, res);
-  } else if (req.method === "GET" && req.url.startsWith("/api/spotify/playlist")) {
+  } else if (req.method === "GET" && pathname.startsWith("/api/spotify/playlist")) {
     handleSpotifyPlaylist(req, res);
-  } else if (req.method === "GET" && req.url.startsWith("/api/bgg/collection")) {
+  } else if (req.method === "GET" && pathname.startsWith("/api/bgg/collection")) {
     handleBGGCollection(req, res);
   } else {
     serveStatic(req, res);
