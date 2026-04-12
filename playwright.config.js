@@ -14,6 +14,7 @@ module.exports = defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
+    env: { NODE_ENV: 'test' },
   },
   reporter: process.env.CI
     ? [['github'], ['html', { open: 'never' }]]
