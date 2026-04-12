@@ -236,8 +236,8 @@ function renderSettingsModal() {
 
   const statusEl = document.getElementById('bgg-sync-status');
   if (statusEl && settings.bggLastSync) {
-    const count = JSON.parse(localStorage.getItem('sz-games') || '[]').length;
-    statusEl.textContent = `${count} games synced · ${settings.bggLastSync}`;
+    const count = settings.bggLastSyncCount ?? JSON.parse(localStorage.getItem('sz-games') || '[]').length;
+    statusEl.textContent = `Synced ${count} games from BoardGameGeek at ${settings.bggLastSync}.`;
     statusEl.className = 'bgg-sync-status bgg-sync-ok';
   }
 }
@@ -346,12 +346,13 @@ function handleBGGImport(input) {
       games = imported;
       localStorage.setItem('sz-games', JSON.stringify(games));
 
-      settings.bggLastSync = new Date().toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: '2-digit',
+      settings.bggLastSync = new Date().toLocaleString('en-US', {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
       });
+      settings.bggLastSyncCount = imported.length;
       localStorage.setItem('sz-settings', JSON.stringify(settings));
 
-      statusEl.textContent = `${imported.length} games imported · ${settings.bggLastSync}`;
+      statusEl.textContent = `Synced ${imported.length} games from BoardGameGeek at ${settings.bggLastSync}.`;
       statusEl.className = 'bgg-sync-status bgg-sync-ok';
     } catch (err) {
       statusEl.textContent = 'Failed to parse CSV: ' + err.message;
@@ -406,12 +407,13 @@ async function syncBGGCollection() {
     games = data.games;
     localStorage.setItem('sz-games', JSON.stringify(games));
 
-    settings.bggLastSync = new Date().toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: '2-digit',
+    settings.bggLastSync = new Date().toLocaleString('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
     });
+    settings.bggLastSyncCount = data.count;
     localStorage.setItem('sz-settings', JSON.stringify(settings));
 
-    statusEl.textContent = `Synced ${data.count} games from BoardGameGeek.`;
+    statusEl.textContent = `Synced ${data.count} games from BoardGameGeek at ${settings.bggLastSync}.`;
     statusEl.className = 'bgg-sync-status bgg-sync-ok';
   } catch (err) {
     console.error('[BGG sync error]', err);
