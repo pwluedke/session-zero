@@ -137,6 +137,50 @@ test('quick search filters visible games', async ({ page }) => {
   }
 });
 
+// ── BGG badge on game cards ────────────────────────────────────────────────
+test('expanded game card shows BGG badge linking to boardgamegeek.com for a BGG game', async ({ page }) => {
+  const main = new MainPage(page);
+
+  await page.evaluate(() => {
+    localStorage.setItem('sz-games', JSON.stringify([
+      { name: 'Ticket to Ride', minPlayers: 2, maxPlayers: 5, playTime: 60,
+        complexity: 'Low', type: 'Board', age: 8, setupTime: 10, rating: 4,
+        played: false, cooperative: false, thumbnail: null, bggId: 9209, source: 'bgg' },
+    ]));
+  });
+  await page.reload();
+
+  await main.findGames();
+  await main.expandGameCard(0);
+
+  const badge = main.gameCards().nth(0).getByTestId('bgg-badge');
+  await expect(badge).toBeVisible();
+  await expect(badge).toHaveAttribute('href', 'https://boardgamegeek.com/boardgame/9209');
+  await expect(badge).toHaveAttribute('target', '_blank');
+});
+
+test('expanded game card shows BGG badge linking to Google search for a manual game', async ({ page }) => {
+  const main = new MainPage(page);
+
+  await page.evaluate(() => {
+    localStorage.setItem('sz-games', JSON.stringify([
+      { name: 'My Homebrew Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
+        complexity: 'Low', type: 'Card', age: 0, setupTime: 5, rating: null,
+        played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual' },
+    ]));
+  });
+  await page.reload();
+
+  await main.findGames();
+  await main.expandGameCard(0);
+
+  const badge = main.gameCards().nth(0).getByTestId('bgg-badge');
+  await expect(badge).toBeVisible();
+  const href = await badge.getAttribute('href');
+  expect(href).toContain('google.com/search');
+  expect(href).toContain('My%20Homebrew%20Game');
+});
+
 // ── Session Modal ──────────────────────────────────────────────────────────
 test("Let's Play opens session modal with game title", async ({ page }) => {
   const main    = new MainPage(page);

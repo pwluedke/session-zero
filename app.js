@@ -596,6 +596,9 @@ function renderResults(picked, heading) {
           <span>🎂 Ages ${game.age}+</span>
           ${game.cooperative ? '<span class="coop-tag">🤝 Co-op</span>' : ''}
           <span>${game.played ? '✓ Played before' : '✨ New to us'}</span>
+          <a class="lib-badge lib-bgg-badge" data-testid="bgg-badge"
+            href="${game.bggId ? `https://boardgamegeek.com/boardgame/${game.bggId}` : `https://www.google.com/search?q=${encodeURIComponent(game.name + ' board game')}`}"
+            target="_blank" rel="noopener" onclick="event.stopPropagation()">BGG↗</a>
         </div>
         <button class="lets-play-btn" data-testid="lets-play-btn" onclick="event.stopPropagation(); openSession(${index})">Let's Play!</button>
       </div>
