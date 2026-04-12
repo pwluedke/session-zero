@@ -226,35 +226,53 @@ All planned and in-progress work is tracked at:
 
 ### Open Backlog
 
-| # | Feature |
+**#18 Recommendation Engine**
+
+| Issue | Title |
 |---|---|
-| #6 | Smart recommendations based on ratings |
-| #7 | Player mood / vibe filter |
-| #8 | Avoid repeats filter |
-| #9 | Game night planner |
-| #10 | Expansion tracker |
-| #11 | Wishlist |
-| #12 | Loan tracker |
-| #13 | Fuzzy search with match score |
-| #15 | BGG collection sync *(in progress - awaiting API token)* |
-| #16 | BGG multi-list support |
-| #17 | Player feedback influencing game suggestions |
-| #25 | Session panel: seating chart & arrangement randomizer |
-| #26 | Session panel: wheel of names (random player picker) |
-| #28 | Session panel: photo upload |
-| #29 | Session panel: notes and house rules |
-| #30 | Session panel: rules reference and BGG link |
-| #32 | Migrate Player Vault to persistent backend database |
-| #33 | Create site mascot art (lineart dragon playing cards) |
-| #55 | BGG two-way sync |
-| #57 | TCG support: card game tournament runner |
-| #60 | GitHub Actions workflow for Playwright CI *(PR #66 open)* |
-| #61 | GitHub Actions secrets for API keys |
-| #62 | Branch protection: require CI to pass before merge |
-| #63 | Upload Playwright report as artifact on failure |
-| #64 | Cache Playwright browser binaries in CI |
-| #65 | Playwright CI status badge in README |
-| #67 | User accounts and authentication *(placeholder - not ready for implementation)* |
+| [#6](https://github.com/pwluedke/session-zero/issues/6) | Smart recommendations based on ratings |
+| [#7](https://github.com/pwluedke/session-zero/issues/7) | Player mood / vibe filter |
+| [#8](https://github.com/pwluedke/session-zero/issues/8) | Avoid repeats filter |
+| [#13](https://github.com/pwluedke/session-zero/issues/13) | Fuzzy search with match score |
+| [#17](https://github.com/pwluedke/session-zero/issues/17) | Player profiles and per-player game feedback |
+
+**#19 Session & Tournament Management**
+
+| Issue | Title |
+|---|---|
+| [#9](https://github.com/pwluedke/session-zero/issues/9) | Game night planner |
+| [#25](https://github.com/pwluedke/session-zero/issues/25) | Session panel: seating chart & arrangement randomizer |
+| [#26](https://github.com/pwluedke/session-zero/issues/26) | Session panel: wheel of names (random player picker) |
+| [#28](https://github.com/pwluedke/session-zero/issues/28) | Session panel: photo upload |
+| [#29](https://github.com/pwluedke/session-zero/issues/29) | Session panel: notes and house rules |
+| [#30](https://github.com/pwluedke/session-zero/issues/30) | Session panel: rules reference and BGG link |
+| [#57](https://github.com/pwluedke/session-zero/issues/57) | TCG support: card game tournament runner |
+
+**#20 Library & Collection Management**
+
+| Issue | Title |
+|---|---|
+| [#10](https://github.com/pwluedke/session-zero/issues/10) | Expansion tracker |
+| [#11](https://github.com/pwluedke/session-zero/issues/11) | Wishlist |
+| [#12](https://github.com/pwluedke/session-zero/issues/12) | Loan tracker |
+| [#16](https://github.com/pwluedke/session-zero/issues/16) | BGG multi-list support |
+| [#55](https://github.com/pwluedke/session-zero/issues/55) | BGG two-way sync |
+| [#84](https://github.com/pwluedke/session-zero/issues/84) | Fix BGG sync: merge instead of replace |
+| [#85](https://github.com/pwluedke/session-zero/issues/85) | Source tagging: show game origin badge in UI |
+| [#86](https://github.com/pwluedke/session-zero/issues/86) | BGG lookup when adding a game manually |
+| [#98](https://github.com/pwluedke/session-zero/issues/98) | Add BGG link badge to suggested game cards |
+
+**#21 Infrastructure & Quality**
+
+| Issue | Title |
+|---|---|
+| [#32](https://github.com/pwluedke/session-zero/issues/32) | Migrate Player Vault to persistent backend database |
+| [#33](https://github.com/pwluedke/session-zero/issues/33) | Create site mascot art (lineart dragon playing cards) |
+| [#62](https://github.com/pwluedke/session-zero/issues/62) | Branch protection: require CI to pass before merge |
+| [#63](https://github.com/pwluedke/session-zero/issues/63) | Upload Playwright report as artifact on failure |
+| [#67](https://github.com/pwluedke/session-zero/issues/67) | User accounts and authentication *(placeholder - not ready for implementation)* |
+| [#87](https://github.com/pwluedke/session-zero/issues/87) | Reset play data |
+| [#88](https://github.com/pwluedke/session-zero/issues/88) | Reset everything |
 
 ---
 
