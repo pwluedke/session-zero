@@ -411,12 +411,14 @@ async function syncBGGCollection() {
     });
     localStorage.setItem('sz-settings', JSON.stringify(settings));
 
-    statusEl.textContent = `${data.count} games synced · ${settings.bggLastSync}`;
+    statusEl.textContent = `Synced ${data.count} games from BoardGameGeek.`;
     statusEl.className = 'bgg-sync-status bgg-sync-ok';
-    suggest();
   } catch (err) {
     console.error('[BGG sync error]', err);
-    statusEl.textContent = 'Network error — is the server running?';
+    const msg = err instanceof TypeError
+      ? 'Network error — is the server running?'
+      : 'Something went wrong. Please try again.';
+    statusEl.textContent = msg;
     statusEl.className = 'bgg-sync-status bgg-sync-error';
   } finally {
     btn.disabled = false;
