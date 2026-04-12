@@ -31,6 +31,7 @@ jobs:
           # REQUIRED: the Anthropic SDK is instantiated at server startup (server.js line 7).
           # The server will not start without this key, regardless of whether any test
           # calls the /api/why endpoint.
+          NODE_ENV: test
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
           # OPTIONAL: only used when the /api/spotify/playlist endpoint is called.
