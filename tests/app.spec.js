@@ -220,6 +220,127 @@ test('settings modal opens and Why? toggle works', async ({ page }) => {
   await expect(page.getByTestId('why-btn').first()).toBeHidden();
 });
 
+// ── BGG Sync (merge behavior) ──────────────────────────────────────────────
+// All tests mock /api/bgg/collection via page.route() - no live BGG API calls.
+
+test('BGG sync preserves manually added games not in BGG response', async ({ page }) => {
+  const settings = new SettingsModal(page);
+  const library  = new LibraryModal(page);
+
+  await page.evaluate(() => {
+    localStorage.setItem('sz-games', JSON.stringify([
+      { name: 'My Homebrew Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
+        complexity: 'Low', type: 'Card', age: 0, setupTime: 5, rating: null,
+        played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual' },
+    ]));
+  });
+  await page.reload();
+
+  await settings.mockAndSync(route =>
+    route.fulfill({ contentType: 'application/json', body: JSON.stringify({ games: [], count: 0 }) })
+  );
+
+  await settings.expectSyncError('No owned games found');
+  await settings.close();
+  await library.open();
+  await library.expectGame('My Homebrew Game');
+});
+
+test('BGG sync updates fields on an existing BGG game matched by bggId', async ({ page }) => {
+  const settings = new SettingsModal(page);
+  const library  = new LibraryModal(page);
+
+  await page.evaluate(() => {
+    localStorage.setItem('sz-games', JSON.stringify([
+      { name: 'Old Name', minPlayers: 2, maxPlayers: 4, playTime: 60,
+        complexity: 'Medium', type: 'Board', age: 0, setupTime: 10, rating: 3,
+        played: true, cooperative: false, thumbnail: null, bggId: 12345, source: 'bgg' },
+    ]));
+  });
+  await page.reload();
+
+  await settings.mockAndSync(route =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        games: [{ name: 'New Name', minPlayers: 2, maxPlayers: 5, playTime: 90,
+                  complexity: 'Medium', type: 'Board', age: 0, setupTime: 10,
+                  rating: null, played: false, cooperative: false, thumbnail: null, bggId: 12345 }],
+        count: 1,
+      }),
+    })
+  );
+
+  await settings.expectSyncSuccess('Synced 1');
+  await settings.close();
+  await library.open();
+  await library.expectGame('New Name');
+  await library.expectNoGame('Old Name');
+});
+
+test('BGG sync adds new games from BGG not yet in the local library', async ({ page }) => {
+  const settings = new SettingsModal(page);
+  const library  = new LibraryModal(page);
+
+  // Start with an empty library (clear any games.json defaults)
+  await page.evaluate(() => {
+    localStorage.setItem('sz-games', JSON.stringify([]));
+  });
+  await page.reload();
+
+  await settings.mockAndSync(route =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        games: [{ name: 'Brand New Game', minPlayers: 2, maxPlayers: 4, playTime: 45,
+                  complexity: 'Low', type: 'Board', age: 8, setupTime: 5,
+                  rating: null, played: false, cooperative: false, thumbnail: null, bggId: 99999 }],
+        count: 1,
+      }),
+    })
+  );
+
+  await settings.expectSyncSuccess('Synced 1');
+  await settings.close();
+  await library.open();
+  await library.expectGame('Brand New Game');
+});
+
+test('BGG sync shows error message on server failure', async ({ page }) => {
+  const settings = new SettingsModal(page);
+
+  await settings.mockAndSync(route =>
+    route.fulfill({ status: 500, contentType: 'application/json',
+                    body: JSON.stringify({ error: 'Internal server error' }) })
+  );
+
+  await settings.expectSyncError();
+});
+
+test('BGG sync preserves existing games when BGG returns empty collection', async ({ page }) => {
+  const settings = new SettingsModal(page);
+  const library  = new LibraryModal(page);
+
+  await page.evaluate(() => {
+    localStorage.setItem('sz-games', JSON.stringify([
+      { name: 'Keeper Game', minPlayers: 2, maxPlayers: 4, playTime: 60,
+        complexity: 'Medium', type: 'Board', age: 0, setupTime: 10, rating: null,
+        played: false, cooperative: false, thumbnail: null, bggId: 77777, source: 'bgg' },
+    ]));
+  });
+  await page.reload();
+
+  await settings.mockAndSync(route =>
+    route.fulfill({ contentType: 'application/json',
+                    body: JSON.stringify({ games: [], count: 0 }) })
+  );
+
+  await settings.expectSyncError('No owned games found');
+  await settings.close();
+  await library.open();
+  await library.expectGame('Keeper Game');
+});
+
 // ── History ────────────────────────────────────────────────────────────────
 test('history modal opens and list renders', async ({ page }) => {
   const history = new HistoryModal(page);
