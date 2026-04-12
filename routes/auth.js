@@ -1,8 +1,33 @@
 const express = require("express");
+const path = require("path");
+const passport = require("../config/passport");
+const pool = require("../db/index");
 
 const router = express.Router();
 
-// Auth routes will be added in issue #92 (Google OAuth with Passport).
-// This file is a placeholder to establish the module structure.
+router.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "../login.html"));
+});
+
+router.get("/auth/google", (req, res, next) => {
+  if (!pool) {
+    return res.status(503).json({ error: "Database not configured - set DATABASE_URL to enable authentication" });
+  }
+  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+});
+
+router.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    res.redirect("/");
+  }
+);
+
+router.get("/auth/logout", (req, res) => {
+  req.logout(() => {
+    res.redirect("/login");
+  });
+});
 
 module.exports = router;
