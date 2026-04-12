@@ -36,13 +36,27 @@ const SETTINGS_DEFAULTS = { showWhyBtn: true };
 let settings = { ...SETTINGS_DEFAULTS, ...JSON.parse(localStorage.getItem('sz-settings') || '{}') };
 
 // ── Init ───────────────────────────────────────────────────────────────────
+function migrateGameSources(arr) {
+  let dirty = false;
+  for (const g of arr) {
+    if (!g.source) {
+      g.source = g.bggId ? 'bgg' : 'manual';
+      dirty = true;
+    }
+  }
+  if (dirty) localStorage.setItem('sz-games', JSON.stringify(arr));
+  return arr;
+}
+
 const storedGames = localStorage.getItem('sz-games');
 if (storedGames) {
-  games = JSON.parse(storedGames);
+  games = migrateGameSources(JSON.parse(storedGames));
 } else {
   fetch("games.json")
     .then(res => res.json())
-    .then(data => { games = data; })
+    .then(data => {
+      games = data.map(g => ({ ...g, source: g.bggId ? 'bgg' : 'manual' }));
+    })
     .catch(() => console.error("Could not load games.json"));
 }
 
@@ -320,6 +334,7 @@ function parseBGGCsv(text) {
       cooperative: false,
       thumbnail: thumbnail || null,
       bggId: iObjectId >= 0 ? parseInt(f[iObjectId]) : null,
+      source: 'bgg',
     });
   }
 
@@ -367,6 +382,29 @@ function handleBGGImport(input) {
   reader.readAsText(file);
 }
 
+function mergeBGGGames(local, incoming) {
+  const BGG_FIELDS = ['name', 'thumbnail', 'minPlayers', 'maxPlayers', 'playTime', 'complexity', 'type'];
+  const incomingMap = new Map(incoming.map(g => [g.bggId, g]));
+  const seenIds = new Set();
+
+  const merged = local.map(localGame => {
+    if (!localGame.bggId) return localGame; // manual - never touch
+    const remote = incomingMap.get(localGame.bggId);
+    if (!remote) return localGame; // no longer in BGG response - preserve as-is
+    seenIds.add(localGame.bggId);
+    const updated = { ...localGame };
+    for (const field of BGG_FIELDS) updated[field] = remote[field];
+    updated.source = 'bgg';
+    return updated;
+  });
+
+  for (const g of incoming) {
+    if (!seenIds.has(g.bggId)) merged.push({ ...g, source: 'bgg' });
+  }
+
+  return merged;
+}
+
 async function syncBGGCollection() {
   const input = document.getElementById('bgg-username-input');
   const statusEl = document.getElementById('bgg-sync-status');
@@ -404,7 +442,7 @@ async function syncBGGCollection() {
       return;
     }
 
-    games = data.games;
+    games = mergeBGGGames(games, data.games);
     localStorage.setItem('sz-games', JSON.stringify(games));
 
     settings.bggLastSync = new Date().toLocaleString('en-US', {
@@ -1683,6 +1721,7 @@ function submitAddGame() {
     played:     false,
     thumbnail:  null,
     bggId:      null,
+    source:     'manual',
   });
   saveGames();
   // reset form
