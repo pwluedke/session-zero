@@ -413,8 +413,9 @@ async function syncBGGCollection() {
 
     statusEl.textContent = `${data.count} games synced · ${settings.bggLastSync}`;
     statusEl.className = 'bgg-sync-status bgg-sync-ok';
-    renderGames();
+    suggest();
   } catch (err) {
+    console.error('[BGG sync error]', err);
     statusEl.textContent = 'Network error — is the server running?';
     statusEl.className = 'bgg-sync-status bgg-sync-error';
   } finally {

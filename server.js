@@ -249,10 +249,12 @@ async function handleBGGCollection(req, res) {
     try {
       bggRes = await fetch(bggUrl, { headers });
     } catch (err) {
+      console.error("[BGG] Network error reaching BGG:", err.message);
       res.writeHead(502, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Could not reach BoardGameGeek" }));
       return;
     }
+    console.log(`[BGG] attempt ${attempt + 1}: HTTP ${bggRes.status} for user "${username}"`);
     if (bggRes.status === 202) continue; // BGG is building the response
     if (bggRes.status === 401) {
       res.writeHead(401, { "Content-Type": "application/json" });
@@ -304,4 +306,5 @@ const server = http.createServer((req, res) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Game Night Planner running at http://localhost:${PORT}`);
+  console.log(`BGG_API_TOKEN: ${process.env.BGG_API_TOKEN ? "loaded" : "not set"}`);
 });
