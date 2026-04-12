@@ -219,10 +219,17 @@ All planned and in-progress work is tracked at:
 | #4 | Player stats |
 | #5 | Head-to-head records |
 | #14 | End-to-end tests (Playwright, 23 tests, Page Object Model) |
+| #15 | BGG collection sync |
 | #22 | Session modal: "Let's Play" UI shell |
 | #23 | Session panel: timer |
 | #24 | Session panel: live score tracker |
 | #27 | Session panel: virtual dice roller |
+| #62 | Branch protection: require CI to pass before merge |
+| #84 | Fix BGG sync: merge instead of replace |
+| #90 | Add Express and restructure server.js |
+| #91 | Add database connection and schema |
+| #92 | Implement Google OAuth with Passport |
+| #93 | Add route protection middleware |
 
 ### Open Backlog
 
@@ -257,7 +264,6 @@ All planned and in-progress work is tracked at:
 | [#12](https://github.com/pwluedke/session-zero/issues/12) | Loan tracker |
 | [#16](https://github.com/pwluedke/session-zero/issues/16) | BGG multi-list support |
 | [#55](https://github.com/pwluedke/session-zero/issues/55) | BGG two-way sync |
-| [#84](https://github.com/pwluedke/session-zero/issues/84) | Fix BGG sync: merge instead of replace |
 | [#85](https://github.com/pwluedke/session-zero/issues/85) | Source tagging: show game origin badge in UI |
 | [#86](https://github.com/pwluedke/session-zero/issues/86) | BGG lookup when adding a game manually |
 | [#98](https://github.com/pwluedke/session-zero/issues/98) | Add BGG link badge to suggested game cards |
@@ -268,9 +274,7 @@ All planned and in-progress work is tracked at:
 |---|---|
 | [#32](https://github.com/pwluedke/session-zero/issues/32) | Migrate Player Vault to persistent backend database |
 | [#33](https://github.com/pwluedke/session-zero/issues/33) | Create site mascot art (lineart dragon playing cards) |
-| [#62](https://github.com/pwluedke/session-zero/issues/62) | Branch protection: require CI to pass before merge |
 | [#63](https://github.com/pwluedke/session-zero/issues/63) | Upload Playwright report as artifact on failure |
-| [#67](https://github.com/pwluedke/session-zero/issues/67) | User accounts and authentication *(placeholder - not ready for implementation)* |
 | [#87](https://github.com/pwluedke/session-zero/issues/87) | Reset play data |
 | [#88](https://github.com/pwluedke/session-zero/issues/88) | Reset everything |
 
