@@ -1,5 +1,8 @@
 # Session Zero: A Game Night Planner
 [![Playwright Tests](https://github.com/pwluedke/session-zero/actions/workflows/playwright.yml/badge.svg)](https://github.com/pwluedke/session-zero/actions/workflows/playwright.yml)
+
+**Live app: [somanygames.app](https://somanygames.app)**
+
 ### *So many games, so little night.*
 
 A personal web application for planning game nights with family and friends. Filter your library by players, playtime, complexity, setup time, and more, then get an AI-powered explanation of why each suggestion fits your group tonight.
@@ -81,6 +84,10 @@ Built as a portfolio project to demonstrate full-stack development, AI integrati
 ---
 
 ## Local Setup
+
+A live version is available at [somanygames.app](https://somanygames.app) - no setup required.
+
+To run locally:
 
 **Prerequisites:** Node.js, npm
 
