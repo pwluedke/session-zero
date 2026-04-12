@@ -13,6 +13,9 @@ router.get("/auth/google", (req, res, next) => {
   if (!pool) {
     return res.status(503).json({ error: "Database not configured - set DATABASE_URL to enable authentication" });
   }
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    return res.status(503).json({ error: "OAuth not configured" });
+  }
   passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
 });
 

@@ -16,44 +16,48 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-const callbackURL = `${process.env.APP_URL || "http://localhost:3000"}/auth/google/callback`;
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  const callbackURL = `${process.env.APP_URL || "http://localhost:3000"}/auth/google/callback`;
 
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID:     process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL,
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      if (!pool) {
-        console.error("[Auth] Cannot authenticate - database not configured");
-        return done(null, false);
-      }
-      try {
-        const existing = await pool.query(
-          "SELECT * FROM users WHERE google_id = $1",
-          [profile.id]
-        );
-        if (existing.rows.length > 0) return done(null, existing.rows[0]);
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID:     process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL,
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        if (!pool) {
+          console.error("[Auth] Cannot authenticate - database not configured");
+          return done(null, false);
+        }
+        try {
+          const existing = await pool.query(
+            "SELECT * FROM users WHERE google_id = $1",
+            [profile.id]
+          );
+          if (existing.rows.length > 0) return done(null, existing.rows[0]);
 
-        const inserted = await pool.query(
-          `INSERT INTO users (google_id, email, display_name, avatar_url)
-           VALUES ($1, $2, $3, $4) RETURNING *`,
-          [
-            profile.id,
-            profile.emails[0].value,
-            profile.displayName,
-            profile.photos[0]?.value ?? null,
-          ]
-        );
-        done(null, inserted.rows[0]);
-      } catch (err) {
-        console.error("[Auth] Database error during authentication:", err.message);
-        done(null, false);
+          const inserted = await pool.query(
+            `INSERT INTO users (google_id, email, display_name, avatar_url)
+             VALUES ($1, $2, $3, $4) RETURNING *`,
+            [
+              profile.id,
+              profile.emails[0].value,
+              profile.displayName,
+              profile.photos[0]?.value ?? null,
+            ]
+          );
+          done(null, inserted.rows[0]);
+        } catch (err) {
+          console.error("[Auth] Database error during authentication:", err.message);
+          done(null, false);
+        }
       }
-    }
-  )
-);
+    )
+  );
+} else {
+  console.warn("[Auth] GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set - OAuth disabled");
+}
 
 module.exports = passport;
