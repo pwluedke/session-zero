@@ -41,3 +41,18 @@ jobs:
 
           # NOT REQUIRED: BGG_API_TOKEN is optional even in production (falls back to
           # unauthenticated requests). Not included here.
+
+# CI environment variables
+# ANTHROPIC_API_KEY: required - server will not start without it
+# SPOTIFY_CLIENT_ID: included to mirror production environment
+# SPOTIFY_CLIENT_SECRET: included to mirror production environment
+#
+# Intentionally excluded from CI:
+# GOOGLE_CLIENT_ID: OAuth credentials not needed for automated tests
+# GOOGLE_CLIENT_SECRET: Auth routes are tested manually, not in Playwright
+# SESSION_SECRET: No session-dependent tests in the current suite
+# DATABASE_URL: No database-dependent tests in the current suite
+# APP_URL: Not needed without OAuth
+#
+# When auth route testing is added in the future, these will need
+# to be added as GitHub Actions secrets.
