@@ -1,4 +1,3 @@
-console.log('[DEBUG] env keys:', Object.keys(process.env).filter(k => !k.includes('npm') && !k.includes('NODE')));
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
