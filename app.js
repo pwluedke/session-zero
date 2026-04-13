@@ -21,7 +21,7 @@ let renderedGames = [];
 // Player Vault (permanent registry)
 const AVATAR_COLORS = ['#e05252','#f5a842','#5dd67a','#52a8e0','#c275e0','#e91e8c','#f5c842'];
 const AVATAR_EMOJIS = ['🎮','🎲','🃏','🧩','♟️','🎯','🎪','🦁','🐉','🦊','🐺','🦝','🎭','🤖','👾','🧙','🧝','🧛','🎩','⚔️','🏴‍☠️','🐸','🐧','🦄'];
-let vault = isDemoMode() ? [] : JSON.parse(localStorage.getItem('sz-vault') || '[]');
+let vault = []; // populated by initVault() on load, or by demo mode synchronously
 let emojiPickerTarget = null; // vault player id
 
 // Roll Call (who's playing tonight — session state)
@@ -100,8 +100,58 @@ if (isDemoMode()) {
 renderRollCall();
 renderGamesInProgress();
 applySettings();
+if (!isDemoMode()) {
+  initVault();
+}
 
 // ── Player Vault ───────────────────────────────────────────────────────────
+function normalizePlayer(p) {
+  return { id: String(p.id), name: p.name, emoji: p.emoji, color: p.color, lastPlayed: p.last_played ?? null };
+}
+
+async function initVault() {
+  try {
+    const res = await fetch('/api/players');
+    if (!res.ok) return;
+    vault = (await res.json()).map(normalizePlayer);
+  } catch {
+    // Network error - vault stays empty
+  }
+  renderRollCall();
+  checkLocalStorageImport();
+}
+
+function checkLocalStorageImport() {
+  if (vault.length > 0) return;
+  const legacy = JSON.parse(localStorage.getItem('sz-vault') || '[]');
+  if (legacy.length === 0) return;
+  document.getElementById('vault-import-prompt')?.classList.remove('hidden');
+}
+
+async function importLocalVault() {
+  const legacy = JSON.parse(localStorage.getItem('sz-vault') || '[]');
+  for (const p of legacy) {
+    try {
+      const res = await fetch('/api/players', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: p.name, emoji: p.emoji, color: p.color }),
+      });
+      if (res.ok) vault.push(normalizePlayer(await res.json()));
+    } catch {}
+  }
+  vault.sort((a, b) => a.name.localeCompare(b.name));
+  localStorage.removeItem('sz-vault');
+  document.getElementById('vault-import-prompt')?.classList.add('hidden');
+  renderVaultList();
+  renderRollCall();
+}
+
+function dismissImportPrompt() {
+  localStorage.removeItem('sz-vault');
+  document.getElementById('vault-import-prompt')?.classList.add('hidden');
+}
+
 function openVault() {
   renderVaultList();
   document.getElementById('vault-modal').classList.add('active');
@@ -112,7 +162,7 @@ function closeVault() {
   document.getElementById('vault-modal').classList.remove('active');
 }
 
-function addToVault() {
+async function addToVault() {
   const input = document.getElementById('vault-name-input');
   const name = input.value.trim();
   if (!name) return;
@@ -123,13 +173,29 @@ function addToVault() {
     return;
   }
   const color = AVATAR_COLORS[vault.length % AVATAR_COLORS.length];
-  vault.push({ id: Date.now().toString(), name, emoji: null, color, lastPlayed: null });
-  vault.sort((a, b) => a.name.localeCompare(b.name));
-  saveVault();
-  renderVaultList();
-  renderRollCall();
-  input.value = '';
-  input.focus();
+  if (isDemoMode()) {
+    vault.push({ id: Date.now().toString(), name, emoji: null, color, lastPlayed: null });
+    vault.sort((a, b) => a.name.localeCompare(b.name));
+    renderVaultList();
+    renderRollCall();
+    input.value = '';
+    input.focus();
+    return;
+  }
+  try {
+    const res = await fetch('/api/players', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, emoji: null, color }),
+    });
+    if (!res.ok) return;
+    vault.push(normalizePlayer(await res.json()));
+    vault.sort((a, b) => a.name.localeCompare(b.name));
+    renderVaultList();
+    renderRollCall();
+    input.value = '';
+    input.focus();
+  } catch {}
 }
 
 function formatLastPlayed(dateStr) {
@@ -137,18 +203,17 @@ function formatLastPlayed(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
 }
 
-function removeFromVault(id) {
+async function removeFromVault(id) {
+  if (!isDemoMode()) {
+    try {
+      await fetch(`/api/players/${id}`, { method: 'DELETE' });
+    } catch {}
+  }
   vault = vault.filter(p => p.id !== id);
   rollCall.delete(id);
-  saveVault();
   renderVaultList();
   renderRollCall();
   syncPlayersFilter();
-}
-
-function saveVault() {
-  if (isDemoMode()) return;
-  localStorage.setItem('sz-vault', JSON.stringify(vault));
 }
 
 function renderVaultList() {
@@ -237,7 +302,13 @@ function selectPlayerEmoji(emoji) {
     const player = vault.find(p => p.id === emojiPickerTarget);
     if (player) {
       player.emoji = emoji;
-      saveVault();
+      if (!isDemoMode()) {
+        fetch(`/api/players/${player.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emoji }),
+        }).catch(() => {});
+      }
       renderVaultList();
       renderRollCall();
     }
@@ -250,7 +321,13 @@ function clearPlayerEmoji() {
     const player = vault.find(p => p.id === emojiPickerTarget);
     if (player) {
       player.emoji = null;
-      saveVault();
+      if (!isDemoMode()) {
+        fetch(`/api/players/${player.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emoji: null }),
+        }).catch(() => {});
+      }
       renderVaultList();
       renderRollCall();
     }
@@ -1012,9 +1089,17 @@ function saveResult(result) {
   // Stamp lastPlayed on each participating vault player
   result.players.forEach(rp => {
     const vp = vault.find(v => v.id === rp.id);
-    if (vp) vp.lastPlayed = result.date;
+    if (vp) {
+      vp.lastPlayed = result.date;
+      if (!isDemoMode()) {
+        fetch(`/api/players/${vp.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ last_played: result.date }),
+        }).catch(() => {});
+      }
+    }
   });
-  saveVault();
 }
 
 // ── Session Lifecycle ──────────────────────────────────────────────────────

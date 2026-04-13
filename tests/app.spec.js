@@ -20,7 +20,38 @@ const MOCK_PLAYLISTS = {
 
 // Each test gets a fresh localStorage so state doesn't bleed between runs.
 // waitForLoadState('networkidle') ensures games.json fetch completes first.
+// /api/players is mocked so tests never hit the real database. The mock is
+// stateful within each test -- state resets between tests because mockPlayers
+// is declared in the beforeEach closure.
 test.beforeEach(async ({ page }) => {
+  let mockPlayers = [];
+  let nextId = 1;
+
+  await page.route(url => url.href.includes('/api/players'), async (route) => {
+    const method = route.request().method();
+    const url = route.request().url();
+    const idSegment = url.match(/\/api\/players\/(\d+)/)?.[1];
+
+    if (method === 'GET') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockPlayers) });
+    } else if (method === 'POST') {
+      const body = route.request().postDataJSON();
+      const player = { id: nextId++, name: body.name, emoji: body.emoji ?? null, color: body.color ?? '#52a8e0', last_played: null };
+      mockPlayers.push(player);
+      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify(player) });
+    } else if (method === 'PUT' && idSegment) {
+      const id = parseInt(idSegment);
+      const body = route.request().postDataJSON();
+      const idx = mockPlayers.findIndex(p => p.id === id);
+      if (idx !== -1) mockPlayers[idx] = { ...mockPlayers[idx], ...body };
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockPlayers[idx] ?? {}) });
+    } else if (method === 'DELETE' && idSegment) {
+      const id = parseInt(idSegment);
+      mockPlayers = mockPlayers.filter(p => p.id !== id);
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
+    }
+  });
+
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -55,6 +86,61 @@ test('rejects duplicate player names', async ({ page }) => {
   await vault.addPlayer('Bob');
   await vault.addPlayer('bob'); // duplicate — different case
   await expect(vault.list.getByTestId('vault-player').filter({ hasText: 'Bob' })).toHaveCount(1);
+});
+
+test('adding a player to the vault persists after reload', async ({ page }) => {
+  // The beforeEach mock is stateful: POST adds Alice to mockPlayers, so the next
+  // GET (on reload) returns her. Clearing localStorage proves the data came from
+  // the API mock and not localStorage.
+  const vault = new VaultModal(page);
+  await vault.open();
+  await vault.addPlayer('Alice');
+  await vault.expectPlayer('Alice');
+
+  await page.waitForLoadState('networkidle');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  await vault.open();
+  await vault.expectPlayer('Alice');
+});
+
+test('deleting a player from the vault persists after reload', async ({ page }) => {
+  // Seed the mock with Bob pre-loaded so we can test that deletion removes him
+  // from the API state, not just from the in-memory vault.
+  let mockPlayers = [{ id: 99, name: 'Bob', emoji: null, color: '#52a8e0', last_played: null }];
+
+  await page.route(url => url.href.includes('/api/players'), async (route) => {
+    const method = route.request().method();
+    const url = route.request().url();
+    const idSegment = url.match(/\/api\/players\/(\d+)/)?.[1];
+
+    if (method === 'GET') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockPlayers) });
+    } else if (method === 'DELETE' && idSegment) {
+      const id = parseInt(idSegment);
+      mockPlayers = mockPlayers.filter(p => p.id !== id);
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
+    }
+  });
+
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  const vault = new VaultModal(page);
+  await vault.open();
+  await vault.expectPlayer('Bob');
+
+  await vault.removePlayer('Bob');
+  await vault.expectNoPlayer('Bob');
+
+  await page.waitForLoadState('networkidle');
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  await vault.open();
+  await vault.expectNoPlayer('Bob');
 });
 
 // ── Roll Call ──────────────────────────────────────────────────────────────

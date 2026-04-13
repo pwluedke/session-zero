@@ -33,6 +33,12 @@
       <div id="roll-call-chips" data-testid="roll-call-chips" class="roll-call-chips"></div>
     </section>
 
+    <div id="vault-import-prompt" data-testid="vault-import-prompt" class="vault-import-prompt hidden">
+      <span>We found players on this device. Import them to your account?</span>
+      <button onclick="importLocalVault()" data-testid="vault-import-yes">Import</button>
+      <button onclick="dismissImportPrompt()" data-testid="vault-import-no">No thanks</button>
+    </div>
+
     <section class="games-in-progress hidden" id="games-in-progress">
       <h2 class="section-label">Games in Progress</h2>
       <div id="gip-list" class="gip-list"></div>
