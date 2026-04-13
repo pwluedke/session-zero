@@ -1,8 +1,12 @@
 // ── Demo Mode ──────────────────────────────────────────────────────────────
 // Demo mode is active when the user arrived via /demo. sessionStorage persists
 // the flag so page reloads within the demo session keep demo mode active.
+// Navigating away from /demo (e.g. signing in via OAuth) clears the flag so
+// the authenticated app does not inherit demo state.
 if (window.location.pathname === '/demo') {
   sessionStorage.setItem('szDemo', 'true');
+} else {
+  sessionStorage.removeItem('szDemo');
 }
 function isDemoMode() {
   return sessionStorage.getItem('szDemo') === 'true';
