@@ -2381,6 +2381,38 @@ body.hide-why .why-btn {
 }
 
 /* ── Demo Mode ──────────────────────────────────────────────────────────── */
+.vault-import-prompt {
+  background: #1a2a4a;
+  border: 1px solid #2a3a5e;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: #c8d8f8;
+}
+
+.vault-import-prompt button {
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.vault-import-prompt button:first-of-type {
+  background: #5b9cf6;
+  color: #0a0f1e;
+}
+
+.vault-import-prompt button:last-of-type {
+  background: #2a3a5e;
+  color: #9ab;
+}
+
 .demo-banner {
   position: sticky;
   top: 0;

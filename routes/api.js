@@ -1,8 +1,77 @@
 const express = require("express");
 const Anthropic = require("@anthropic-ai/sdk");
+const pool = require("../db/index");
 
 const router = express.Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// ── Players ────────────────────────────────────────────────────────────────
+router.get("/api/players", async (req, res) => {
+  if (!pool) return res.json([]);
+  try {
+    const { rows } = await pool.query(
+      "SELECT id, name, emoji, color, last_played FROM players WHERE user_id = $1 ORDER BY name",
+      [req.user.id]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/api/players", async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "Database not available" });
+  const { name, emoji, color } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: "name required" });
+  try {
+    const { rows } = await pool.query(
+      "INSERT INTO players (user_id, name, emoji, color) VALUES ($1, $2, $3, $4) RETURNING id, name, emoji, color, last_played",
+      [req.user.id, name.trim(), emoji ?? null, color ?? null]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/api/players/:id", async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "Database not available" });
+  const updates = [];
+  const vals = [];
+  let idx = 1;
+  if ("emoji" in req.body)       { updates.push(`emoji = $${idx++}`);       vals.push(req.body.emoji); }
+  if ("color" in req.body)       { updates.push(`color = $${idx++}`);       vals.push(req.body.color); }
+  if ("last_played" in req.body) { updates.push(`last_played = $${idx++}`); vals.push(req.body.last_played); }
+  if (!updates.length) return res.status(400).json({ error: "Nothing to update" });
+  vals.push(req.params.id, req.user.id);
+  try {
+    const { rows } = await pool.query(
+      `UPDATE players SET ${updates.join(", ")} WHERE id = $${idx} AND user_id = $${idx + 1} RETURNING id, name, emoji, color, last_played`,
+      vals
+    );
+    if (!rows.length) return res.status(404).json({ error: "Player not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete("/api/players/:id", async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "Database not available" });
+  try {
+    await pool.query(
+      "DELETE FROM players WHERE id = $1 AND user_id = $2",
+      [req.params.id, req.user.id]
+    );
+    res.json({});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Spotify ────────────────────────────────────────────────────────────────
 let spotifyToken = null;
