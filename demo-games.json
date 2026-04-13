@@ -1,0 +1,12 @@
+[
+  { "name": "Codenames", "type": "Party", "minPlayers": 2, "maxPlayers": 8, "playTime": 15, "age": 14, "complexity": "Low", "played": true, "setupTime": 2, "rating": 5, "cooperative": false },
+  { "name": "Catan", "type": "Board", "minPlayers": 3, "maxPlayers": 6, "playTime": 90, "age": 10, "complexity": "Medium", "played": true, "setupTime": 10, "rating": 4, "cooperative": false },
+  { "name": "Azul", "type": "Board", "minPlayers": 2, "maxPlayers": 4, "playTime": 45, "age": 8, "complexity": "Medium", "played": false, "setupTime": 5, "rating": null, "cooperative": false },
+  { "name": "Pandemic", "type": "Board", "minPlayers": 2, "maxPlayers": 4, "playTime": 60, "age": 8, "complexity": "Medium", "played": true, "setupTime": 10, "rating": 5, "cooperative": true },
+  { "name": "Blokus", "type": "Abstract", "minPlayers": 2, "maxPlayers": 4, "playTime": 30, "age": 7, "complexity": "Low", "played": true, "setupTime": 1, "rating": 4, "cooperative": false },
+  { "name": "Coup", "type": "Card", "minPlayers": 2, "maxPlayers": 6, "playTime": 15, "age": 10, "complexity": "Low", "played": false, "setupTime": 2, "rating": null, "cooperative": false },
+  { "name": "Arkham Horror (3rd Edition)", "type": "Board", "minPlayers": 1, "maxPlayers": 6, "playTime": 240, "age": 14, "complexity": "High", "played": false, "setupTime": 60, "rating": null, "cooperative": true },
+  { "name": "Betrayal at House on the Hill (3rd Edition)", "type": "Mystery", "minPlayers": 3, "maxPlayers": 6, "playTime": 90, "age": 12, "complexity": "Medium", "played": true, "setupTime": 5, "rating": 4, "cooperative": false },
+  { "name": "Catan Dice", "type": "Dice", "minPlayers": 1, "maxPlayers": 6, "playTime": 30, "age": 7, "complexity": "Low", "played": true, "setupTime": 2, "rating": 3, "cooperative": false },
+  { "name": "Gloomhaven: Jaws of the Lion", "type": "Narrative", "minPlayers": 1, "maxPlayers": 4, "playTime": 60, "age": 14, "complexity": "High", "played": false, "setupTime": 15, "rating": null, "cooperative": true }
+]

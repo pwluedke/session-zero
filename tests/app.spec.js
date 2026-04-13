@@ -7,6 +7,7 @@ const { SettingsModal } = require('./pages/SettingsModal');
 const { HistoryModal } = require('./pages/HistoryModal');
 const { StatsModal }   = require('./pages/StatsModal');
 const { SpotifyPanel } = require('./pages/SpotifyPanel');
+const { LandingPage }  = require('./pages/LandingPage');
 
 // Mock Spotify API response used across Spotify tests.
 // Two playlists so we can also test the options row when needed.
@@ -523,4 +524,104 @@ test('shows no-result message and search input when Spotify returns no playlists
   await expect(spotify.noResult).toBeVisible();
   await expect(spotify.searchRow).toBeVisible();
   await expect(spotify.iframe).not.toBeAttached();
+});
+
+// ── Landing Page ───────────────────────────────────────────────────────────
+test('landing page shows Try the Demo and Sign in with Google buttons', async ({ page }) => {
+  const landing = new LandingPage(page);
+  await landing.goto();
+  await expect(landing.heading).toBeVisible();
+  await expect(landing.tagline).toBeVisible();
+  await expect(landing.demoBtnLink).toBeVisible();
+  await expect(landing.demoBtnLink).toHaveAttribute('href', '/demo');
+  await expect(landing.googleSigninLink).toBeVisible();
+  await expect(landing.googleSigninLink).toHaveAttribute('href', '/auth/google');
+});
+
+// ── Demo Mode ──────────────────────────────────────────────────────────────
+test('demo mode shows sticky banner and sign-in button', async ({ page }) => {
+  await page.goto('/demo');
+  await page.waitForLoadState('networkidle');
+
+  await expect(page.getByTestId('demo-banner')).toBeVisible();
+  await expect(page.getByTestId('demo-header-signin')).toBeVisible();
+});
+
+test('demo mode pre-loads four fictional players in the vault', async ({ page }) => {
+  await page.goto('/demo');
+  await page.waitForLoadState('networkidle');
+
+  const vault = new VaultModal(page);
+  await vault.open();
+
+  await vault.expectPlayer('Colonel Mustard');
+  await vault.expectPlayer('Miss Scarlett');
+  await vault.expectPlayer('Mrs. Peacock');
+  await vault.expectPlayer('Professor Plum');
+});
+
+test('demo mode loads games from demo-games.json', async ({ page }) => {
+  await page.goto('/demo');
+  await page.waitForLoadState('networkidle');
+
+  // Open the library modal to see all loaded games without the 5-game random cap
+  const library = new LibraryModal(page);
+  await library.open();
+
+  // demo-games.json has exactly 10 games
+  await expect(page.getByTestId('library-count')).toContainText('10');
+
+  // Spot-check a game unique to demo-games.json
+  await expect(page.getByTestId('library-list')).toContainText('Codenames');
+});
+
+test('demo mode Why? button returns mock response without calling Anthropic', async ({ page }) => {
+  let anthropicCalled = false;
+  await page.route('/api/why', async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.demo !== true) {
+      anthropicCalled = true;
+    }
+    // Let the request proceed to the server -- it will return the demo response
+    await route.continue();
+  });
+
+  await page.goto('/demo');
+  await page.waitForLoadState('networkidle');
+
+  const main = new MainPage(page);
+  await main.findGames();
+
+  // Click Why? on the first result
+  const whyBtn = page.getByTestId('game-list').locator('.why-btn').first();
+  await whyBtn.click();
+  await page.waitForSelector('.why-text:not(.hidden)');
+
+  const whyText = page.locator('.why-text').first();
+  await expect(whyText).not.toBeEmpty();
+  expect(anthropicCalled).toBe(false);
+});
+
+test('demo mode does not write to localStorage', async ({ page }) => {
+  await page.goto('/demo');
+  await page.waitForLoadState('networkidle');
+
+  // Open vault and attempt to add a player -- should not persist to localStorage
+  const vault = new VaultModal(page);
+  await vault.open();
+  await vault.addPlayer('TestUser');
+
+  const stored = await page.evaluate(() => localStorage.getItem('sz-vault'));
+  expect(stored).toBeNull();
+});
+
+test('demo mode sign-in link points to Google auth', async ({ page }) => {
+  await page.goto('/demo');
+  await page.waitForLoadState('networkidle');
+
+  const signinBtn = page.getByTestId('demo-header-signin');
+  await expect(signinBtn).toHaveAttribute('href', '/auth/google');
+
+  const bannerSignin = page.getByTestId('demo-banner-signin');
+  await expect(bannerSignin).toHaveAttribute('href', '/auth/google');
 });

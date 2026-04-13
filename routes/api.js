@@ -47,7 +47,13 @@ async function searchPlaylist(token, query) {
 }
 
 // ── Why? ───────────────────────────────────────────────────────────────────
+const DEMO_WHY_RESPONSE = "This is a great pick for tonight! The mix of strategy and luck keeps everyone engaged, and it plays well with groups of different experience levels. Give it a try -- demo mode is showing you a sample response instead of calling the AI.";
+
 router.post("/api/why", async (req, res) => {
+  if (req.body.demo === true) {
+    return res.json({ explanation: DEMO_WHY_RESPONSE });
+  }
+
   try {
     const { game, filters } = req.body;
 

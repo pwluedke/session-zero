@@ -1,5 +1,5 @@
 // Routes that are always accessible without authentication.
-const PUBLIC_PATHS = ["/login", "/auth/google", "/auth/google/callback", "/auth/logout"];
+const PUBLIC_PATHS = ["/login", "/demo", "/auth/google", "/auth/google/callback", "/auth/logout"];
 
 function requireAuth(req, res, next) {
   // In test mode, bypass auth entirely so the Playwright suite can run without

@@ -2380,4 +2380,49 @@ body.hide-why .why-btn {
   flex-shrink: 0;
 }
 
+/* ── Demo Mode ──────────────────────────────────────────────────────────── */
+.demo-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #7a5c00;
+  color: #fde68a;
+  text-align: center;
+  padding: 0.6rem 1rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.demo-banner-signin {
+  color: #fde68a;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.demo-banner-signin:hover {
+  color: #fff;
+}
+
+.demo-header-signin {
+  display: inline-block;
+  margin-top: 0.75rem;
+  background: transparent;
+  color: #9a9ab0;
+  border: 1px solid #2a2a4a;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.demo-header-signin:hover {
+  border-color: #4a4a7a;
+  color: #c0c0d0;
+}
+
 .lib-delete:hover { color: #e05252; }
