@@ -1,3 +1,17 @@
+// ── Demo Mode ──────────────────────────────────────────────────────────────
+// Demo mode is active when the user arrived via /demo. sessionStorage persists
+// the flag so page reloads within the demo session keep demo mode active.
+// Navigating away from /demo (e.g. signing in via OAuth) clears the flag so
+// the authenticated app does not inherit demo state.
+if (window.location.pathname === '/demo') {
+  sessionStorage.setItem('szDemo', 'true');
+} else {
+  sessionStorage.removeItem('szDemo');
+}
+function isDemoMode() {
+  return sessionStorage.getItem('szDemo') === 'true';
+}
+
 // ── State ──────────────────────────────────────────────────────────────────
 let games = [];
 let newOnly = false;
@@ -7,7 +21,7 @@ let renderedGames = [];
 // Player Vault (permanent registry)
 const AVATAR_COLORS = ['#e05252','#f5a842','#5dd67a','#52a8e0','#c275e0','#e91e8c','#f5c842'];
 const AVATAR_EMOJIS = ['🎮','🎲','🃏','🧩','♟️','🎯','🎪','🦁','🐉','🦊','🐺','🦝','🎭','🤖','👾','🧙','🧝','🧛','🎩','⚔️','🏴‍☠️','🐸','🐧','🦄'];
-let vault = JSON.parse(localStorage.getItem('sz-vault') || '[]');
+let vault = isDemoMode() ? [] : JSON.parse(localStorage.getItem('sz-vault') || '[]');
 let emojiPickerTarget = null; // vault player id
 
 // Roll Call (who's playing tonight — session state)
@@ -33,7 +47,7 @@ let currentSpotifyOptions = [];   // full list returned by last fetch
 
 // Settings
 const SETTINGS_DEFAULTS = { showWhyBtn: true };
-let settings = { ...SETTINGS_DEFAULTS, ...JSON.parse(localStorage.getItem('sz-settings') || '{}') };
+let settings = { ...SETTINGS_DEFAULTS, ...(isDemoMode() ? {} : JSON.parse(localStorage.getItem('sz-settings') || '{}')) };
 
 // ── Init ───────────────────────────────────────────────────────────────────
 function migrateGameSources(arr) {
@@ -44,20 +58,43 @@ function migrateGameSources(arr) {
       dirty = true;
     }
   }
-  if (dirty) localStorage.setItem('sz-games', JSON.stringify(arr));
+  if (dirty && !isDemoMode()) localStorage.setItem('sz-games', JSON.stringify(arr));
   return arr;
 }
 
-const storedGames = localStorage.getItem('sz-games');
-if (storedGames) {
-  games = migrateGameSources(JSON.parse(storedGames));
-} else {
-  fetch("games.json")
+if (isDemoMode()) {
+  fetch("demo-games.json")
     .then(res => res.json())
     .then(data => {
-      games = data.map(g => ({ ...g, source: g.bggId ? 'bgg' : 'manual' }));
+      games = data.map(g => ({ ...g, source: 'manual' }));
+      renderGamesInProgress();
     })
-    .catch(() => console.error("Could not load games.json"));
+    .catch(() => console.error("Could not load demo-games.json"));
+
+  // Pre-populate vault with fictional demo players
+  const DEMO_PLAYERS = [
+    { id: 'demo-1', name: 'Colonel Mustard', emoji: null, color: '#f5a842', lastPlayed: null },
+    { id: 'demo-2', name: 'Miss Scarlett',   emoji: null, color: '#e05252', lastPlayed: null },
+    { id: 'demo-3', name: 'Mrs. Peacock',    emoji: null, color: '#52a8e0', lastPlayed: null },
+    { id: 'demo-4', name: 'Professor Plum',  emoji: null, color: '#c275e0', lastPlayed: null },
+  ];
+  vault = DEMO_PLAYERS;
+
+  // Show demo UI
+  document.getElementById('demo-banner').classList.remove('hidden');
+  document.getElementById('demo-header-signin').classList.remove('hidden');
+} else {
+  const storedGames = localStorage.getItem('sz-games');
+  if (storedGames) {
+    games = migrateGameSources(JSON.parse(storedGames));
+  } else {
+    fetch("games.json")
+      .then(res => res.json())
+      .then(data => {
+        games = data.map(g => ({ ...g, source: g.bggId ? 'bgg' : 'manual' }));
+      })
+      .catch(() => console.error("Could not load games.json"));
+  }
 }
 
 renderRollCall();
@@ -110,6 +147,7 @@ function removeFromVault(id) {
 }
 
 function saveVault() {
+  if (isDemoMode()) return;
   localStorage.setItem('sz-vault', JSON.stringify(vault));
 }
 
@@ -359,13 +397,13 @@ function handleBGGImport(input) {
         return;
       }
       games = imported;
-      localStorage.setItem('sz-games', JSON.stringify(games));
+      if (!isDemoMode()) localStorage.setItem('sz-games', JSON.stringify(games));
 
       settings.bggLastSync = new Date().toLocaleString('en-US', {
         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
       });
       settings.bggLastSyncCount = imported.length;
-      localStorage.setItem('sz-settings', JSON.stringify(settings));
+      if (!isDemoMode()) localStorage.setItem('sz-settings', JSON.stringify(settings));
 
       statusEl.textContent = `Synced ${imported.length} games from BoardGameGeek at ${settings.bggLastSync}.`;
       statusEl.className = 'bgg-sync-status bgg-sync-ok';
@@ -419,7 +457,7 @@ async function syncBGGCollection() {
 
   // Save username for next time
   settings.bggUsername = username;
-  localStorage.setItem('sz-settings', JSON.stringify(settings));
+  if (!isDemoMode()) localStorage.setItem('sz-settings', JSON.stringify(settings));
 
   btn.disabled = true;
   btn.textContent = 'Syncing…';
@@ -443,13 +481,13 @@ async function syncBGGCollection() {
     }
 
     games = mergeBGGGames(games, data.games);
-    localStorage.setItem('sz-games', JSON.stringify(games));
+    if (!isDemoMode()) localStorage.setItem('sz-games', JSON.stringify(games));
 
     settings.bggLastSync = new Date().toLocaleString('en-US', {
       month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
     });
     settings.bggLastSyncCount = data.count;
-    localStorage.setItem('sz-settings', JSON.stringify(settings));
+    if (!isDemoMode()) localStorage.setItem('sz-settings', JSON.stringify(settings));
 
     statusEl.textContent = `Synced ${data.count} games from BoardGameGeek at ${settings.bggLastSync}.`;
     statusEl.className = 'bgg-sync-status bgg-sync-ok';
@@ -468,7 +506,7 @@ async function syncBGGCollection() {
 
 function toggleSetting(key) {
   settings[key] = !settings[key];
-  localStorage.setItem('sz-settings', JSON.stringify(settings));
+  if (!isDemoMode()) localStorage.setItem('sz-settings', JSON.stringify(settings));
   applySettings();
   renderSettingsModal();
 }
@@ -635,7 +673,7 @@ async function askWhy(btn, game, filters) {
     const res = await fetch("/api/why", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ game, filters }),
+      body: JSON.stringify({ game, filters, ...(isDemoMode() ? { demo: true } : {}) }),
     });
     const data = await res.json();
     whyText.textContent = data.explanation || data.error || "No response.";
@@ -798,7 +836,7 @@ function saveSpotifyPlaylist() {
   if (idx >= 0) {
     games[idx].spotifyEmbedUrl = currentSpotifyData.embedUrl;
     games[idx].spotifyPlaylistName = currentSpotifyData.name;
-    localStorage.setItem('sz-games', JSON.stringify(games));
+    if (!isDemoMode()) localStorage.setItem('sz-games', JSON.stringify(games));
     sessionGame = games[idx];
   }
   const btn = document.querySelector('.spotify-save-btn');
@@ -966,6 +1004,7 @@ function backToSession() {
 }
 
 function saveResult(result) {
+  if (isDemoMode()) return;
   const history = JSON.parse(localStorage.getItem('sz-history') || '[]');
   history.unshift(result);
   localStorage.setItem('sz-history', JSON.stringify(history));
@@ -1006,11 +1045,13 @@ function pauseSession() {
     timerSeconds,
     pausedAt: new Date().toISOString(),
   };
-  const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
-  const idx = sessions.findIndex(s => s.id === state.id);
-  if (idx >= 0) sessions[idx] = state;
-  else sessions.push(state);
-  localStorage.setItem('sz-active-sessions', JSON.stringify(sessions));
+  if (!isDemoMode()) {
+    const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
+    const idx = sessions.findIndex(s => s.id === state.id);
+    if (idx >= 0) sessions[idx] = state;
+    else sessions.push(state);
+    localStorage.setItem('sz-active-sessions', JSON.stringify(sessions));
+  }
   document.getElementById('session-modal').classList.remove('active');
   renderGamesInProgress();
 }
@@ -1407,10 +1448,12 @@ function finalizeSession() {
 
   saveResult(result);
 
-  const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
-  localStorage.setItem('sz-active-sessions',
-    JSON.stringify(sessions.filter(s => s.id !== currentSessionId))
-  );
+  if (!isDemoMode()) {
+    const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
+    localStorage.setItem('sz-active-sessions',
+      JSON.stringify(sessions.filter(s => s.id !== currentSessionId))
+    );
+  }
 
   currentSessionId = null;
   document.getElementById('session-modal').classList.remove('active');
@@ -1652,6 +1695,7 @@ function renderLibrary() {
 }
 
 function saveGames() {
+  if (isDemoMode()) return;
   localStorage.setItem('sz-games', JSON.stringify(games));
 }
 

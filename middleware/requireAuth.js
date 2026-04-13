@@ -1,5 +1,7 @@
+const path = require("path");
+
 // Routes that are always accessible without authentication.
-const PUBLIC_PATHS = ["/login", "/auth/google", "/auth/google/callback", "/auth/logout"];
+const PUBLIC_PATHS = ["/login", "/demo", "/auth/google", "/auth/google/callback", "/auth/logout"];
 
 function requireAuth(req, res, next) {
   // In test mode, bypass auth entirely so the Playwright suite can run without
@@ -7,6 +9,11 @@ function requireAuth(req, res, next) {
   // set explicitly by playwright.config.js webServer.env and by the CI workflow
   // -- it is not a general development bypass.
   if (process.env.NODE_ENV === "test") return next();
+
+  // Static assets (.js, .css, .json, images, etc.) are never sensitive.
+  // They must be reachable by unauthenticated visitors on public routes like
+  // /login and /demo, which serve index.html and then request these files.
+  if (path.extname(req.path)) return next();
 
   if (PUBLIC_PATHS.includes(req.path)) return next();
 

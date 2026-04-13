@@ -7,10 +7,16 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div id="demo-banner" data-testid="demo-banner" class="demo-banner hidden">
+    You're in demo mode - your changes won't be saved.
+    <a href="/auth/google" class="demo-banner-signin" data-testid="demo-banner-signin">Sign in to save your library</a>
+  </div>
+
   <div class="container">
     <header>
       <h1>Session Zero: A Game Night Planner</h1>
       <p class="subtitle">So many games, so little night.</p>
+      <a href="/auth/google" id="demo-header-signin" data-testid="demo-header-signin" class="demo-header-signin hidden">Sign in with Google</a>
     </header>
 
     <section class="roll-call">

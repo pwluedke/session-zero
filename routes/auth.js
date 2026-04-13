@@ -9,6 +9,10 @@ router.get("/login", (req, res) => {
   res.sendFile(path.join(__dirname, "../login.html"));
 });
 
+router.get("/demo", (req, res) => {
+  res.sendFile(path.join(__dirname, "../index.html"));
+});
+
 router.get("/auth/google", (req, res, next) => {
   if (!pool) {
     return res.status(503).json({ error: "Database not configured - set DATABASE_URL to enable authentication" });
