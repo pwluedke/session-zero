@@ -97,3 +97,6 @@ All tests live in `tests/app.spec.js`. Page objects live in `tests/pages/`. Each
 - Use /compact when the session gets long to preserve output quality
 - When creating GitHub Issues, follow the template in /prompts/create-github-issues.md
 - The prompt library lives in /prompts/ -- check it before starting any repeatable task
+- Use /project:plan before any implementation -- never skip the plan step
+- Use /project:issue to create GitHub Issues -- keeps prompt library in sync
+- Use /project:review before merging any PR

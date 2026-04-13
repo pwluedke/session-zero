@@ -225,6 +225,7 @@ This project uses custom Claude Code slash commands to standardize how AI-assist
 | `/implement` | `/implement #104`                   | Executes the approved plan. Full loop: write, test, fix, PR.                           |
 | `/issue`     | `/issue add BGG link to game cards` | Creates a structured GitHub Issue using the prompt library template.                   |
 | `/review`    | `/review`                           | Reviews the open PR against acceptance criteria, POM patterns, and quality gates.      |
+| `/start`    | `/start`                           | Verifies .env is present and correct, starts the node server, and confirms db connection is live via logs      |
 
 
 ### How to use them
