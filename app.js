@@ -82,7 +82,7 @@ if (isDemoMode()) {
 
   // Show demo UI
   document.getElementById('demo-banner').classList.remove('hidden');
-  document.getElementById('demo-header-signin').classList.remove('hidden');
+  document.getElementById('demo-header-signin')?.classList.remove('hidden');
 } else {
   const storedGames = localStorage.getItem('sz-games');
   if (storedGames) {
@@ -102,6 +102,42 @@ renderGamesInProgress();
 applySettings();
 if (!isDemoMode()) {
   initVault();
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+function setActiveNav(name) {
+  document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.nav === name);
+  });
+}
+
+function closeAllSections() {
+  document.getElementById('history-section-modal').classList.remove('active');
+  document.getElementById('profile-modal').classList.remove('active');
+  document.getElementById('library-modal').classList.remove('active');
+}
+
+function navHome() {
+  closeAllSections();
+  setActiveNav('home');
+}
+
+function navLibrary() {
+  closeAllSections();
+  openLibrary();
+  setActiveNav('library');
+}
+
+function navHistory() {
+  closeAllSections();
+  openHistorySection('history');
+  setActiveNav('history');
+}
+
+function navProfile() {
+  closeAllSections();
+  openProfile();
+  setActiveNav('profile');
 }
 
 // ── Player Vault ───────────────────────────────────────────────────────────
@@ -153,13 +189,11 @@ function dismissImportPrompt() {
 }
 
 function openVault() {
-  renderVaultList();
-  document.getElementById('vault-modal').classList.add('active');
-  document.getElementById('vault-name-input').focus();
+  navProfile();
 }
 
 function closeVault() {
-  document.getElementById('vault-modal').classList.remove('active');
+  closeProfile();
 }
 
 async function addToVault() {
@@ -342,12 +376,11 @@ function closeEmojiPicker() {
 
 // ── Settings ───────────────────────────────────────────────────────────────
 function openSettings() {
-  renderSettingsModal();
-  document.getElementById('settings-modal').classList.add('active');
+  navProfile();
 }
 
 function closeSettings() {
-  document.getElementById('settings-modal').classList.remove('active');
+  closeProfile();
 }
 
 function renderSettingsModal() {
@@ -590,6 +623,80 @@ function toggleSetting(key) {
 
 function applySettings() {
   document.body.classList.toggle('hide-why', !settings.showWhyBtn);
+}
+
+// ── Profile Section ─────────────────────────────────────────────────────────
+async function openProfile() {
+  renderSettingsModal();
+  renderVaultList();
+  await fetchAndRenderProfile();
+  document.getElementById('profile-modal').classList.add('active');
+  document.getElementById('vault-name-input').focus();
+}
+
+function closeProfile() {
+  document.getElementById('profile-modal').classList.remove('active');
+  setActiveNav('home');
+}
+
+async function fetchAndRenderProfile() {
+  const nameEl  = document.getElementById('profile-display-name');
+  const emailEl = document.getElementById('profile-email');
+  const avatarEl = document.getElementById('profile-avatar');
+
+  if (isDemoMode()) {
+    if (nameEl)   nameEl.textContent  = 'Demo User';
+    if (emailEl)  emailEl.textContent = '';
+    if (avatarEl) avatarEl.textContent = 'D';
+    const signout = document.getElementById('profile-signout');
+    if (signout) signout.classList.add('hidden');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/me');
+    if (!res.ok) return;
+    const { display_name, email, avatar_url } = await res.json();
+    if (nameEl)  nameEl.textContent  = display_name || email || 'User';
+    if (emailEl) emailEl.textContent = email || '';
+    if (avatarEl) {
+      if (avatar_url) {
+        avatarEl.innerHTML = `<img src="${avatar_url}" alt="${display_name || 'User'}" class="profile-avatar-img" />`;
+      } else {
+        avatarEl.textContent = (display_name || email || 'U')[0].toUpperCase();
+      }
+    }
+  } catch {}
+}
+
+// ── History Section ─────────────────────────────────────────────────────────
+function openHistorySection(tab) {
+  switchHistoryTab(tab || 'history');
+  document.getElementById('history-section-modal').classList.add('active');
+}
+
+function closeHistorySection() {
+  document.getElementById('history-section-modal').classList.remove('active');
+  setActiveNav('home');
+}
+
+function switchHistoryTab(tab) {
+  const historyPanel = document.getElementById('history-panel');
+  const statsPanel   = document.getElementById('stats-panel');
+  const tabHistory   = document.getElementById('tab-nav-history');
+  const tabStats     = document.getElementById('tab-nav-stats');
+
+  historyPanel.classList.toggle('hidden', tab !== 'history');
+  statsPanel.classList.toggle('hidden', tab !== 'stats');
+  if (tabHistory) tabHistory.classList.toggle('active', tab === 'history');
+  if (tabStats)   tabStats.classList.toggle('active',   tab === 'stats');
+
+  if (tab === 'history') {
+    renderHistory();
+  } else {
+    switchStatsTab('players');
+    renderStats();
+  }
 }
 
 // ── Filters ────────────────────────────────────────────────────────────────
@@ -1199,12 +1306,11 @@ function renderGamesInProgress() {
 
 // ── Play History ───────────────────────────────────────────────────────────
 function openHistory() {
-  renderHistory();
-  document.getElementById('history-modal').classList.add('active');
+  openHistorySection('history');
 }
 
 function closeHistory() {
-  document.getElementById('history-modal').classList.remove('active');
+  closeHistorySection();
 }
 
 function renderHistory() {
@@ -1283,13 +1389,11 @@ let activeStatsTab = 'players';
 let h2hSelected = { a: null, b: null };
 
 function openStats() {
-  switchStatsTab('players');
-  renderStats();
-  document.getElementById('stats-modal').classList.add('active');
+  openHistorySection('stats');
 }
 
 function closeStats() {
-  document.getElementById('stats-modal').classList.remove('active');
+  closeHistorySection();
 }
 
 function switchStatsTab(tab) {
@@ -1690,6 +1794,7 @@ function closeLibrary() {
   document.getElementById('library-modal').classList.remove('active');
   const form = document.getElementById('add-game-form');
   if (form) form.classList.add('hidden');
+  setActiveNav('home');
 }
 
 function setLibrarySort(key) {

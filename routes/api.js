@@ -5,6 +5,12 @@ const pool = require("../db/index");
 const router = express.Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// ── Me ─────────────────────────────────────────────────────────────────────
+router.get("/api/me", (req, res) => {
+  const { display_name, email, avatar_url } = req.user;
+  res.json({ display_name, email, avatar_url });
+});
+
 // ── Players ────────────────────────────────────────────────────────────────
 router.get("/api/players", async (req, res) => {
   if (!pool) return res.json([]);
