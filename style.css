@@ -18,8 +18,112 @@ body {
 }
 
 header {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.header-brand {
+  text-align: left;
+}
+
+/* ── Desktop nav ─────────────────────────────────────────────────────────── */
+.desktop-nav {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  flex: unset;
+  padding: 0.4rem 0.85rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #9a9ab0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.nav-item:hover {
+  color: #e0e0e0;
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 1;
+}
+
+.nav-item.active {
+  color: #f5c842;
+  border-color: #f5c842;
+  background: rgba(245, 200, 66, 0.08);
+}
+
+/* ── Mobile bottom nav ───────────────────────────────────────────────────── */
+.mobile-nav {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .desktop-nav {
+    display: none;
+  }
+
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #16213e;
+    border-top: 1px solid #0f3460;
+    z-index: 200;
+    height: 60px;
+  }
+
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    background: transparent;
+    border: none;
+    color: #9a9ab0;
+    cursor: pointer;
+    min-height: 44px;
+    padding: 0.3rem 0;
+    font-family: inherit;
+    transition: color 0.15s;
+  }
+
+  .mobile-nav-item:hover {
+    color: #e0e0e0;
+    opacity: 1;
+  }
+
+  .mobile-nav-item.active {
+    color: #f5c842;
+  }
+
+  .mobile-nav-icon {
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+
+  .mobile-nav-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  body {
+    padding-bottom: 68px;
+  }
 }
 
 h1 {
@@ -1613,23 +1717,12 @@ button:hover {
   cursor: pointer;
 }
 
-/* ── Roll Call header actions ────────────────────────────────────────────── */
-.roll-call-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
 /* ── Settings Modal ──────────────────────────────────────────────────────── */
 body.hide-why .why-btn {
   display: none !important;
 }
 
-.settings-panel {
-  max-width: 420px;
-}
-
 .settings-body {
-  padding: 1.2rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -2008,6 +2101,137 @@ body.hide-why .why-btn {
 
 .h2h-result {
   min-height: 60px;
+}
+
+/* ── History Section Modal (combined History + Stats) ────────────────────── */
+.history-section-panel {
+  max-width: 560px;
+}
+
+.history-section-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.history-section-tab {
+  flex: unset;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: #9a9ab0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.history-section-tab:hover {
+  color: #e0e0e0;
+  opacity: 1;
+}
+
+.history-section-tab.active {
+  color: #f5c842;
+  border-bottom-color: #f5c842;
+}
+
+/* ── Profile Modal ───────────────────────────────────────────────────────── */
+.profile-panel {
+  max-width: 440px;
+}
+
+.profile-body {
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+}
+
+.profile-user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #0f3460;
+  margin-bottom: 0.5rem;
+}
+
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0f3460;
+  border: 1px solid #1a4a80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f5c842;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-user-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.profile-display-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.profile-email {
+  font-size: 0.78rem;
+  color: #6a7a90;
+}
+
+.profile-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6a7a90;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #0f3460;
+}
+
+.profile-signout {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #0f3460;
+}
+
+.profile-signout-btn {
+  display: inline-block;
+  padding: 0.45rem 1rem;
+  background: transparent;
+  border: 1px solid #4a5a70;
+  border-radius: 8px;
+  color: #9a9ab0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.profile-signout-btn:hover {
+  border-color: #e05252;
+  color: #e05252;
 }
 
 /* ── BGG Sync ────────────────────────────────────────────────────────────── */
