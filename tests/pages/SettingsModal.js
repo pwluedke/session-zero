@@ -3,7 +3,7 @@ const { expect } = require('@playwright/test');
 class SettingsModal {
   constructor(page) {
     this.page        = page;
-    this.modal       = page.getByTestId('settings-modal');
+    this.modal       = page.getByTestId('profile-modal');
     this.whyBtn      = page.getByTestId('setting-why-btn');
     this.syncStatus  = page.getByTestId('bgg-sync-status');
     this.usernameInput = page.getByTestId('bgg-username-input');
@@ -11,12 +11,12 @@ class SettingsModal {
   }
 
   async open() {
-    await this.page.getByTestId('btn-settings').click();
+    await this.page.getByTestId('nav-profile').click();
     await expect(this.modal).toHaveClass(/active/);
   }
 
   async close() {
-    await this.page.getByTestId('settings-modal-close').click();
+    await this.page.getByTestId('profile-modal-close').click();
     await expect(this.modal).not.toHaveClass(/active/);
   }
 
@@ -32,7 +32,7 @@ class SettingsModal {
     await expect(this.whyBtn).toHaveText('Off');
   }
 
-  // Sets up a page.route() mock for /api/bgg/collection, opens Settings,
+  // Sets up a page.route() mock for /api/bgg/collection, opens Profile,
   // fills in a username, and clicks Sync. routeHandler receives the Playwright
   // Route object so callers can fulfill, abort, or return custom responses.
   async mockAndSync(routeHandler, username = 'testuser') {

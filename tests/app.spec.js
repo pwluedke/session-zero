@@ -8,6 +8,7 @@ const { HistoryModal } = require('./pages/HistoryModal');
 const { StatsModal }   = require('./pages/StatsModal');
 const { SpotifyPanel } = require('./pages/SpotifyPanel');
 const { LandingPage }  = require('./pages/LandingPage');
+const { NavBar }       = require('./pages/NavBar');
 
 // Mock Spotify API response used across Spotify tests.
 // Two playlists so we can also test the options row when needed.
@@ -59,15 +60,14 @@ test.beforeEach(async ({ page }) => {
 });
 
 // ── Page load ──────────────────────────────────────────────────────────────
-test('loads with correct title and all header buttons', async ({ page }) => {
+test('loads with correct title and desktop nav items', async ({ page }) => {
   const main = new MainPage(page);
   await expect(page).toHaveTitle('Session Zero');
-  await expect(page.getByText('Session Zero: A Game Night Planner')).toBeVisible();
-  await expect(main.btnVault).toBeVisible();
-  await expect(main.btnLibrary).toBeVisible();
-  await expect(main.btnHistory).toBeVisible();
-  await expect(main.btnStats).toBeVisible();
-  await expect(main.btnSettings).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Session Zero' })).toBeVisible();
+  await expect(main.navHome).toBeVisible();
+  await expect(main.navLibrary).toBeVisible();
+  await expect(main.navHistory).toBeVisible();
+  await expect(main.navProfile).toBeVisible();
 });
 
 // ── Player Vault ───────────────────────────────────────────────────────────
@@ -630,7 +630,7 @@ test('demo mode shows sticky banner and sign-in button', async ({ page }) => {
   await page.waitForLoadState('networkidle');
 
   await expect(page.getByTestId('demo-banner')).toBeVisible();
-  await expect(page.getByTestId('demo-header-signin')).toBeVisible();
+  await expect(page.getByTestId('demo-banner-signin')).toBeVisible();
 });
 
 test('demo mode pre-loads four fictional players in the vault', async ({ page }) => {
@@ -705,9 +705,67 @@ test('demo mode sign-in link points to Google auth', async ({ page }) => {
   await page.goto('/demo');
   await page.waitForLoadState('networkidle');
 
-  const signinBtn = page.getByTestId('demo-header-signin');
-  await expect(signinBtn).toHaveAttribute('href', '/auth/google');
-
   const bannerSignin = page.getByTestId('demo-banner-signin');
   await expect(bannerSignin).toHaveAttribute('href', '/auth/google');
+});
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+test('desktop nav shows four items at 768px and above', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  const nav = new NavBar(page);
+  await nav.expectDesktopNavVisible();
+  await expect(nav.navHome).toBeVisible();
+  await expect(nav.navLibrary).toBeVisible();
+  await expect(nav.navHistory).toBeVisible();
+  await expect(nav.navProfile).toBeVisible();
+});
+
+test('mobile nav shows four items below 768px', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  const nav = new NavBar(page);
+  await nav.expectMobileNavVisible();
+  await expect(nav.mobileNavHome).toBeVisible();
+  await expect(nav.mobileNavLibrary).toBeVisible();
+  await expect(nav.mobileNavHistory).toBeVisible();
+  await expect(nav.mobileNavProfile).toBeVisible();
+});
+
+test('clicking Library nav opens the library section', async ({ page }) => {
+  const nav     = new NavBar(page);
+  const library = new LibraryModal(page);
+  await library.open();
+  await expect(library.modal).toHaveClass(/active/);
+  await nav.expectActiveNav('library');
+});
+
+test('clicking History nav opens the history section', async ({ page }) => {
+  const nav     = new NavBar(page);
+  const history = new HistoryModal(page);
+  await history.open();
+  await expect(history.modal).toHaveClass(/active/);
+  await nav.expectActiveNav('history');
+});
+
+test('clicking Profile nav opens the profile section', async ({ page }) => {
+  const nav  = new NavBar(page);
+  const vault = new VaultModal(page);
+  await vault.open();
+  await expect(vault.modal).toHaveClass(/active/);
+  await nav.expectActiveNav('profile');
+});
+
+test('Home nav closes open section and resets active state', async ({ page }) => {
+  // Mobile nav (z-index 200) is intentionally above modal overlays (z-index 100)
+  // so the Home button is always reachable even when a section is open.
+  await page.setViewportSize({ width: 375, height: 812 });
+  const nav     = new NavBar(page);
+  const history = new HistoryModal(page);
+
+  // Open history via mobile nav
+  await nav.mobileNavHistory.click();
+  await expect(history.modal).toHaveClass(/active/);
+
+  // Click Home on the mobile nav -- should close the section
+  await nav.mobileNavHome.click();
+  await expect(history.modal).not.toHaveClass(/active/);
 });

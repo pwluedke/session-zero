@@ -14,21 +14,21 @@
 
   <div class="container">
     <header>
-      <h1>Session Zero: A Game Night Planner</h1>
-      <p class="subtitle">So many games, so little night.</p>
-      <a href="/auth/google" id="demo-header-signin" data-testid="demo-header-signin" class="demo-header-signin hidden">Sign in with Google</a>
+      <div class="header-brand">
+        <h1>Session Zero</h1>
+        <p class="subtitle">So many games, so little night.</p>
+      </div>
+      <nav class="desktop-nav" data-testid="desktop-nav" aria-label="Main navigation">
+        <button class="nav-item active" data-nav="home" data-testid="nav-home" onclick="navHome()">Home</button>
+        <button class="nav-item" data-nav="library" data-testid="nav-library" onclick="navLibrary()">Library</button>
+        <button class="nav-item" data-nav="history" data-testid="nav-history" onclick="navHistory()">History</button>
+        <button class="nav-item" data-nav="profile" data-testid="nav-profile" onclick="navProfile()">Profile</button>
+      </nav>
     </header>
 
     <section class="roll-call">
       <div class="roll-call-header">
         <h2 class="section-label">🎲 Roll Call</h2>
-        <div class="roll-call-actions">
-          <button class="vault-btn" data-testid="btn-settings" onclick="openSettings()">⚙ Settings</button>
-          <button class="vault-btn" data-testid="btn-history" onclick="openHistory()">History</button>
-          <button class="vault-btn" data-testid="btn-stats" onclick="openStats()">Stats</button>
-          <button class="vault-btn" data-testid="btn-library" onclick="openLibrary()">My Games</button>
-          <button class="vault-btn" data-testid="btn-vault" onclick="openVault()">Player Vault</button>
-        </div>
       </div>
       <div id="roll-call-chips" data-testid="roll-call-chips" class="roll-call-chips"></div>
     </section>
@@ -165,21 +165,80 @@
     </section>
   </div>
 
-  <!-- Player Vault Modal -->
-  <div id="vault-modal" data-testid="vault-modal" class="modal-overlay">
-    <div class="modal-panel">
+  <!-- Profile Modal (Settings + Player Vault + user info) -->
+  <div id="profile-modal" data-testid="profile-modal" class="modal-overlay" onclick="closeProfile()">
+    <div class="modal-panel profile-panel" onclick="event.stopPropagation()">
       <div class="modal-header">
-        <div class="session-title">Player Vault</div>
-        <button class="modal-close" data-testid="vault-modal-close" onclick="closeVault()">×</button>
+        <div class="session-title">Profile</div>
+        <button class="modal-close" data-testid="profile-modal-close" onclick="closeProfile()">×</button>
       </div>
-      <div class="modal-section">
-        <div class="player-input-row">
-          <input type="text" id="vault-name-input" data-testid="vault-name-input"
-                 placeholder="Add a player..."
-                 onkeydown="if(event.key==='Enter') addToVault()" />
-          <button id="add-vault-btn" data-testid="vault-add-btn" onclick="addToVault()">Add</button>
+      <div class="profile-body">
+
+        <!-- User info -->
+        <div class="profile-user-info">
+          <div id="profile-avatar" data-testid="profile-avatar" class="profile-avatar"></div>
+          <div class="profile-user-text">
+            <div id="profile-display-name" data-testid="profile-display-name" class="profile-display-name"></div>
+            <div id="profile-email" data-testid="profile-email" class="profile-email"></div>
+          </div>
         </div>
-        <div id="vault-list" data-testid="vault-list" class="vault-list"></div>
+
+        <!-- Settings section -->
+        <div class="profile-section-label">Settings</div>
+        <div class="settings-body">
+          <div class="settings-group-label">BoardGameGeek</div>
+          <div class="settings-row settings-row-column">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Sync Collection</div>
+              <div class="settings-row-desc">Enter your BGG username to import your owned games.</div>
+            </div>
+            <div class="bgg-username-row">
+              <input type="text" id="bgg-username-input" data-testid="bgg-username-input"
+                     class="bgg-username-input" placeholder="BGG username"
+                     onkeydown="if(event.key==='Enter')syncBGGCollection()" />
+              <button id="bgg-sync-btn" data-testid="bgg-sync-btn"
+                      class="bgg-sync-btn" onclick="syncBGGCollection()">Sync</button>
+            </div>
+            <div id="bgg-sync-status" data-testid="bgg-sync-status" class="bgg-sync-status"></div>
+          </div>
+          <div class="settings-row settings-row-column">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Import from CSV</div>
+              <div class="settings-row-desc">Alternatively: on BGG go to your collection - Export - CSV.</div>
+            </div>
+            <label class="bgg-file-label" for="bgg-csv-input">Choose CSV file</label>
+            <input type="file" id="bgg-csv-input" data-testid="bgg-csv-input" accept=".csv"
+                   class="bgg-file-input" onchange="handleBGGImport(this)" />
+          </div>
+
+          <div class="settings-group-label" style="margin-top:1rem">AI Features</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Why? Button</div>
+              <div class="settings-row-desc">Ask Claude why a game fits tonight's group</div>
+            </div>
+            <button id="setting-why-btn" data-testid="setting-why-btn" class="toggle-btn"
+                    onclick="toggleSetting('showWhyBtn')" aria-pressed="true">On</button>
+          </div>
+        </div>
+
+        <!-- Player Vault section -->
+        <div class="profile-section-label">Player Vault</div>
+        <div class="modal-section">
+          <div class="player-input-row">
+            <input type="text" id="vault-name-input" data-testid="vault-name-input"
+                   placeholder="Add a player..."
+                   onkeydown="if(event.key==='Enter') addToVault()" />
+            <button id="add-vault-btn" data-testid="vault-add-btn" onclick="addToVault()">Add</button>
+          </div>
+          <div id="vault-list" data-testid="vault-list" class="vault-list"></div>
+        </div>
+
+        <!-- Sign out -->
+        <div class="profile-signout" id="profile-signout">
+          <a href="/auth/logout" class="profile-signout-btn" data-testid="profile-signout-btn">Sign Out</a>
+        </div>
+
       </div>
     </div>
   </div>
@@ -286,89 +345,45 @@
     </div>
   </div>
 
-  <!-- Settings Modal -->
-  <div id="settings-modal" data-testid="settings-modal" class="modal-overlay" onclick="closeSettings()">
-    <div class="modal-panel settings-panel" onclick="event.stopPropagation()">
+  <!-- History Section Modal (History + Stats with tab switching) -->
+  <div id="history-section-modal" data-testid="history-section-modal" class="modal-overlay" onclick="closeHistorySection()">
+    <div class="modal-panel history-section-panel" onclick="event.stopPropagation()">
       <div class="modal-header">
-        <div class="session-title">Settings</div>
-        <button class="modal-close" data-testid="settings-modal-close" onclick="closeSettings()">×</button>
+        <div class="history-section-tabs">
+          <button class="history-section-tab active" id="tab-nav-history" data-testid="tab-nav-history"
+                  onclick="switchHistoryTab('history')">History</button>
+          <button class="history-section-tab" id="tab-nav-stats" data-testid="tab-nav-stats"
+                  onclick="switchHistoryTab('stats')">Stats</button>
+        </div>
+        <button class="modal-close" data-testid="history-section-modal-close" onclick="closeHistorySection()">×</button>
       </div>
-      <div class="settings-body">
-        <div class="settings-group-label">BoardGameGeek</div>
-        <div class="settings-row settings-row-column">
-          <div class="settings-row-info">
-            <div class="settings-row-label">Sync Collection</div>
-            <div class="settings-row-desc">Enter your BGG username to import your owned games.</div>
-          </div>
-          <div class="bgg-username-row">
-            <input type="text" id="bgg-username-input" data-testid="bgg-username-input"
-                   class="bgg-username-input" placeholder="BGG username"
-                   onkeydown="if(event.key==='Enter')syncBGGCollection()" />
-            <button id="bgg-sync-btn" data-testid="bgg-sync-btn"
-                    class="bgg-sync-btn" onclick="syncBGGCollection()">Sync</button>
-          </div>
-          <div id="bgg-sync-status" data-testid="bgg-sync-status" class="bgg-sync-status"></div>
-        </div>
-        <div class="settings-row settings-row-column">
-          <div class="settings-row-info">
-            <div class="settings-row-label">Import from CSV</div>
-            <div class="settings-row-desc">Alternatively: on BGG go to your collection → Export → CSV.</div>
-          </div>
-          <label class="bgg-file-label" for="bgg-csv-input">Choose CSV file</label>
-          <input type="file" id="bgg-csv-input" data-testid="bgg-csv-input" accept=".csv"
-                 class="bgg-file-input" onchange="handleBGGImport(this)" />
-        </div>
 
-        <div class="settings-group-label" style="margin-top:1rem">AI Features</div>
-        <div class="settings-row">
-          <div class="settings-row-info">
-            <div class="settings-row-label">Why? Button</div>
-            <div class="settings-row-desc">Ask Claude why a game fits tonight's group</div>
-          </div>
-          <button id="setting-why-btn" data-testid="setting-why-btn" class="toggle-btn"
-                  onclick="toggleSetting('showWhyBtn')" aria-pressed="true">On</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- History Modal -->
-  <div id="history-modal" data-testid="history-modal" class="modal-overlay" onclick="closeHistory()">
-    <div class="modal-panel history-panel" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <div class="session-title">Play History</div>
-        <button class="modal-close" data-testid="history-modal-close" onclick="closeHistory()">×</button>
-      </div>
-      <div class="history-body">
+      <!-- History panel -->
+      <div id="history-panel" data-testid="history-panel" class="history-body">
         <div id="history-list" data-testid="history-list" class="history-list"></div>
       </div>
-    </div>
-  </div>
 
-  <!-- Stats Modal -->
-  <div id="stats-modal" data-testid="stats-modal" class="modal-overlay" onclick="closeStats()">
-    <div class="modal-panel stats-panel" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <div class="session-title">Player Stats</div>
-        <button class="modal-close" data-testid="stats-modal-close" onclick="closeStats()">×</button>
-      </div>
-      <div class="stats-tabs">
-        <button class="stats-tab active" id="tab-players" data-testid="tab-players"
-                onclick="switchStatsTab('players')">Players</button>
-        <button class="stats-tab" id="tab-h2h" data-testid="tab-h2h"
-                onclick="switchStatsTab('h2h')">Head-to-Head</button>
-      </div>
-      <div class="stats-body" id="stats-body-players" data-testid="stats-body-players">
-        <div id="stats-list" class="stats-list"></div>
-      </div>
-      <div class="stats-body hidden" id="stats-body-h2h" data-testid="stats-body-h2h">
-        <div class="h2h-selectors">
-          <div class="h2h-selector" id="h2h-selector-a"></div>
-          <div class="h2h-vs">vs.</div>
-          <div class="h2h-selector" id="h2h-selector-b"></div>
+      <!-- Stats panel -->
+      <div id="stats-panel" data-testid="stats-panel" class="hidden">
+        <div class="stats-tabs">
+          <button class="stats-tab active" id="tab-players" data-testid="tab-players"
+                  onclick="switchStatsTab('players')">Players</button>
+          <button class="stats-tab" id="tab-h2h" data-testid="tab-h2h"
+                  onclick="switchStatsTab('h2h')">Head-to-Head</button>
         </div>
-        <div id="h2h-result" class="h2h-result"></div>
+        <div class="stats-body" id="stats-body-players" data-testid="stats-body-players">
+          <div id="stats-list" class="stats-list"></div>
+        </div>
+        <div class="stats-body hidden" id="stats-body-h2h" data-testid="stats-body-h2h">
+          <div class="h2h-selectors">
+            <div class="h2h-selector" id="h2h-selector-a"></div>
+            <div class="h2h-vs">vs.</div>
+            <div class="h2h-selector" id="h2h-selector-b"></div>
+          </div>
+          <div id="h2h-result" class="h2h-result"></div>
+        </div>
       </div>
+
     </div>
   </div>
 
@@ -426,6 +441,26 @@
       <div id="library-list" data-testid="library-list" class="library-list"></div>
     </div>
   </div>
+
+  <!-- Mobile bottom nav -->
+  <nav class="mobile-nav" data-testid="mobile-nav" aria-label="Main navigation">
+    <button class="mobile-nav-item active" data-nav="home" data-testid="mobile-nav-home" onclick="navHome()">
+      <span class="mobile-nav-icon">🏠</span>
+      <span class="mobile-nav-label">Home</span>
+    </button>
+    <button class="mobile-nav-item" data-nav="library" data-testid="mobile-nav-library" onclick="navLibrary()">
+      <span class="mobile-nav-icon">📚</span>
+      <span class="mobile-nav-label">Library</span>
+    </button>
+    <button class="mobile-nav-item" data-nav="history" data-testid="mobile-nav-history" onclick="navHistory()">
+      <span class="mobile-nav-icon">📋</span>
+      <span class="mobile-nav-label">History</span>
+    </button>
+    <button class="mobile-nav-item" data-nav="profile" data-testid="mobile-nav-profile" onclick="navProfile()">
+      <span class="mobile-nav-icon">👤</span>
+      <span class="mobile-nav-label">Profile</span>
+    </button>
+  </nav>
 
   <script src="app.js"></script>
 </body>

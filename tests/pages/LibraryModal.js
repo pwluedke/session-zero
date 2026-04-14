@@ -20,7 +20,7 @@ class LibraryModal {
   }
 
   async open() {
-    await this.page.getByTestId('btn-library').click();
+    await this.page.getByTestId('nav-library').click();
     await expect(this.modal).toHaveClass(/active/);
   }
 
