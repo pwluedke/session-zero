@@ -4,12 +4,11 @@ class MainPage {
   constructor(page) {
     this.page = page;
 
-    // Header nav buttons
-    this.btnSettings = page.getByTestId('btn-settings');
-    this.btnHistory  = page.getByTestId('btn-history');
-    this.btnStats    = page.getByTestId('btn-stats');
-    this.btnLibrary  = page.getByTestId('btn-library');
-    this.btnVault    = page.getByTestId('btn-vault');
+    // Desktop nav items
+    this.navHome    = page.getByTestId('nav-home');
+    this.navLibrary = page.getByTestId('nav-library');
+    this.navHistory = page.getByTestId('nav-history');
+    this.navProfile = page.getByTestId('nav-profile');
 
     // Roll call
     this.rollCallChips = page.getByTestId('roll-call-chips');
