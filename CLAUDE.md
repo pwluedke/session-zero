@@ -200,3 +200,4 @@ Define success criteria. Loop until verified.
 - Use /plan before any implementation -- never skip the plan step
 - Use /issue to create GitHub Issues -- keeps prompt library in sync
 - Use /review before merging any PR
+- docs/diary.md is the project diary -- run /reflect at the start of each session and /diary at the end
