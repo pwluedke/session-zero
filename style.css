@@ -124,6 +124,10 @@ header {
   body {
     padding-bottom: 68px;
   }
+
+  .modal-overlay {
+    padding-bottom: 60px;
+  }
 }
 
 h1 {
@@ -2106,6 +2110,9 @@ body.hide-why .why-btn {
 /* ── History Section Modal (combined History + Stats) ────────────────────── */
 .history-section-panel {
   max-width: 560px;
+  height: auto;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .history-section-tabs {
@@ -2140,6 +2147,10 @@ body.hide-why .why-btn {
 /* ── Profile Modal ───────────────────────────────────────────────────────── */
 .profile-panel {
   max-width: 440px;
+  /* Override the session-modal desktop rule that locks height and hides overflow */
+  height: auto;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .profile-body {
@@ -2147,7 +2158,6 @@ body.hide-why .why-btn {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  overflow-y: auto;
 }
 
 .profile-user-info {
