@@ -62,7 +62,7 @@ test.beforeEach(async ({ page }) => {
 // ── Page load ──────────────────────────────────────────────────────────────
 test('loads with correct title and desktop nav items', async ({ page }) => {
   const main = new MainPage(page);
-  await expect(page).toHaveTitle('DELIBERATELY BROKEN FOR CI VERIFICATION');
+  await expect(page).toHaveTitle('Session Zero');
   await expect(page.getByRole('heading', { name: 'Session Zero' })).toBeVisible();
   await expect(main.navHome).toBeVisible();
   await expect(main.navLibrary).toBeVisible();
