@@ -37,11 +37,16 @@ function collectFailures(suite, ancestors = []) {
   return failures;
 }
 
+// Strip ANSI escape codes so Claude receives clean text.
+function stripAnsi(str) {
+  return str.replace(/\u001b\[[0-9;]*[a-zA-Z]/g, '');
+}
+
 function formatFailures(failures) {
   let text = failures
     .map((f) => {
-      const msg = f.error?.message || '(no error message)';
-      const stack = f.error?.stack ? `\nStack:\n${f.error.stack}` : '';
+      const msg = stripAnsi(f.error?.message || '(no error message)');
+      const stack = f.error?.stack ? `\nStack:\n${stripAnsi(f.error.stack)}` : '';
       return `### ${f.title}\n\nError: ${msg}${stack}`;
     })
     .join('\n\n---\n\n');
@@ -77,19 +82,7 @@ async function main() {
     process.exit(0);
   }
 
-  // DEBUG: log top-level suite structure
-  console.log(`[DEBUG] suites count: ${(results.suites || []).length}`);
-  (results.suites || []).forEach((s, i) => {
-    console.log(`[DEBUG] suite[${i}].title=${JSON.stringify(s.title)} specs=${(s.specs||[]).length} suites=${(s.suites||[]).length}`);
-  });
-
   const failures = (results.suites || []).flatMap((s) => collectFailures(s));
-
-  console.log(`[DEBUG] failures found: ${failures.length}`);
-  if (failures.length > 0) {
-    console.log(`[DEBUG] first failure title: ${failures[0].title}`);
-    console.log(`[DEBUG] first failure error: ${JSON.stringify(failures[0].error)}`);
-  }
 
   if (failures.length === 0) {
     console.log('analyze-failure: no failures found -- skipping analysis');
@@ -97,8 +90,6 @@ async function main() {
   }
 
   const failureText = formatFailures(failures);
-  console.log(`[DEBUG] failureText length: ${failureText.length}`);
-  console.log(`[DEBUG] failureText preview: ${failureText.slice(0, 200)}`);
 
   // Build prompt
   let promptTemplate;
@@ -108,7 +99,6 @@ async function main() {
     console.warn(`analyze-failure: failed to read prompt: ${err.message}`);
     process.exit(0);
   }
-  console.log(`[DEBUG] prompt contains placeholder: ${promptTemplate.includes('{FAILURE_OUTPUT}')}`);
 
   const prompt = promptTemplate.replace('{FAILURE_OUTPUT}', failureText);
 
