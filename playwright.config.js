@@ -18,6 +18,6 @@ module.exports = defineConfig({
     env: { NODE_ENV: 'test' },
   },
   reporter: process.env.CI
-    ? [['github'], ['html', { open: 'never' }]]
+    ? [['github'], ['html', { open: 'never' }], ['json', { outputFile: 'test-results/results.json' }]]
     : [['list']],
 });

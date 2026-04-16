@@ -43,6 +43,20 @@ jobs:
           # NOT REQUIRED: BGG_API_TOKEN is optional even in production (falls back to
           # unauthenticated requests). Not included here.
 
+      - name: Analyze test failures
+        if: failure()
+        run: node scripts/analyze-failure.js
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Upload failure analysis
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-analysis
+          path: failure-analysis/
+          retention-days: 7
+
 # CI environment variables
 # ANTHROPIC_API_KEY: required - server will not start without it
 # SPOTIFY_CLIENT_ID: included to mirror production environment
