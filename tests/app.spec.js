@@ -437,6 +437,40 @@ test('BGG sync adds new games from BGG not yet in the local library', async ({ p
   await library.expectGame('Brand New Game');
 });
 
+test('BGG sync backfills bggId on a name-matched manual game so badge links to BGG', async ({ page }) => {
+  const settings = new SettingsModal(page);
+  const main     = new MainPage(page);
+
+  await page.evaluate(() => {
+    localStorage.setItem('sz-games', JSON.stringify([
+      { name: 'Ticket to Ride', minPlayers: 2, maxPlayers: 5, playTime: 60,
+        complexity: 'Low', type: 'Board', age: 8, setupTime: 10, rating: 4,
+        played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual' },
+    ]));
+  });
+  await page.reload();
+
+  await settings.mockAndSync(route =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        games: [{ name: 'Ticket to Ride', minPlayers: 2, maxPlayers: 5, playTime: 60,
+                  complexity: 'Low', type: 'Board', age: 8, setupTime: 10,
+                  rating: null, played: false, cooperative: false, thumbnail: null, bggId: 9209 }],
+        count: 1,
+      }),
+    })
+  );
+
+  await settings.expectSyncSuccess('Synced 1');
+  await settings.close();
+  await main.findGames();
+  await main.expandGameCard(0);
+
+  const badge = main.gameCards().nth(0).getByTestId('bgg-badge');
+  await expect(badge).toHaveAttribute('href', 'https://boardgamegeek.com/boardgame/9209');
+});
+
 test('BGG sync shows error message on server failure', async ({ page }) => {
   const settings = new SettingsModal(page);
 

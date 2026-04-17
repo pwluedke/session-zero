@@ -533,10 +533,16 @@ function handleBGGImport(input) {
 function mergeBGGGames(local, incoming) {
   const BGG_FIELDS = ['name', 'thumbnail', 'minPlayers', 'maxPlayers', 'playTime', 'complexity', 'type'];
   const incomingMap = new Map(incoming.map(g => [g.bggId, g]));
+  const incomingByName = new Map(incoming.map(g => [g.name.trim().toLowerCase(), g]));
   const seenIds = new Set();
 
   const merged = local.map(localGame => {
-    if (!localGame.bggId) return localGame; // manual - never touch
+    if (!localGame.bggId) {
+      const nameMatch = incomingByName.get(localGame.name.trim().toLowerCase());
+      if (!nameMatch) return localGame;
+      seenIds.add(nameMatch.bggId);
+      return { ...localGame, bggId: nameMatch.bggId, source: 'bgg' };
+    }
     const remote = incomingMap.get(localGame.bggId);
     if (!remote) return localGame; // no longer in BGG response - preserve as-is
     seenIds.add(localGame.bggId);
