@@ -50,18 +50,6 @@ const SETTINGS_DEFAULTS = { showWhyBtn: true };
 let settings = { ...SETTINGS_DEFAULTS };
 
 // ── Init ───────────────────────────────────────────────────────────────────
-function migrateGameSources(arr) {
-  let dirty = false;
-  for (const g of arr) {
-    if (!g.source) {
-      g.source = g.bggId ? 'bgg' : 'manual';
-      dirty = true;
-    }
-  }
-  if (dirty && !isDemoMode()) localStorage.setItem('sz-games', JSON.stringify(arr));
-  return arr;
-}
-
 if (isDemoMode()) {
   fetch("demo-games.json")
     .then(res => res.json())
@@ -83,18 +71,6 @@ if (isDemoMode()) {
   // Show demo UI
   document.getElementById('demo-banner').classList.remove('hidden');
   document.getElementById('demo-header-signin')?.classList.remove('hidden');
-} else {
-  const storedGames = localStorage.getItem('sz-games');
-  if (storedGames) {
-    games = migrateGameSources(JSON.parse(storedGames));
-  } else {
-    fetch("games.json")
-      .then(res => res.json())
-      .then(data => {
-        games = data.map(g => ({ ...g, source: g.bggId ? 'bgg' : 'manual' }));
-      })
-      .catch(() => console.error("Could not load games.json"));
-  }
 }
 
 renderRollCall();
@@ -103,6 +79,7 @@ applySettings();
 if (!isDemoMode()) {
   initVault();
   initSettings();
+  initGames();
 }
 
 // ── Navigation ─────────────────────────────────────────────────────────────
@@ -177,6 +154,45 @@ function saveSettings() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(settings),
   }).catch(() => {});
+}
+
+async function initGames() {
+  try {
+    const res = await fetch('/api/games');
+    if (!res.ok) return;
+    games = await res.json();
+  } catch {
+    // Network error - games stays empty
+  }
+  checkGamesLocalStorageImport();
+}
+
+function checkGamesLocalStorageImport() {
+  if (games.length > 0) return;
+  const legacy = localStorage.getItem('sz-games');
+  if (!legacy) return;
+  document.getElementById('games-import-prompt')?.classList.remove('hidden');
+}
+
+async function importLocalGames() {
+  const legacy = JSON.parse(localStorage.getItem('sz-games') || '[]');
+  if (legacy.length === 0) { dismissGamesImportPrompt(); return; }
+  try {
+    const res = await fetch('/api/games/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(legacy),
+    });
+    if (res.ok) games = await res.json();
+  } catch {}
+  localStorage.removeItem('sz-games');
+  document.getElementById('games-import-prompt')?.classList.add('hidden');
+  renderLibrary();
+}
+
+function dismissGamesImportPrompt() {
+  localStorage.removeItem('sz-games');
+  document.getElementById('games-import-prompt')?.classList.add('hidden');
 }
 
 function checkLocalStorageImport() {
@@ -420,7 +436,7 @@ function renderSettingsModal() {
 
   const statusEl = document.getElementById('bgg-sync-status');
   if (statusEl && settings.bggLastSync) {
-    const count = settings.bggLastSyncCount ?? JSON.parse(localStorage.getItem('sz-games') || '[]').length;
+    const count = settings.bggLastSyncCount ?? games.length;
     statusEl.textContent = `Synced ${count} games from BoardGameGeek at ${settings.bggLastSync}.`;
     statusEl.className = 'bgg-sync-status bgg-sync-ok';
   }
@@ -529,7 +545,15 @@ function handleBGGImport(input) {
         return;
       }
       games = imported;
-      if (!isDemoMode()) localStorage.setItem('sz-games', JSON.stringify(games));
+      if (!isDemoMode()) {
+        fetch('/api/games/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(games),
+        }).then(res => res.ok ? res.json() : null).then(synced => {
+          if (synced) games = synced;
+        }).catch(() => {});
+      }
 
       settings.bggLastSync = new Date().toLocaleString('en-US', {
         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -619,7 +643,15 @@ async function syncBGGCollection() {
     }
 
     games = mergeBGGGames(games, data.games);
-    if (!isDemoMode()) localStorage.setItem('sz-games', JSON.stringify(games));
+    if (!isDemoMode()) {
+      fetch('/api/games/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(games),
+      }).then(res => res.ok ? res.json() : null).then(synced => {
+        if (synced) games = synced;
+      }).catch(() => {});
+    }
 
     settings.bggLastSync = new Date().toLocaleString('en-US', {
       month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -1048,7 +1080,16 @@ function saveSpotifyPlaylist() {
   if (idx >= 0) {
     games[idx].spotifyEmbedUrl = currentSpotifyData.embedUrl;
     games[idx].spotifyPlaylistName = currentSpotifyData.name;
-    if (!isDemoMode()) localStorage.setItem('sz-games', JSON.stringify(games));
+    if (!isDemoMode() && games[idx].id) {
+      fetch(`/api/games/${games[idx].id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          spotifyEmbedUrl: currentSpotifyData.embedUrl,
+          spotifyPlaylistName: currentSpotifyData.name,
+        }),
+      }).catch(() => {});
+    }
     sessionGame = games[idx];
   }
   const btn = document.querySelector('.spotify-save-btn');
@@ -1912,17 +1953,21 @@ function renderLibrary() {
   }).join('');
 }
 
-function saveGames() {
-  if (isDemoMode()) return;
-  localStorage.setItem('sz-games', JSON.stringify(games));
+function gamePut(game, fields) {
+  if (isDemoMode() || !game.id) return;
+  fetch(`/api/games/${game.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields),
+  }).catch(() => {});
 }
 
 function setGameRating(displayIdx, n) {
   const { game, idx } = libraryDisplayed[displayIdx];
   // clicking the same star again clears the rating
   games[idx].rating = game.rating === n ? null : n;
-  saveGames();
   renderLibrary();
+  gamePut(game, { rating: games[idx].rating });
 }
 
 function cycleGameField(displayIdx, field) {
@@ -1934,23 +1979,25 @@ function cycleGameField(displayIdx, field) {
     const i = GAME_COMPLEXITIES.indexOf(game.complexity);
     games[idx].complexity = GAME_COMPLEXITIES[(i + 1) % GAME_COMPLEXITIES.length];
   }
-  saveGames();
   renderLibrary();
+  gamePut(game, { [field]: games[idx][field] });
 }
 
 function toggleGameField(displayIdx, field) {
-  const { idx } = libraryDisplayed[displayIdx];
+  const { game, idx } = libraryDisplayed[displayIdx];
   games[idx][field] = !games[idx][field];
-  saveGames();
   renderLibrary();
+  gamePut(game, { [field]: games[idx][field] });
 }
 
 function deleteGame(displayIdx) {
   const { game, idx } = libraryDisplayed[displayIdx];
   if (!confirm(`Remove "${game.name}" from your library?`)) return;
   games.splice(idx, 1);
-  saveGames();
   renderLibrary();
+  if (!isDemoMode() && game.id) {
+    fetch(`/api/games/${game.id}`, { method: 'DELETE' }).catch(() => {});
+  }
 }
 
 function toggleAddGameForm() {
@@ -1972,7 +2019,7 @@ function submitAddGame() {
   }
   const minPlayers = parseInt(document.getElementById('ag-min-players')?.value) || 2;
   const maxPlayers = parseInt(document.getElementById('ag-max-players')?.value) || minPlayers;
-  games.push({
+  const newGame = {
     name,
     type:       document.getElementById('ag-type')?.value || 'Board',
     complexity: document.getElementById('ag-complexity')?.value || 'Medium',
@@ -1987,8 +2034,17 @@ function submitAddGame() {
     thumbnail:  null,
     bggId:      null,
     source:     'manual',
-  });
-  saveGames();
+  };
+  games.push(newGame);
+  if (!isDemoMode()) {
+    fetch('/api/games', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newGame),
+    }).then(res => res.ok ? res.json() : null).then(saved => {
+      if (saved) newGame.id = saved.id;
+    }).catch(() => {});
+  }
   // reset form
   ['ag-name','ag-min-players','ag-max-players','ag-playtime','ag-age'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';

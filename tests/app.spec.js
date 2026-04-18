@@ -19,11 +19,20 @@ const MOCK_PLAYLISTS = {
   ],
 };
 
+// Default game library used by the /api/games mock in beforeEach.
+// Includes Low-complexity games (for filter tests) and Wingspan Asia (for 'wing' search test).
+const DEFAULT_TEST_GAMES = [
+  { id: 1, name: 'Wingspan Asia', type: 'Board', complexity: 'Medium', minPlayers: 1, maxPlayers: 2, playTime: 70, age: 14, setupTime: 10, rating: null, played: false, cooperative: false, thumbnail: null, bggId: 366161, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 2, name: 'Azul', type: 'Board', complexity: 'Medium', minPlayers: 2, maxPlayers: 4, playTime: 45, age: 8, setupTime: 5, rating: null, played: true, cooperative: false, thumbnail: null, bggId: 230802, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 3, name: 'Catan', type: 'Board', complexity: 'Medium', minPlayers: 3, maxPlayers: 6, playTime: 90, age: 10, setupTime: 10, rating: null, played: true, cooperative: false, thumbnail: null, bggId: 13, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 4, name: 'Codenames', type: 'Party', complexity: 'Low', minPlayers: 2, maxPlayers: 8, playTime: 15, age: 14, setupTime: 2, rating: null, played: true, cooperative: false, thumbnail: null, bggId: 178900, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 5, name: 'Fluxx', type: 'Card', complexity: 'Low', minPlayers: 2, maxPlayers: 6, playTime: 30, age: 8, setupTime: 1, rating: null, played: true, cooperative: false, thumbnail: null, bggId: 258, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+];
+
 // Each test gets a fresh localStorage so state doesn't bleed between runs.
-// waitForLoadState('networkidle') ensures games.json fetch completes first.
-// /api/players is mocked so tests never hit the real database. The mock is
-// stateful within each test -- state resets between tests because mockPlayers
-// is declared in the beforeEach closure.
+// /api/players and /api/games are mocked so tests never hit the real database.
+// Both mocks are stateful within each test -- state resets between tests because
+// the mock arrays are declared in the beforeEach closure.
 test.beforeEach(async ({ page }) => {
   let mockPlayers = [];
   let nextId = 1;
@@ -50,6 +59,39 @@ test.beforeEach(async ({ page }) => {
       const id = parseInt(idSegment);
       mockPlayers = mockPlayers.filter(p => p.id !== id);
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
+    }
+  });
+
+  let mockGames = DEFAULT_TEST_GAMES.map(g => ({ ...g }));
+  let nextGameId = DEFAULT_TEST_GAMES.length + 1;
+
+  await page.route(url => url.href.includes('/api/games'), async (route) => {
+    const method = route.request().method();
+    const url = route.request().url();
+    const idSegment = url.match(/\/api\/games\/(\d+)/)?.[1];
+    const isSync = url.includes('/api/games/sync');
+
+    if (method === 'GET') {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockGames) });
+    } else if (method === 'POST' && isSync) {
+      const arr = route.request().postDataJSON();
+      mockGames = arr.map(g => ({ ...g, id: g.id ?? nextGameId++ }));
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockGames) });
+    } else if (method === 'POST') {
+      const body = route.request().postDataJSON();
+      const game = { ...body, id: nextGameId++ };
+      mockGames.push(game);
+      return route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify(game) });
+    } else if (method === 'PUT' && idSegment) {
+      const id = parseInt(idSegment);
+      const body = route.request().postDataJSON();
+      const idx = mockGames.findIndex(g => g.id === id);
+      if (idx !== -1) mockGames[idx] = { ...mockGames[idx], ...body };
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockGames[idx] ?? {}) });
+    } else if (method === 'DELETE' && idSegment) {
+      const id = parseInt(idSegment);
+      mockGames = mockGames.filter(g => g.id !== id);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
     }
   });
 
@@ -162,7 +204,7 @@ test('toggling a player on roll call updates the player count filter', async ({ 
 });
 
 // ── Find Games / Filters ───────────────────────────────────────────────────
-test('Find Games shows results from games.json', async ({ page }) => {
+test('Find Games shows results from library', async ({ page }) => {
   const main = new MainPage(page);
   await main.findGames();
   await main.expectResults();
@@ -226,16 +268,15 @@ test('quick search filters visible games', async ({ page }) => {
 
 // ── BGG badge on game cards ────────────────────────────────────────────────
 test('expanded game card shows BGG badge linking to boardgamegeek.com for a BGG game', async ({ page }) => {
-  const main = new MainPage(page);
+  const main    = new MainPage(page);
+  const library = new LibraryModal(page);
 
-  await page.evaluate(() => {
-    localStorage.setItem('sz-games', JSON.stringify([
-      { name: 'Ticket to Ride', minPlayers: 2, maxPlayers: 5, playTime: 60,
-        complexity: 'Low', type: 'Board', age: 8, setupTime: 10, rating: 4,
-        played: false, cooperative: false, thumbnail: null, bggId: 9209, source: 'bgg' },
-    ]));
-  });
-  await page.reload();
+  await library.seedGames([
+    { id: 101, name: 'Ticket to Ride', minPlayers: 2, maxPlayers: 5, playTime: 60,
+      complexity: 'Low', type: 'Board', age: 8, setupTime: 10, rating: 4,
+      played: false, cooperative: false, thumbnail: null, bggId: 9209, source: 'bgg',
+      spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  ]);
 
   await main.findGames();
   await main.expandGameCard(0);
@@ -247,16 +288,15 @@ test('expanded game card shows BGG badge linking to boardgamegeek.com for a BGG 
 });
 
 test('expanded game card shows BGG badge linking to Google search for a manual game', async ({ page }) => {
-  const main = new MainPage(page);
+  const main    = new MainPage(page);
+  const library = new LibraryModal(page);
 
-  await page.evaluate(() => {
-    localStorage.setItem('sz-games', JSON.stringify([
-      { name: 'My Homebrew Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
-        complexity: 'Low', type: 'Card', age: 0, setupTime: 5, rating: null,
-        played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual' },
-    ]));
-  });
-  await page.reload();
+  await library.seedGames([
+    { id: 102, name: 'My Homebrew Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
+      complexity: 'Low', type: 'Card', age: 0, setupTime: 5, rating: null,
+      played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual',
+      spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  ]);
 
   await main.findGames();
   await main.expandGameCard(0);
@@ -398,14 +438,12 @@ test('BGG sync preserves manually added games not in BGG response', async ({ pag
   const settings = new SettingsModal(page);
   const library  = new LibraryModal(page);
 
-  await page.evaluate(() => {
-    localStorage.setItem('sz-games', JSON.stringify([
-      { name: 'My Homebrew Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
-        complexity: 'Low', type: 'Card', age: 0, setupTime: 5, rating: null,
-        played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual' },
-    ]));
-  });
-  await page.reload();
+  await library.seedGames([
+    { id: 201, name: 'My Homebrew Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
+      complexity: 'Low', type: 'Card', age: 0, setupTime: 5, rating: null,
+      played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual',
+      spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  ]);
 
   await settings.mockAndSync(route =>
     route.fulfill({ contentType: 'application/json', body: JSON.stringify({ games: [], count: 0 }) })
@@ -421,14 +459,12 @@ test('BGG sync updates fields on an existing BGG game matched by bggId', async (
   const settings = new SettingsModal(page);
   const library  = new LibraryModal(page);
 
-  await page.evaluate(() => {
-    localStorage.setItem('sz-games', JSON.stringify([
-      { name: 'Old Name', minPlayers: 2, maxPlayers: 4, playTime: 60,
-        complexity: 'Medium', type: 'Board', age: 0, setupTime: 10, rating: 3,
-        played: true, cooperative: false, thumbnail: null, bggId: 12345, source: 'bgg' },
-    ]));
-  });
-  await page.reload();
+  await library.seedGames([
+    { id: 202, name: 'Old Name', minPlayers: 2, maxPlayers: 4, playTime: 60,
+      complexity: 'Medium', type: 'Board', age: 0, setupTime: 10, rating: 3,
+      played: true, cooperative: false, thumbnail: null, bggId: 12345, source: 'bgg',
+      spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  ]);
 
   await settings.mockAndSync(route =>
     route.fulfill({
@@ -453,11 +489,7 @@ test('BGG sync adds new games from BGG not yet in the local library', async ({ p
   const settings = new SettingsModal(page);
   const library  = new LibraryModal(page);
 
-  // Start with an empty library (clear any games.json defaults)
-  await page.evaluate(() => {
-    localStorage.setItem('sz-games', JSON.stringify([]));
-  });
-  await page.reload();
+  await library.seedGames([]);
 
   await settings.mockAndSync(route =>
     route.fulfill({
@@ -480,15 +512,14 @@ test('BGG sync adds new games from BGG not yet in the local library', async ({ p
 test('BGG sync backfills bggId on a name-matched manual game so badge links to BGG', async ({ page }) => {
   const settings = new SettingsModal(page);
   const main     = new MainPage(page);
+  const library  = new LibraryModal(page);
 
-  await page.evaluate(() => {
-    localStorage.setItem('sz-games', JSON.stringify([
-      { name: 'Ticket to Ride', minPlayers: 2, maxPlayers: 5, playTime: 60,
-        complexity: 'Low', type: 'Board', age: 8, setupTime: 10, rating: 4,
-        played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual' },
-    ]));
-  });
-  await page.reload();
+  await library.seedGames([
+    { id: 204, name: 'Ticket to Ride', minPlayers: 2, maxPlayers: 5, playTime: 60,
+      complexity: 'Low', type: 'Board', age: 8, setupTime: 10, rating: 4,
+      played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual',
+      spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  ]);
 
   await settings.mockAndSync(route =>
     route.fulfill({
@@ -526,14 +557,12 @@ test('BGG sync preserves existing games when BGG returns empty collection', asyn
   const settings = new SettingsModal(page);
   const library  = new LibraryModal(page);
 
-  await page.evaluate(() => {
-    localStorage.setItem('sz-games', JSON.stringify([
-      { name: 'Keeper Game', minPlayers: 2, maxPlayers: 4, playTime: 60,
-        complexity: 'Medium', type: 'Board', age: 0, setupTime: 10, rating: null,
-        played: false, cooperative: false, thumbnail: null, bggId: 77777, source: 'bgg' },
-    ]));
-  });
-  await page.reload();
+  await library.seedGames([
+    { id: 205, name: 'Keeper Game', minPlayers: 2, maxPlayers: 4, playTime: 60,
+      complexity: 'Medium', type: 'Board', age: 0, setupTime: 10, rating: null,
+      played: false, cooperative: false, thumbnail: null, bggId: 77777, source: 'bgg',
+      spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  ]);
 
   await settings.mockAndSync(route =>
     route.fulfill({ contentType: 'application/json',
@@ -544,6 +573,95 @@ test('BGG sync preserves existing games when BGG returns empty collection', asyn
   await settings.close();
   await library.open();
   await library.expectGame('Keeper Game');
+});
+
+// ── Games import prompt ────────────────────────────────────────────────────
+test('import prompt appears when localStorage has games and API returns empty library', async ({ page }) => {
+  await page.route(url => url.href.includes('/api/games'), async route => {
+    if (route.request().method() === 'GET' && !route.request().url().includes('/sync')) {
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify([]) });
+    }
+    return route.fallback();
+  });
+  await page.evaluate(() => {
+    localStorage.setItem('sz-games', JSON.stringify([
+      { name: 'Old Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
+        complexity: 'Low', type: 'Card', age: 0, setupTime: 5,
+        rating: null, played: false, cooperative: false, thumbnail: null,
+        bggId: null, source: 'manual' },
+    ]));
+  });
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  const main = new MainPage(page);
+  await expect(main.gamesImportPrompt).toBeVisible();
+});
+
+test('importing local games calls sync endpoint and dismisses prompt', async ({ page }) => {
+  let syncCalled = false;
+
+  await page.route(url => url.href.includes('/api/games'), async route => {
+    const method = route.request().method();
+    const url = route.request().url();
+    if (method === 'GET' && !url.includes('/sync')) {
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify([]) });
+    }
+    if (method === 'POST' && url.includes('/sync')) {
+      syncCalled = true;
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify([
+        { id: 1, name: 'Old Game', type: 'Card', complexity: 'Low', minPlayers: 2, maxPlayers: 4,
+          playTime: 30, age: 0, setupTime: 5, rating: null, played: false, cooperative: false,
+          thumbnail: null, bggId: null, source: 'manual', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+      ]) });
+    }
+    return route.fallback();
+  });
+  await page.evaluate(() => {
+    localStorage.setItem('sz-games', JSON.stringify([
+      { name: 'Old Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
+        complexity: 'Low', type: 'Card', age: 0, setupTime: 5,
+        rating: null, played: false, cooperative: false, thumbnail: null,
+        bggId: null, source: 'manual' },
+    ]));
+  });
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  const main = new MainPage(page);
+  await main.gamesImportYes.click();
+  await page.waitForLoadState('networkidle');
+
+  expect(syncCalled).toBe(true);
+  await expect(main.gamesImportPrompt).not.toBeVisible();
+  const stored = await page.evaluate(() => localStorage.getItem('sz-games'));
+  expect(stored).toBeNull();
+});
+
+test('dismissing import prompt removes localStorage entry', async ({ page }) => {
+  await page.route(url => url.href.includes('/api/games'), async route => {
+    if (route.request().method() === 'GET' && !route.request().url().includes('/sync')) {
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify([]) });
+    }
+    return route.fallback();
+  });
+  await page.evaluate(() => {
+    localStorage.setItem('sz-games', JSON.stringify([
+      { name: 'Old Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
+        complexity: 'Low', type: 'Card', age: 0, setupTime: 5,
+        rating: null, played: false, cooperative: false, thumbnail: null,
+        bggId: null, source: 'manual' },
+    ]));
+  });
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  const main = new MainPage(page);
+  await main.gamesImportNo.click();
+
+  await expect(main.gamesImportPrompt).not.toBeVisible();
+  const stored = await page.evaluate(() => localStorage.getItem('sz-games'));
+  expect(stored).toBeNull();
 });
 
 // ── History ────────────────────────────────────────────────────────────────

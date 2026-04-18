@@ -128,6 +128,133 @@ router.put("/api/settings", async (req, res) => {
   }
 });
 
+// ── Games ──────────────────────────────────────────────────────────────────
+function normalizeGame(row) {
+  return {
+    id:                  row.id,
+    name:                row.name,
+    type:                row.type,
+    complexity:          row.complexity,
+    minPlayers:          row.min_players,
+    maxPlayers:          row.max_players,
+    playTime:            row.play_time,
+    age:                 row.age,
+    setupTime:           row.setup_time,
+    rating:              row.rating,
+    played:              row.played,
+    cooperative:         row.cooperative,
+    thumbnail:           row.thumbnail,
+    bggId:               row.bgg_id,
+    source:              row.source,
+    spotifyEmbedUrl:     row.spotify_embed_url,
+    spotifyPlaylistName: row.spotify_playlist_name,
+  };
+}
+
+const GAME_INSERT_COLS = `(user_id, name, type, complexity, min_players, max_players,
+  play_time, age, setup_time, rating, played, cooperative, thumbnail, bgg_id, source,
+  spotify_embed_url, spotify_playlist_name)`;
+const GAME_INSERT_VALS = `($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`;
+function gameParams(userId, g) {
+  return [userId, g.name, g.type ?? 'Board', g.complexity ?? 'Medium',
+    g.minPlayers ?? 1, g.maxPlayers ?? 1, g.playTime ?? 60,
+    g.age ?? 0, g.setupTime ?? 10, g.rating ?? null,
+    g.played ?? false, g.cooperative ?? false, g.thumbnail ?? null,
+    g.bggId ?? null, g.source ?? 'manual',
+    g.spotifyEmbedUrl ?? null, g.spotifyPlaylistName ?? null];
+}
+
+router.get("/api/games", async (req, res) => {
+  if (!pool) return res.json([]);
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM games WHERE user_id = $1 ORDER BY name",
+      [req.user.id]
+    );
+    res.json(rows.map(normalizeGame));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/api/games/sync", async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "Database not available" });
+  try {
+    const arr = req.body;
+    if (!Array.isArray(arr)) return res.status(400).json({ error: "Expected array" });
+    await pool.query("DELETE FROM games WHERE user_id = $1", [req.user.id]);
+    const result = [];
+    for (const g of arr) {
+      const { rows } = await pool.query(
+        `INSERT INTO games ${GAME_INSERT_COLS} VALUES ${GAME_INSERT_VALS} RETURNING *`,
+        gameParams(req.user.id, g)
+      );
+      result.push(rows[0]);
+    }
+    res.json(result.map(normalizeGame));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/api/games", async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "Database not available" });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO games ${GAME_INSERT_COLS} VALUES ${GAME_INSERT_VALS} RETURNING *`,
+      gameParams(req.user.id, req.body)
+    );
+    res.status(201).json(normalizeGame(rows[0]));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/api/games/:id", async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "Database not available" });
+  try {
+    const fieldMap = {
+      name: 'name', type: 'type', complexity: 'complexity',
+      minPlayers: 'min_players', maxPlayers: 'max_players', playTime: 'play_time',
+      age: 'age', setupTime: 'setup_time', rating: 'rating', played: 'played',
+      cooperative: 'cooperative', thumbnail: 'thumbnail', bggId: 'bgg_id',
+      source: 'source', spotifyEmbedUrl: 'spotify_embed_url',
+      spotifyPlaylistName: 'spotify_playlist_name',
+    };
+    const sets = [];
+    const vals = [req.params.id, req.user.id];
+    let i = 3;
+    for (const [jsKey, col] of Object.entries(fieldMap)) {
+      if (jsKey in req.body) { sets.push(`${col} = $${i++}`); vals.push(req.body[jsKey]); }
+    }
+    if (!sets.length) return res.status(400).json({ error: "No fields to update" });
+    const { rows } = await pool.query(
+      `UPDATE games SET ${sets.join(', ')} WHERE id = $1 AND user_id = $2 RETURNING *`,
+      vals
+    );
+    if (!rows.length) return res.status(404).json({ error: "Not found" });
+    res.json(normalizeGame(rows[0]));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete("/api/games/:id", async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "Database not available" });
+  try {
+    await pool.query("DELETE FROM games WHERE id = $1 AND user_id = $2",
+      [req.params.id, req.user.id]);
+    res.json({});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Spotify ────────────────────────────────────────────────────────────────
 let spotifyToken = null;
 let spotifyTokenExpiry = 0;
