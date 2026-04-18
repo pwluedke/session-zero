@@ -28,6 +28,11 @@ class MainPage {
     this.newOnlyBtn      = page.getByTestId('new-only-btn');
     this.coopBtn         = page.getByTestId('coop-btn');
 
+    // Games import prompt
+    this.gamesImportPrompt = page.getByTestId('games-import-prompt');
+    this.gamesImportYes    = page.getByTestId('games-import-yes');
+    this.gamesImportNo     = page.getByTestId('games-import-no');
+
     // Action buttons
     this.findGamesBtn = page.getByTestId('btn-find-games');
     this.surpriseBtn  = page.getByTestId('btn-surprise');

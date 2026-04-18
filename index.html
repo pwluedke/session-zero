@@ -39,6 +39,12 @@
       <button onclick="dismissImportPrompt()" data-testid="vault-import-no">No thanks</button>
     </div>
 
+    <div id="games-import-prompt" data-testid="games-import-prompt" class="vault-import-prompt hidden">
+      <span>We found games on this device. Import them to your account?</span>
+      <button onclick="importLocalGames()" data-testid="games-import-yes">Import</button>
+      <button onclick="dismissGamesImportPrompt()" data-testid="games-import-no">No thanks</button>
+    </div>
+
     <section class="games-in-progress hidden" id="games-in-progress">
       <h2 class="section-label">Games in Progress</h2>
       <div id="gip-list" class="gip-list"></div>

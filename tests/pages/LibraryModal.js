@@ -70,6 +70,17 @@ class LibraryModal {
   async expectNoGame(gameName) {
     await expect(this.row(gameName)).toHaveCount(0);
   }
+
+  async seedGames(games) {
+    await this.page.route(url => url.href.includes('/api/games'), async route => {
+      if (route.request().method() === 'GET' && !route.request().url().includes('/sync')) {
+        return route.fulfill({ contentType: 'application/json', body: JSON.stringify(games) });
+      }
+      return route.fallback();
+    });
+    await this.page.reload();
+    await this.page.waitForLoadState('networkidle');
+  }
 }
 
 module.exports = { LibraryModal };
