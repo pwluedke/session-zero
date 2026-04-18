@@ -32,6 +32,10 @@ class SettingsModal {
     await expect(this.whyBtn).toHaveText('Off');
   }
 
+  async mockSettings(routeHandler) {
+    await this.page.route('/api/settings*', routeHandler);
+  }
+
   // Sets up a page.route() mock for /api/bgg/collection, opens Profile,
   // fills in a username, and clicks Sync. routeHandler receives the Playwright
   // Route object so callers can fulfill, abort, or return custom responses.
