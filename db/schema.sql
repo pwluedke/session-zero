@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   display_name TEXT,
   avatar_url TEXT,
+  approved BOOLEAN DEFAULT TRUE,
+  role     TEXT    DEFAULT 'user',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -86,3 +88,6 @@ CREATE TABLE IF NOT EXISTS active_sessions (
   data      JSONB NOT NULL,
   paused_at TIMESTAMPTZ
 );
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT TRUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';

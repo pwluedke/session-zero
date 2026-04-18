@@ -9,6 +9,7 @@ const { StatsModal }   = require('./pages/StatsModal');
 const { SpotifyPanel } = require('./pages/SpotifyPanel');
 const { LandingPage }  = require('./pages/LandingPage');
 const { NavBar }       = require('./pages/NavBar');
+const { PendingPage }  = require('./pages/PendingPage');
 
 // Mock Spotify API response used across Spotify tests.
 // Two playlists so we can also test the options row when needed.
@@ -1214,4 +1215,12 @@ test('Home nav closes open section and resets active state', async ({ page }) =>
   // Click Home on the mobile nav -- should close the section
   await nav.mobileNavHome.click();
   await expect(history.modal).not.toHaveClass(/active/);
+});
+
+// ── Pending page ───────────────────────────────────────────────────────────
+
+test('pending page shows account pending message', async ({ page }) => {
+  const pending = new PendingPage(page);
+  await pending.goto();
+  await pending.expectMessage();
 });

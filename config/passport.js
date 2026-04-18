@@ -39,8 +39,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           if (existing.rows.length > 0) return done(null, existing.rows[0]);
 
           const inserted = await pool.query(
-            `INSERT INTO users (google_id, email, display_name, avatar_url)
-             VALUES ($1, $2, $3, $4) RETURNING *`,
+            `INSERT INTO users (google_id, email, display_name, avatar_url, approved)
+             VALUES ($1, $2, $3, $4, FALSE) RETURNING *`,
             [
               profile.id,
               profile.emails[0].value,
