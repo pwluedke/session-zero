@@ -95,6 +95,47 @@ test.beforeEach(async ({ page }) => {
     }
   });
 
+  let mockHistory = [];
+
+  await page.route(url => url.href.includes('/api/history'), async (route) => {
+    const method = route.request().method();
+    const url = route.request().url();
+    const isSync = url.includes('/api/history/sync');
+
+    if (method === 'GET') {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockHistory) });
+    } else if (method === 'POST' && isSync) {
+      const arr = route.request().postDataJSON();
+      mockHistory = [...arr, ...mockHistory];
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ count: arr.length }) });
+    } else if (method === 'POST') {
+      const entry = route.request().postDataJSON();
+      mockHistory.unshift(entry);
+      return route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({}) });
+    }
+  });
+
+  let mockActiveSessions = [];
+
+  await page.route(url => url.href.includes('/api/sessions/active'), async (route) => {
+    const method = route.request().method();
+    const url = route.request().url();
+    const idSegment = url.match(/\/api\/sessions\/active\/([^/?]+)/)?.[1];
+
+    if (method === 'GET') {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockActiveSessions) });
+    } else if (method === 'PUT') {
+      const state = route.request().postDataJSON();
+      const idx = mockActiveSessions.findIndex(s => s.id === state.id);
+      if (idx >= 0) mockActiveSessions[idx] = state;
+      else mockActiveSessions.push(state);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
+    } else if (method === 'DELETE' && idSegment) {
+      mockActiveSessions = mockActiveSessions.filter(s => s.id !== idSegment);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
+    }
+  });
+
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -664,11 +705,224 @@ test('dismissing import prompt removes localStorage entry', async ({ page }) => 
   expect(stored).toBeNull();
 });
 
+// ── History import prompt ──────────────────────────────────────────────────
+test('history import prompt appears when localStorage has history and API returns empty', async ({ page }) => {
+  await page.route(url => url.href.includes('/api/history'), async route => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify([]) });
+    }
+    return route.fallback();
+  });
+  await page.evaluate(() => {
+    localStorage.setItem('sz-history', JSON.stringify([
+      { id: 'h1', date: '2025-01-01', game: 'Azul', mode: 'scores', lowScoreWins: false,
+        timerSeconds: 1800, players: [], feedback: {} },
+    ]));
+  });
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  const main = new MainPage(page);
+  await expect(main.historyImportPrompt).toBeVisible();
+});
+
+test('importing local history calls sync endpoint and dismisses prompt', async ({ page }) => {
+  let syncCalled = false;
+
+  await page.route(url => url.href.includes('/api/history'), async route => {
+    const method = route.request().method();
+    const url = route.request().url();
+    if (method === 'GET') {
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify([]) });
+    }
+    if (method === 'POST' && url.includes('/sync')) {
+      syncCalled = true;
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ count: 1 }) });
+    }
+    return route.fallback();
+  });
+  await page.evaluate(() => {
+    localStorage.setItem('sz-history', JSON.stringify([
+      { id: 'h1', date: '2025-01-01', game: 'Azul', mode: 'scores', lowScoreWins: false,
+        timerSeconds: 1800, players: [], feedback: {} },
+    ]));
+  });
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  const main = new MainPage(page);
+  await main.historyImportYes.click();
+  await page.waitForLoadState('networkidle');
+
+  expect(syncCalled).toBe(true);
+  await expect(main.historyImportPrompt).not.toBeVisible();
+  const stored = await page.evaluate(() => localStorage.getItem('sz-history'));
+  expect(stored).toBeNull();
+});
+
+test('dismissing history import prompt removes localStorage entry', async ({ page }) => {
+  await page.route(url => url.href.includes('/api/history'), async route => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify([]) });
+    }
+    return route.fallback();
+  });
+  await page.evaluate(() => {
+    localStorage.setItem('sz-history', JSON.stringify([
+      { id: 'h1', date: '2025-01-01', game: 'Azul', mode: 'scores', lowScoreWins: false,
+        timerSeconds: 1800, players: [], feedback: {} },
+    ]));
+  });
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  const main = new MainPage(page);
+  await main.historyImportNo.click();
+
+  await expect(main.historyImportPrompt).not.toBeVisible();
+  const stored = await page.evaluate(() => localStorage.getItem('sz-history'));
+  expect(stored).toBeNull();
+});
+
+// ── Active sessions import prompt ──────────────────────────────────────────
+test('active sessions import prompt appears when localStorage has paused session', async ({ page }) => {
+  await page.route(url => url.href.includes('/api/sessions/active'), async route => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify([]) });
+    }
+    return route.fallback();
+  });
+  await page.evaluate(() => {
+    localStorage.setItem('sz-active-sessions', JSON.stringify([
+      { id: 'sess-1', game: { id: 1, name: 'Azul' }, players: [], scores: {},
+        scoreMode: 'scores', lowScoreWins: false, outcome: null,
+        timerSeconds: 300, pausedAt: new Date().toISOString() },
+    ]));
+  });
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  const main = new MainPage(page);
+  await expect(main.activeSessionsImportPrompt).toBeVisible();
+});
+
+test('importing local active sessions calls PUT endpoint and dismisses prompt', async ({ page }) => {
+  let putCalled = false;
+
+  await page.route(url => url.href.includes('/api/sessions/active'), async route => {
+    const method = route.request().method();
+    if (method === 'GET') {
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify([]) });
+    }
+    if (method === 'PUT') {
+      putCalled = true;
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify({}) });
+    }
+    return route.fallback();
+  });
+  await page.evaluate(() => {
+    localStorage.setItem('sz-active-sessions', JSON.stringify([
+      { id: 'sess-1', game: { id: 1, name: 'Azul' }, players: [], scores: {},
+        scoreMode: 'scores', lowScoreWins: false, outcome: null,
+        timerSeconds: 300, pausedAt: new Date().toISOString() },
+    ]));
+  });
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  const main = new MainPage(page);
+  await main.activeSessionsImportYes.click();
+  await page.waitForLoadState('networkidle');
+
+  expect(putCalled).toBe(true);
+  await expect(main.activeSessionsImportPrompt).not.toBeVisible();
+  const stored = await page.evaluate(() => localStorage.getItem('sz-active-sessions'));
+  expect(stored).toBeNull();
+});
+
+test('dismissing active sessions import prompt removes localStorage entry', async ({ page }) => {
+  await page.route(url => url.href.includes('/api/sessions/active'), async route => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify([]) });
+    }
+    return route.fallback();
+  });
+  await page.evaluate(() => {
+    localStorage.setItem('sz-active-sessions', JSON.stringify([
+      { id: 'sess-1', game: { id: 1, name: 'Azul' }, players: [], scores: {},
+        scoreMode: 'scores', lowScoreWins: false, outcome: null,
+        timerSeconds: 300, pausedAt: new Date().toISOString() },
+    ]));
+  });
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  const main = new MainPage(page);
+  await main.activeSessionsImportNo.click();
+
+  await expect(main.activeSessionsImportPrompt).not.toBeVisible();
+  const stored = await page.evaluate(() => localStorage.getItem('sz-active-sessions'));
+  expect(stored).toBeNull();
+});
+
 // ── History ────────────────────────────────────────────────────────────────
 test('history modal opens and list renders', async ({ page }) => {
   const history = new HistoryModal(page);
   await history.open();
   await expect(history.list).toBeVisible();
+});
+
+test('history shows empty state when no sessions recorded', async ({ page }) => {
+  const history = new HistoryModal(page);
+  await history.open();
+  await expect(history.list).toContainText('No sessions recorded yet.');
+});
+
+test('finalized session appears in history list', async ({ page }) => {
+  const main    = new MainPage(page);
+  const session = new SessionModal(page);
+  const history = new HistoryModal(page);
+
+  await main.findGames();
+  const gameName = await main.gameCards().nth(0).getByTestId('game-name').textContent();
+  await main.letsPlay(0);
+  await session.finalize();
+
+  await history.open();
+  await expect(history.card(gameName)).toBeVisible();
+});
+
+test('paused session appears in Games in Progress', async ({ page }) => {
+  const main    = new MainPage(page);
+  const session = new SessionModal(page);
+
+  await main.findGames();
+  const gameName = await main.gameCards().nth(0).getByTestId('game-name').textContent();
+  await main.letsPlay(0);
+
+  await session.pauseBtn.click();
+  await expect(session.modal).not.toHaveClass(/active/);
+
+  const gip = page.locator('.gip-game');
+  await expect(gip).toBeVisible();
+  await expect(gip).toContainText(gameName);
+});
+
+test('resumed session restores game title', async ({ page }) => {
+  const main    = new MainPage(page);
+  const session = new SessionModal(page);
+
+  await main.findGames();
+  const gameName = await main.gameCards().nth(0).getByTestId('game-name').textContent();
+  await main.letsPlay(0);
+  await session.pauseBtn.click();
+
+  const resumeBtn = page.locator('.resume-btn').first();
+  await expect(resumeBtn).toBeVisible();
+  await resumeBtn.click();
+
+  await session.expectOpen();
+  await session.expectTitle(gameName);
 });
 
 // ── Stats ──────────────────────────────────────────────────────────────────

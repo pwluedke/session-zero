@@ -45,6 +45,12 @@ class SessionModal {
   async expectTimerStopped() {
     await expect(this.timerBtn).toHaveText('Start');
   }
+
+  async finalize() {
+    await this.endGameBtn.click();
+    await expect(this.finalizeBtn).toBeVisible();
+    await this.finalizeBtn.click();
+  }
 }
 
 module.exports = { SessionModal };
