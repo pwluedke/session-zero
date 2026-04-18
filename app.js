@@ -47,7 +47,7 @@ let currentSpotifyOptions = [];   // full list returned by last fetch
 
 // Settings
 const SETTINGS_DEFAULTS = { showWhyBtn: true };
-let settings = { ...SETTINGS_DEFAULTS, ...(isDemoMode() ? {} : JSON.parse(localStorage.getItem('sz-settings') || '{}')) };
+let settings = { ...SETTINGS_DEFAULTS };
 
 // ── Init ───────────────────────────────────────────────────────────────────
 function migrateGameSources(arr) {
@@ -102,6 +102,7 @@ renderGamesInProgress();
 applySettings();
 if (!isDemoMode()) {
   initVault();
+  initSettings();
 }
 
 // ── Navigation ─────────────────────────────────────────────────────────────
@@ -155,6 +156,27 @@ async function initVault() {
   }
   renderRollCall();
   checkLocalStorageImport();
+}
+
+async function initSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) return;
+    Object.assign(settings, await res.json());
+  } catch {
+    // Network error - keep defaults
+  }
+  applySettings();
+  renderSettingsModal();
+}
+
+function saveSettings() {
+  if (isDemoMode()) return;
+  fetch('/api/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  }).catch(() => {});
 }
 
 function checkLocalStorageImport() {
@@ -513,7 +535,7 @@ function handleBGGImport(input) {
         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
       });
       settings.bggLastSyncCount = imported.length;
-      if (!isDemoMode()) localStorage.setItem('sz-settings', JSON.stringify(settings));
+      saveSettings();
 
       statusEl.textContent = `Synced ${imported.length} games from BoardGameGeek at ${settings.bggLastSync}.`;
       statusEl.className = 'bgg-sync-status bgg-sync-ok';
@@ -573,7 +595,7 @@ async function syncBGGCollection() {
 
   // Save username for next time
   settings.bggUsername = username;
-  if (!isDemoMode()) localStorage.setItem('sz-settings', JSON.stringify(settings));
+  saveSettings();
 
   btn.disabled = true;
   btn.textContent = 'Syncing…';
@@ -603,7 +625,7 @@ async function syncBGGCollection() {
       month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
     });
     settings.bggLastSyncCount = data.count;
-    if (!isDemoMode()) localStorage.setItem('sz-settings', JSON.stringify(settings));
+    saveSettings();
 
     statusEl.textContent = `Synced ${data.count} games from BoardGameGeek at ${settings.bggLastSync}.`;
     statusEl.className = 'bgg-sync-status bgg-sync-ok';
@@ -622,7 +644,7 @@ async function syncBGGCollection() {
 
 function toggleSetting(key) {
   settings[key] = !settings[key];
-  if (!isDemoMode()) localStorage.setItem('sz-settings', JSON.stringify(settings));
+  saveSettings();
   applySettings();
   renderSettingsModal();
 }

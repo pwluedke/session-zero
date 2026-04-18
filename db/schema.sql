@@ -24,3 +24,11 @@ CREATE TABLE IF NOT EXISTS session (
 );
 
 CREATE INDEX IF NOT EXISTS session_expire_idx ON session (expire);
+
+CREATE TABLE IF NOT EXISTS settings (
+  user_id             INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  show_why_btn        BOOLEAN DEFAULT TRUE,
+  bgg_username        TEXT,
+  bgg_last_sync       TEXT,
+  bgg_last_sync_count INTEGER
+);
