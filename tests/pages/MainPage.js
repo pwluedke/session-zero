@@ -33,6 +33,16 @@ class MainPage {
     this.gamesImportYes    = page.getByTestId('games-import-yes');
     this.gamesImportNo     = page.getByTestId('games-import-no');
 
+    // History import prompt
+    this.historyImportPrompt = page.getByTestId('history-import-prompt');
+    this.historyImportYes    = page.getByTestId('history-import-yes');
+    this.historyImportNo     = page.getByTestId('history-import-no');
+
+    // Active sessions import prompt
+    this.activeSessionsImportPrompt = page.getByTestId('active-sessions-import-prompt');
+    this.activeSessionsImportYes    = page.getByTestId('active-sessions-import-yes');
+    this.activeSessionsImportNo     = page.getByTestId('active-sessions-import-no');
+
     // Action buttons
     this.findGamesBtn = page.getByTestId('btn-find-games');
     this.surpriseBtn  = page.getByTestId('btn-surprise');

@@ -49,6 +49,10 @@ let currentSpotifyOptions = [];   // full list returned by last fetch
 const SETTINGS_DEFAULTS = { showWhyBtn: true };
 let settings = { ...SETTINGS_DEFAULTS };
 
+// Play History and Active Sessions
+let history = [];
+let activeSessions = [];
+
 // ── Init ───────────────────────────────────────────────────────────────────
 if (isDemoMode()) {
   fetch("demo-games.json")
@@ -80,6 +84,8 @@ if (!isDemoMode()) {
   initVault();
   initSettings();
   initGames();
+  initHistory();
+  initActiveSessions();
 }
 
 // ── Navigation ─────────────────────────────────────────────────────────────
@@ -193,6 +199,86 @@ async function importLocalGames() {
 function dismissGamesImportPrompt() {
   localStorage.removeItem('sz-games');
   document.getElementById('games-import-prompt')?.classList.add('hidden');
+}
+
+async function initHistory() {
+  try {
+    const res = await fetch('/api/history');
+    if (!res.ok) return;
+    history = await res.json();
+  } catch {
+    // Network error - history stays empty
+  }
+  checkHistoryLocalStorageImport();
+}
+
+function checkHistoryLocalStorageImport() {
+  if (history.length > 0) return;
+  const legacy = localStorage.getItem('sz-history');
+  if (!legacy) return;
+  document.getElementById('history-import-prompt')?.classList.remove('hidden');
+}
+
+async function importLocalHistory() {
+  const legacy = JSON.parse(localStorage.getItem('sz-history') || '[]');
+  if (legacy.length === 0) { dismissHistoryImportPrompt(); return; }
+  try {
+    const res = await fetch('/api/history/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(legacy),
+    });
+    if (res.ok) history = legacy;
+  } catch {}
+  localStorage.removeItem('sz-history');
+  document.getElementById('history-import-prompt')?.classList.add('hidden');
+}
+
+function dismissHistoryImportPrompt() {
+  localStorage.removeItem('sz-history');
+  document.getElementById('history-import-prompt')?.classList.add('hidden');
+}
+
+async function initActiveSessions() {
+  try {
+    const res = await fetch('/api/sessions/active');
+    if (!res.ok) return;
+    activeSessions = await res.json();
+  } catch {
+    // Network error - activeSessions stays empty
+  }
+  checkActiveSessionsImport();
+  renderGamesInProgress();
+}
+
+function checkActiveSessionsImport() {
+  if (activeSessions.length > 0) return;
+  const legacy = localStorage.getItem('sz-active-sessions');
+  if (!legacy) return;
+  document.getElementById('active-sessions-import-prompt')?.classList.remove('hidden');
+}
+
+async function importLocalActiveSessions() {
+  const legacy = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
+  if (legacy.length === 0) { dismissActiveSessionsImportPrompt(); return; }
+  try {
+    await Promise.all(legacy.map(state =>
+      fetch('/api/sessions/active', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state),
+      })
+    ));
+    activeSessions = legacy;
+  } catch {}
+  localStorage.removeItem('sz-active-sessions');
+  document.getElementById('active-sessions-import-prompt')?.classList.add('hidden');
+  renderGamesInProgress();
+}
+
+function dismissActiveSessionsImportPrompt() {
+  localStorage.removeItem('sz-active-sessions');
+  document.getElementById('active-sessions-import-prompt')?.classList.add('hidden');
 }
 
 function checkLocalStorageImport() {
@@ -1258,9 +1344,12 @@ function backToSession() {
 
 function saveResult(result) {
   if (isDemoMode()) return;
-  const history = JSON.parse(localStorage.getItem('sz-history') || '[]');
   history.unshift(result);
-  localStorage.setItem('sz-history', JSON.stringify(history));
+  fetch('/api/history', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(result),
+  }).catch(() => {});
 
   // Stamp lastPlayed on each participating vault player
   result.players.forEach(rp => {
@@ -1307,19 +1396,21 @@ function pauseSession() {
     pausedAt: new Date().toISOString(),
   };
   if (!isDemoMode()) {
-    const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
-    const idx = sessions.findIndex(s => s.id === state.id);
-    if (idx >= 0) sessions[idx] = state;
-    else sessions.push(state);
-    localStorage.setItem('sz-active-sessions', JSON.stringify(sessions));
+    const idx = activeSessions.findIndex(s => s.id === state.id);
+    if (idx >= 0) activeSessions[idx] = state;
+    else activeSessions.push(state);
+    fetch('/api/sessions/active', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state),
+    }).catch(() => {});
   }
   document.getElementById('session-modal').classList.remove('active');
   renderGamesInProgress();
 }
 
 function resumeSession(sessionId) {
-  const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
-  const state = sessions.find(s => s.id === sessionId);
+  const state = activeSessions.find(s => s.id === sessionId);
   if (!state) return;
 
   currentSessionId   = state.id;
@@ -1342,7 +1433,7 @@ function resumeSession(sessionId) {
 }
 
 function renderGamesInProgress() {
-  const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
+  const sessions = activeSessions;
   const section = document.getElementById('games-in-progress');
   const list = document.getElementById('gip-list');
   if (!section || !list) return;
@@ -1383,7 +1474,6 @@ function closeHistory() {
 }
 
 function renderHistory() {
-  const history = JSON.parse(localStorage.getItem('sz-history') || '[]');
   const container = document.getElementById('history-list');
   if (!container) return;
 
@@ -1475,7 +1565,6 @@ function switchStatsTab(tab) {
 }
 
 function computePlayerStats(playerId) {
-  const history = JSON.parse(localStorage.getItem('sz-history') || '[]');
   const sessions = history.filter(e => e.players.some(p => p.id === playerId));
   const gamesPlayed = sessions.length;
 
@@ -1590,7 +1679,6 @@ function selectH2HPlayer(side, id) {
 }
 
 function computeHeadToHead(idA, idB) {
-  const history = JSON.parse(localStorage.getItem('sz-history') || '[]');
   const shared = history.filter(e =>
     e.players.some(p => p.id === idA) && e.players.some(p => p.id === idB)
   );
@@ -1691,6 +1779,7 @@ function finalizeSession() {
     id: currentSessionId,
     date: new Date().toISOString().split('T')[0],
     game: sessionGame.name,
+    gameId: sessionGame?.id ?? null,
     mode: scoreMode,
     ...(scoreMode === 'winlose' ? { outcome: sessionOutcome } : { lowScoreWins: lowWins }),
     players,
@@ -1707,10 +1796,9 @@ function finalizeSession() {
   saveResult(result);
 
   if (!isDemoMode()) {
-    const sessions = JSON.parse(localStorage.getItem('sz-active-sessions') || '[]');
-    localStorage.setItem('sz-active-sessions',
-      JSON.stringify(sessions.filter(s => s.id !== currentSessionId))
-    );
+    const removedId = currentSessionId;
+    activeSessions = activeSessions.filter(s => s.id !== removedId);
+    fetch(`/api/sessions/active/${removedId}`, { method: 'DELETE' }).catch(() => {});
   }
 
   currentSessionId = null;

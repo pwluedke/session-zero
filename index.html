@@ -45,6 +45,18 @@
       <button onclick="dismissGamesImportPrompt()" data-testid="games-import-no">No thanks</button>
     </div>
 
+    <div id="history-import-prompt" data-testid="history-import-prompt" class="vault-import-prompt hidden">
+      <span>We found play history on this device. Import it to your account?</span>
+      <button onclick="importLocalHistory()" data-testid="history-import-yes">Import</button>
+      <button onclick="dismissHistoryImportPrompt()" data-testid="history-import-no">No thanks</button>
+    </div>
+
+    <div id="active-sessions-import-prompt" data-testid="active-sessions-import-prompt" class="vault-import-prompt hidden">
+      <span>We found paused sessions on this device. Import them to your account?</span>
+      <button onclick="importLocalActiveSessions()" data-testid="active-sessions-import-yes">Import</button>
+      <button onclick="dismissActiveSessionsImportPrompt()" data-testid="active-sessions-import-no">No thanks</button>
+    </div>
+
     <section class="games-in-progress hidden" id="games-in-progress">
       <h2 class="section-label">Games in Progress</h2>
       <div id="gip-list" class="gip-list"></div>

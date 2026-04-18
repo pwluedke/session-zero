@@ -255,6 +255,167 @@ router.delete("/api/games/:id", async (req, res) => {
   }
 });
 
+// ── History ────────────────────────────────────────────────────────────────
+function normalizeHistoryEntry(row) {
+  const players = (row.players_data || []).filter(Boolean);
+  return {
+    id: row.id,
+    date: String(row.played_at).split('T')[0],
+    game: row.game_name,
+    mode: row.mode,
+    ...(row.mode === 'winlose' ? { outcome: row.outcome } : { lowScoreWins: row.low_score_wins }),
+    timerSeconds: row.duration_seconds,
+    players: players.map(sp => {
+      const p = { id: sp.player_id, name: sp.player_name };
+      if (row.mode !== 'winlose') { p.score = sp.score; p.winner = sp.winner; }
+      return p;
+    }),
+    feedback: Object.fromEntries(
+      players
+        .filter(sp => sp.feedback_rating || sp.feedback_play_again || sp.feedback_notes)
+        .map(sp => [sp.player_id, {
+          rating: sp.feedback_rating,
+          playAgain: sp.feedback_play_again,
+          notes: sp.feedback_notes,
+        }])
+    ),
+  };
+}
+
+async function insertHistoryEntry(client, userId, entry) {
+  await client.query(
+    `INSERT INTO sessions (id, user_id, game_name, game_id, played_at, duration_seconds, mode, outcome, low_score_wins)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO NOTHING`,
+    [entry.id, userId, entry.game, entry.gameId ?? null, entry.date,
+     entry.timerSeconds ?? 0, entry.mode ?? 'scores',
+     entry.outcome ?? null, entry.lowScoreWins ?? false]
+  );
+  for (const p of (entry.players || [])) {
+    const fb = entry.feedback?.[p.id] ?? {};
+    await client.query(
+      `INSERT INTO session_players (session_id, player_id, player_name, score, winner, feedback_rating, feedback_play_again, feedback_notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [entry.id, String(p.id), p.name, p.score ?? null, p.winner ?? false,
+       fb.rating ?? null, fb.playAgain ?? null, fb.notes ?? null]
+    );
+  }
+}
+
+router.get("/api/history", async (req, res) => {
+  if (!pool) return res.json([]);
+  try {
+    const { rows } = await pool.query(
+      `SELECT s.id, s.game_name, s.game_id, s.played_at, s.duration_seconds, s.mode, s.outcome, s.low_score_wins,
+              json_agg(json_build_object(
+                'player_id', sp.player_id, 'player_name', sp.player_name,
+                'score', sp.score, 'winner', sp.winner,
+                'feedback_rating', sp.feedback_rating, 'feedback_play_again', sp.feedback_play_again,
+                'feedback_notes', sp.feedback_notes
+              ) ORDER BY sp.id) AS players_data
+       FROM sessions s
+       LEFT JOIN session_players sp ON sp.session_id = s.id
+       WHERE s.user_id = $1
+       GROUP BY s.id
+       ORDER BY s.played_at DESC, s.created_at DESC`,
+      [req.user.id]
+    );
+    res.json(rows.map(normalizeHistoryEntry));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/api/history/sync", async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "Database not available" });
+  try {
+    const arr = req.body;
+    if (!Array.isArray(arr)) return res.status(400).json({ error: "Expected array" });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const entry of arr) await insertHistoryEntry(client, req.user.id, entry);
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+    res.json({ count: arr.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/api/history", async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "Database not available" });
+  try {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await insertHistoryEntry(client, req.user.id, req.body);
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+    res.status(201).json({});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Active Sessions ────────────────────────────────────────────────────────
+router.get("/api/sessions/active", async (req, res) => {
+  if (!pool) return res.json([]);
+  try {
+    const { rows } = await pool.query(
+      "SELECT data FROM active_sessions WHERE user_id = $1 ORDER BY paused_at DESC",
+      [req.user.id]
+    );
+    res.json(rows.map(r => r.data));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/api/sessions/active", async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "Database not available" });
+  try {
+    const state = req.body;
+    await pool.query(
+      `INSERT INTO active_sessions (id, user_id, data, paused_at) VALUES ($1, $2, $3, $4)
+       ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, paused_at = EXCLUDED.paused_at`,
+      [state.id, req.user.id, JSON.stringify(state), state.pausedAt ?? new Date().toISOString()]
+    );
+    res.json({});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete("/api/sessions/active/:id", async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "Database not available" });
+  try {
+    await pool.query(
+      "DELETE FROM active_sessions WHERE id = $1 AND user_id = $2",
+      [req.params.id, req.user.id]
+    );
+    res.json({});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Spotify ────────────────────────────────────────────────────────────────
 let spotifyToken = null;
 let spotifyTokenExpiry = 0;

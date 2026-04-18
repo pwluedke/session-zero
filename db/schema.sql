@@ -54,3 +54,35 @@ CREATE TABLE IF NOT EXISTS settings (
   bgg_last_sync       TEXT,
   bgg_last_sync_count INTEGER
 );
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id               TEXT PRIMARY KEY,
+  user_id          INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  game_name        TEXT NOT NULL,
+  game_id          INTEGER REFERENCES games(id) ON DELETE SET NULL,
+  played_at        DATE NOT NULL,
+  duration_seconds INTEGER NOT NULL DEFAULT 0,
+  mode             TEXT NOT NULL DEFAULT 'scores',
+  outcome          TEXT,
+  low_score_wins   BOOLEAN DEFAULT FALSE,
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS session_players (
+  id                   SERIAL PRIMARY KEY,
+  session_id           TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+  player_id            TEXT NOT NULL,
+  player_name          TEXT NOT NULL,
+  score                INTEGER,
+  winner               BOOLEAN DEFAULT FALSE,
+  feedback_rating      INTEGER,
+  feedback_play_again  TEXT,
+  feedback_notes       TEXT
+);
+
+CREATE TABLE IF NOT EXISTS active_sessions (
+  id        TEXT PRIMARY KEY,
+  user_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  data      JSONB NOT NULL,
+  paused_at TIMESTAMPTZ
+);
