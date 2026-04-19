@@ -39,6 +39,7 @@ app.use(passport.session());
 app.use(require("./middleware/requireAuth"));
 
 app.use(require("./routes/auth"));
+app.use(require("./routes/admin"));
 app.use(require("./routes/api"));
 app.use(require("./routes/static"));
 

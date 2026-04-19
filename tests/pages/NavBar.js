@@ -10,13 +10,15 @@ class NavBar {
     this.navLibrary    = page.getByTestId('nav-library');
     this.navHistory    = page.getByTestId('nav-history');
     this.navProfile    = page.getByTestId('nav-profile');
+    this.navAdmin      = page.getByTestId('nav-admin');
 
     // Mobile nav (below 768px)
-    this.mobileNav         = page.getByTestId('mobile-nav');
-    this.mobileNavHome     = page.getByTestId('mobile-nav-home');
-    this.mobileNavLibrary  = page.getByTestId('mobile-nav-library');
-    this.mobileNavHistory  = page.getByTestId('mobile-nav-history');
-    this.mobileNavProfile  = page.getByTestId('mobile-nav-profile');
+    this.mobileNav          = page.getByTestId('mobile-nav');
+    this.mobileNavHome      = page.getByTestId('mobile-nav-home');
+    this.mobileNavLibrary   = page.getByTestId('mobile-nav-library');
+    this.mobileNavHistory   = page.getByTestId('mobile-nav-history');
+    this.mobileNavProfile   = page.getByTestId('mobile-nav-profile');
+    this.mobileNavAdmin     = page.getByTestId('mobile-nav-admin');
   }
 
   async expectDesktopNavVisible() {

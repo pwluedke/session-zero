@@ -70,3 +70,31 @@ Read at the start of every session using /reflect.
 - The `req.user` undefined errors in server logs during tests are pre-existing (settings route hits real server in test mode) -- not caused by this session's work.
 
 ---
+
+## 2026-04-18 (evening)
+
+### Completed
+- PR #145 merged: Add user approval gate (#139). New OAuth users land in a `pending` state (`approved = FALSE`) and are redirected to `pending.html` with a sign-out link. `requireAuth` blocks unapproved users with redirect (pages) or 403 (API). Existing users unaffected via `DEFAULT TRUE` migration. 4 new Jest unit tests, 1 new Playwright test for the `/pending` route. Total tests: 62 Playwright + 4 Jest.
+- PR #148 merged: Fix logout session persistence and Google account picker (fix/auth-logout-and-account-picker). Two bugs in `routes/auth.js`: (1) `req.session.destroy()` was called outside the `req.logout()` callback, so the session survived logout and looped back to `/pending`; (2) Google OAuth was auto-selecting the last account rather than showing the picker -- fixed with `prompt=select_account`.
+
+### Decisions made
+- Approval gate uses `approved BOOLEAN DEFAULT TRUE` so existing users are not locked out on migration; only new signups start unapproved.
+- `requireAuth` handles unapproved users inline (no separate middleware) -- redirects HTML requests to `/pending`, returns 403 for API requests.
+- `pending.html` is a static page served without auth so unapproved users can reach it and sign out.
+- `prompt=select_account` added permanently to Google OAuth -- always show account picker, never auto-select.
+- Post-deploy step required: delete test users and set `role='admin'` on Paul's account manually via SQL.
+
+### In progress
+- No open PRs. All branches merged to main.
+
+### Up next
+- Pick up PWA support (#130): `manifest.json`, service worker, iOS/Android meta tags.
+- Consider implementing role-based access (`role` column already on users table) if admin features are needed.
+- Run /reflect at the start of next session.
+
+### Notes
+- The logout bug (session surviving `req.logout()`) was caught because unapproved users could not escape the `/pending` loop even after signing out. Root cause: async `destroy()` must be called inside the `req.logout(done)` callback, not after it.
+- `routes/auth.js` is now the only file changed on the merged branch -- a clean, minimal fix.
+- Post-deploy SQL checklist is in the PR #145 description for reference if new test users need to be cleaned up again.
+
+---

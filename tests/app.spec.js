@@ -1224,3 +1224,41 @@ test('pending page shows account pending message', async ({ page }) => {
   await pending.goto();
   await pending.expectMessage();
 });
+
+// ── Admin nav ──────────────────────────────────────────────────────────────
+
+test('admin nav item is visible for admin users', async ({ page }) => {
+  const nav = new NavBar(page);
+  await page.route('**/api/me', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ display_name: 'Admin', email: 'admin@test.com', avatar_url: null, role: 'admin' }),
+  }));
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+  await expect(nav.navAdmin).toBeVisible();
+});
+
+test('admin nav item is not visible for regular users', async ({ page }) => {
+  const nav = new NavBar(page);
+  await page.route('**/api/me', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ display_name: 'User', email: 'user@test.com', avatar_url: null, role: 'user' }),
+  }));
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+  await expect(nav.navAdmin).not.toBeVisible();
+});
+
+test('admin nav item is not visible when role is absent', async ({ page }) => {
+  const nav = new NavBar(page);
+  await page.route('**/api/me', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ display_name: 'User', email: 'user@test.com', avatar_url: null }),
+  }));
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+  await expect(nav.navAdmin).not.toBeVisible();
+});

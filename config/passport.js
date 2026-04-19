@@ -1,5 +1,6 @@
 const passport = require("passport");
 const { Strategy: GoogleStrategy } = require("passport-google-oauth20");
+const { Resend } = require("resend");
 const pool = require("../db/index");
 
 passport.serializeUser((user, done) => {
@@ -48,7 +49,27 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
               profile.photos[0]?.value ?? null,
             ]
           );
-          done(null, inserted.rows[0]);
+          const newUser = inserted.rows[0];
+
+          if (
+            process.env.NODE_ENV !== "test" &&
+            process.env.RESEND_API_KEY &&
+            process.env.ADMIN_EMAIL
+          ) {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            resend.emails
+              .send({
+                from: "Session Zero <noreply@somanygames.app>",
+                to: process.env.ADMIN_EMAIL,
+                subject: "New user pending approval",
+                text: `New user signed up:\nName: ${newUser.display_name}\nEmail: ${newUser.email}\n\nApprove them in the admin panel at https://somanygames.app/admin`,
+              })
+              .catch((err) =>
+                console.error("[Auth] Failed to send new user notification:", err.message)
+              );
+          }
+
+          done(null, newUser);
         } catch (err) {
           console.error("[Auth] Database error during authentication:", err.message);
           done(null, false);
