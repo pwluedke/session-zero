@@ -43,6 +43,25 @@ brew services start postgresql@16
 createdb session_zero_dev
 ```
 
+### Managing the local database
+
+Start Postgres:
+```bash
+brew services start postgresql@16
+```
+
+Stop Postgres:
+```bash
+brew services stop postgresql@16
+```
+
+Check status:
+```bash
+brew services list
+```
+
+Postgres starts automatically on login by default after the initial `brew services start`. If it doesn't start after a Mac restart, run `brew services start postgresql@16` again.
+
 ### Configure .env
 Create a `.env` file in the project root. For local development, point `DATABASE_URL` at your local instance:
 
