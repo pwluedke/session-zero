@@ -86,6 +86,7 @@ if (!isDemoMode()) {
   initGames();
   initHistory();
   initActiveSessions();
+  initAdminNav();
 }
 
 // ── Navigation ─────────────────────────────────────────────────────────────
@@ -122,6 +123,10 @@ function navProfile() {
   closeAllSections();
   openProfile();
   setActiveNav('profile');
+}
+
+function navAdmin() {
+  window.location.href = '/admin';
 }
 
 // ── Player Vault ───────────────────────────────────────────────────────────
@@ -769,6 +774,18 @@ function toggleSetting(key) {
 
 function applySettings() {
   document.body.classList.toggle('hide-why', !settings.showWhyBtn);
+}
+
+async function initAdminNav() {
+  try {
+    const res = await fetch('/api/me');
+    if (!res.ok) return;
+    const { role } = await res.json();
+    if (role === 'admin') {
+      document.querySelector('[data-testid="nav-admin"]')?.classList.remove('hidden');
+      document.querySelector('[data-testid="mobile-nav-admin"]')?.classList.remove('hidden');
+    }
+  } catch {}
 }
 
 // ── Profile Section ─────────────────────────────────────────────────────────

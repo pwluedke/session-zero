@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Session Zero - Admin</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .landing-card {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 16px;
+      padding: 3rem 2.5rem;
+      text-align: center;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .landing-card h1 {
+      font-size: 2rem;
+      color: #f5c842;
+      margin-bottom: 0.5rem;
+    }
+
+    .landing-card .tagline {
+      color: #9a9ab0;
+      font-size: 0.95rem;
+      margin-bottom: 2.5rem;
+      font-style: italic;
+    }
+
+    .admin-message {
+      color: #c0c0d0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .back-link {
+      color: #4a4a6a;
+      font-size: 0.85rem;
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      color: #9a9ab0;
+    }
+  </style>
+</head>
+<body>
+  <div class="landing-card" data-testid="admin-page">
+    <h1>Session Zero</h1>
+    <p class="tagline">So many games, so little night.</p>
+    <p class="admin-message" data-testid="admin-message">
+      Admin panel coming soon.
+    </p>
+    <a href="/" class="back-link">Back to app</a>
+  </div>
+</body>
+</html>
