@@ -98,3 +98,28 @@ Read at the start of every session using /reflect.
 - Post-deploy SQL checklist is in the PR #145 description for reference if new test users need to be cleaned up again.
 
 ---
+
+## 2026-04-18 (night)
+
+### Completed
+- PR #149 merged: Add admin role system and new user email notifications (feature/admin-role-and-permissions). `role` column on users table put to use; admin-gated routes and email notification logic added.
+- `/start local` and `/stop local` subcommands added to `.claude/commands/`. `/stop local` kills whatever is on port 3000; `/start local` validates `.env` and starts the server.
+- `CLAUDE.md` updated with a "Local database" section noting that `DATABASE_URL` must point at the local Postgres instance during development, never at Railway.
+- `docs/process.md` updated with start/stop/status commands for local Postgres (`brew services start/stop postgresql@16`, `brew services list`). Committed and pushed directly to main (docs only).
+
+### Decisions made
+- Docs-only changes (process.md) pushed directly to main without a PR -- acceptable for pure documentation with no code impact.
+- `/start` and `/stop` use a `local` subcommand argument to distinguish from future remote variants.
+
+### In progress
+- Nothing open. All branches merged.
+
+### Up next
+- Pick up PWA support (#130): `manifest.json`, service worker, iOS/Android meta tags.
+- Run /reflect at the start of next session.
+
+### Notes
+- `/stop local` pattern: `kill -9 $(lsof -t -i:3000) 2>/dev/null` -- graceful if nothing is running.
+- The `local` vs remote subcommand distinction is not yet implemented for remote -- just a naming convention for now.
+
+---
