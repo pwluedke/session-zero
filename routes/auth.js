@@ -24,7 +24,7 @@ router.get("/auth/google", (req, res, next) => {
   if (!process.env.GOOGLE_CLIENT_ID) {
     return res.status(503).json({ error: "OAuth not configured" });
   }
-  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+  passport.authenticate("google", { scope: ["profile", "email"], prompt: "select_account" })(req, res, next);
 });
 
 router.get(
@@ -38,7 +38,9 @@ router.get(
 
 router.get("/auth/logout", (req, res) => {
   req.logout(() => {
-    res.redirect("/login");
+    req.session.destroy(() => {
+      res.redirect("/login");
+    });
   });
 });
 
