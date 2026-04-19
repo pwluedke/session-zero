@@ -123,3 +123,47 @@ Read at the start of every session using /reflect.
 - The `local` vs remote subcommand distinction is not yet implemented for remote -- just a naming convention for now.
 
 ---
+
+## 2026-04-18 (late night)
+
+### Completed
+- Resend domain verification completed for somanygames.app -- DKIM verified, SPF and DMARC records added to Porkbun DNS. New user approval email confirmed working end-to-end locally and in production.
+- Local Postgres development environment set up -- `session_zero_dev` database created, `DATABASE_URL` in `.env` updated to point at local instance. App no longer develops against Railway production database.
+- TablePlus configured with two saved connections: `session-zero-local` (local dev) and `session-zero-railway` (production, handle with care).
+- `docs/process.md` updated with full local development environment setup including database connection details and TablePlus configuration.
+- Issues closed: #6 (superseded by #135), #142 (absorbed into #147 and #141).
+- Issues created: #132 (BGG rating display), #133 (Table Rating), #134 (complexity fix), #135 (Epic: Intelligent Suggestion Engine), #136-#138 (suggestion engine skeleton issues), #139-#143 (admin/approval cluster), #144 (weighted scoring), #147 (Why? toggle to admin).
+- Epic housekeeping: #136, #137, #138, #144 linked to #135. #103 and #113 linked to #102. #147 epic updated from #20 to #21.
+- Portfolio plan document overhauled -- weekly structure removed, replaced with priority-based structure reflecting current state.
+- Google AI Essentials certificate started.
+- Prompt Engineering for Generative AI (LinkedIn) -- completed.
+
+### Decisions made
+- Local development always uses local Postgres (`session_zero_dev`). Railway DATABASE_URL is production -- never used locally.
+- `games.json` is demo-only going forward. New users see an empty library with a BGG sync prompt. No seeding from games.json on first login.
+- All user-facing AI features gated behind a single `ai_enabled` boolean per user (not separate per-feature flags). Covers Why?, suggestion engine, and any future AI features.
+- `ai_daily_limit` integer on users table (null = unlimited, default 20) controls rate limiting per user. Configured per user in admin panel.
+- Table Rating chosen as the name for group session average ratings (10-point scale, matches BGG).
+- Full AI suggestion engine (Option A) approved -- Claude receives all context and returns ranked suggestions with scores and explanations. Not the current backwards flow of suggest-then-explain.
+- All CI-facing AI (failure analyzer, release notes) is not controlled by user-facing feature flags -- managed in code and environment variables only.
+- Resend chosen for transactional email. Domain verification required SPF, DKIM, and DMARC records in Porkbun DNS.
+- 0 = unlimited rejected for ai_daily_limit in favor of null = unlimited (industry standard pattern).
+
+### In progress
+- #140 merged (admin role + email notification).
+- #141 (admin panel UI) -- next in the admin cluster, depends on #140.
+- Resend SPF records still propagating in Porkbun DNS -- DKIM already verified.
+
+### Up next
+- Plan and implement #141 (admin panel UI) -- user management, approve/deny, ai_enabled checkbox, ai_daily_limit input.
+- Plan and implement #147 (move Why? toggle to admin, replace with ai_enabled).
+- Run /reflect at the start of next session.
+
+### Notes
+- Never point DATABASE_URL at Railway credentials locally -- that is live production data.
+- TablePlus Cmd+T opens a new SQL query tab. Cmd+R refreshes the table view.
+- Resend fires on INSERT path only (new users) -- not on SELECT path (returning users). If email doesn't fire, check if the user already exists in the database.
+- `prompt=select_account` on Google OAuth means the account picker always shows -- essential for testing with multiple accounts.
+- The admin cluster dependency order is: #139 (done) → #140 (done) → #143 (done) → #141 → #147 → #142 (now redundant, absorbed into #141/#147).
+- Suggestion engine issues #136-#138 and #144 all tagged do-not-implement -- skeleton only until the ratings and real-world signals work is complete.
+- /reflect will suggest PWA as next up based on older diary entries -- ignore it. Current priority is #141 admin panel UI.
