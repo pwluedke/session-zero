@@ -62,6 +62,9 @@ Entry point. Sets up Express middleware in this exact order -- do not reorder:
 12. routes/static.js
 13. app.listen()
 
+### Database
+Local development uses a local Postgres instance (session_zero_dev). Never point DATABASE_URL at Railway when running locally -- that is the production database. Railway credentials are for production only.
+
 ### Routes
 - `POST /api/why` - streams Claude API recommendation explanation
 - `GET /api/spotify/playlist` - fetches Spotify playlists by game name
