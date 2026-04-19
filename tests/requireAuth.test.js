@@ -1,7 +1,7 @@
 const requireAuth = require('../middleware/requireAuth');
 
-function makeReq(path, authenticated = false) {
-  return { path, isAuthenticated: () => authenticated };
+function makeReq(path, authenticated = false, user = null) {
+  return { path, isAuthenticated: () => authenticated, user };
 }
 
 function makeRes() {
@@ -81,7 +81,41 @@ test('returns 401 JSON for unauthenticated API requests', () => {
 test('passes through authenticated request for /', () => {
   const next = jest.fn();
   const res  = makeRes();
-  requireAuth(makeReq('/', true), res, next);
+  requireAuth(makeReq('/', true, { approved: true }), res, next);
+  expect(next).toHaveBeenCalledTimes(1);
+  expect(res.redirect).not.toHaveBeenCalled();
+});
+
+// ── Approval gate ──────────────────────────────────────────────────────────
+test('redirects unauthenticated request to /login', () => {
+  const next = jest.fn();
+  const res  = makeRes();
+  requireAuth(makeReq('/'), res, next);
+  expect(res.redirect).toHaveBeenCalledWith('/login');
+  expect(next).not.toHaveBeenCalled();
+});
+
+test('authenticated but unapproved page request redirects to /pending', () => {
+  const next = jest.fn();
+  const res  = makeRes();
+  requireAuth(makeReq('/', true, { approved: false }), res, next);
+  expect(res.redirect).toHaveBeenCalledWith('/pending');
+  expect(next).not.toHaveBeenCalled();
+});
+
+test('authenticated but unapproved API request returns 403', () => {
+  const next = jest.fn();
+  const res  = makeRes();
+  requireAuth(makeReq('/api/games', true, { approved: false }), res, next);
+  expect(res.status).toHaveBeenCalledWith(403);
+  expect(res.json).toHaveBeenCalledWith({ error: 'Account pending approval' });
+  expect(next).not.toHaveBeenCalled();
+});
+
+test('authenticated and approved request calls next', () => {
+  const next = jest.fn();
+  const res  = makeRes();
+  requireAuth(makeReq('/', true, { approved: true }), res, next);
   expect(next).toHaveBeenCalledTimes(1);
   expect(res.redirect).not.toHaveBeenCalled();
 });

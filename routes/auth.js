@@ -9,6 +9,10 @@ router.get("/login", (req, res) => {
   res.sendFile(path.join(__dirname, "../login.html"));
 });
 
+router.get("/pending", (req, res) => {
+  res.sendFile(path.join(__dirname, "../pending.html"));
+});
+
 router.get("/demo", (req, res) => {
   res.sendFile(path.join(__dirname, "../index.html"));
 });
@@ -27,6 +31,7 @@ router.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
+    if (!req.user.approved) return res.redirect("/pending");
     res.redirect("/");
   }
 );
