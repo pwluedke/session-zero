@@ -583,18 +583,7 @@ function parseBGGXml(xml) {
     const playsMatch = block.match(/<numplays>(\d+)<\/numplays>/);
     const played = playsMatch ? parseInt(playsMatch[1]) > 0 : false;
 
-    const weightMatch = block.match(/<averageweight\s+value="([^"]*)"/);
     let complexity = "Medium";
-    if (weightMatch && weightMatch[1] !== "0") {
-      const w = parseFloat(weightMatch[1]);
-      if (!isNaN(w) && w > 0) {
-        if      (w < 2.0) complexity = "Light";
-        else if (w < 2.5) complexity = "Medium Light";
-        else if (w < 3.5) complexity = "Medium";
-        else if (w < 4.0) complexity = "Medium Heavy";
-        else              complexity = "Heavy";
-      }
-    }
 
     const playTime = maxPlaytime || minPlaytime || 60;
 
@@ -616,6 +605,45 @@ function parseBGGXml(xml) {
   }
 
   return games.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// averageweight is not in the collection API -- requires a separate Thing API call.
+// Batches IDs in groups of 20 to avoid oversized requests.
+async function fetchBGGWeights(bggIds, token) {
+  const weights = new Map();
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const BATCH = 20;
+
+  for (let i = 0; i < bggIds.length; i += BATCH) {
+    const batch = bggIds.slice(i, i + BATCH);
+    const url = `https://boardgamegeek.com/xmlapi2/thing?id=${batch.join(",")}&stats=1`;
+    try {
+      const res = await fetch(url, { headers });
+      if (!res.ok) continue;
+      const xml = await res.text();
+      const parts = xml.split("<item ");
+      for (let j = 1; j < parts.length; j++) {
+        const block = "<item " + parts[j];
+        const idMatch = block.match(/\bid="(\d+)"/);
+        if (!idMatch) continue;
+        const id = parseInt(idMatch[1]);
+        const wMatch = block.match(/<averageweight\s+value="([^"]*)"/);
+        if (!wMatch || wMatch[1] === "0") continue;
+        const w = parseFloat(wMatch[1]);
+        if (isNaN(w) || w <= 0) continue;
+        let label = "Medium";
+        if      (w < 2.0) label = "Light";
+        else if (w < 2.5) label = "Medium Light";
+        else if (w < 3.5) label = "Medium";
+        else if (w < 4.0) label = "Medium Heavy";
+        else              label = "Heavy";
+        weights.set(id, label);
+      }
+    } catch {
+      // batch failed -- those games keep default "Medium"
+    }
+  }
+  return weights;
 }
 
 router.get("/api/bgg/collection", async (req, res) => {
@@ -665,6 +693,17 @@ router.get("/api/bgg/collection", async (req, res) => {
   }
 
   const games = parseBGGXml(xml);
+
+  const bggIds = games.map(g => g.bggId).filter(Boolean);
+  if (bggIds.length > 0) {
+    const weights = await fetchBGGWeights(bggIds, process.env.BGG_API_TOKEN);
+    for (const game of games) {
+      if (game.bggId && weights.has(game.bggId)) {
+        game.complexity = weights.get(game.bggId);
+      }
+    }
+  }
+
   res.json({ games, count: games.length });
 });
 
