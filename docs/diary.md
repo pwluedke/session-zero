@@ -202,3 +202,44 @@ Read at the start of every session using /reflect.
 - Never run the seed script with a Railway `DATABASE_URL` -- the guard exits immediately.
 - Multiple concurrent Playwright runs caused port 3000 contention and false failures during this session. Always kill the dev server before running tests (`/stop local`), and never run two Playwright processes simultaneously.
 - The admin cluster dependency order is now complete: #139 done → #140 done → #143 done → #141 done → **#147** next.
+
+---
+
+## 2026-04-20
+
+### Completed
+- PR #151 opened: Move Why? toggle from Settings to admin-controlled `ai_enabled` flag (feature/why-btn-to-admin, Closes #147).
+  - `show_why_btn` column dropped from `settings` table via `ALTER TABLE settings DROP COLUMN IF EXISTS show_why_btn` in `schema.sql`.
+  - New OAuth users explicitly set `ai_enabled = FALSE` in `config/passport.js` INSERT.
+  - `initAdminNav()` renamed to `initUserState()` in `app.js`; now reads both `role` and `ai_enabled` from `/api/me` and toggles `hide-why` CSS class on body.
+  - AI Features settings row removed from `index.html`.
+  - `SettingsModal` page object cleaned of `whyBtn`, `toggleWhyBtn()`, `expectWhyBtnOn/Off()`.
+  - Two new Playwright tests replacing old Why? toggle tests: "Why? button is hidden when ai_enabled is false", "Why? button is visible when ai_enabled is true". 74/74 passing.
+- Design decision note appended to 2026-04-19 diary entry: AI suggestion engine returns exactly 3 recommendations, not 5.
+- Comment posted on GitHub issue #135 with the same design decision rationale.
+- `scripts/seed-dev.js` fully rewritten: resets all non-admin data, then seeds 1 test user (`TEST_USER_EMAIL`), 6 Dungeon Crawler Carl players, 18 games, 67 sessions with 7 hardcoded story patterns, and 1 paused Root active session (212 session_player rows). Uses `seedrandom` npm package with seed `'dungeon-crawler-carl'` for deterministic data.
+- `.claude/commands/test.md` added: `/test #N` command checks out a PR branch and starts the server.
+- `seedrandom` added to `package.json`.
+
+### Decisions made
+- **Seed script is now destructive (RESET)**: deletes all non-admin users and their data before seeding. Designed for repeated use during stats dashboard development -- a clean slate every run.
+- **7 hardcoded story patterns** in seed data to support stats dashboard QA: Carl's Small World dominance, Princess Donut hates Catan, the forgotten Everdell gem, Katia's coop streak, Prepotente's suspicious win rate, recent Wingspan/Azul hot streak, Ticket to Ride rivalry between Carl and Mordecai.
+- **Everdell and Catan excluded from random fill** to preserve their story integrity ("forgotten gem" must never appear in recent sessions; "all Catan sessions" must follow the PD-hates-Catan pattern).
+- **Coop games excluded from random fill** so Katia's coop streak pattern holds -- every coop session includes Katia.
+- **Prepotente excluded from random fill players** -- only 5 total sessions to make the suspicious win rate stat visible.
+
+### In progress
+- PR #151 open (feature/why-btn-to-admin): Closes #147. Branch pushed, awaiting manual testing and merge.
+- Local DB seeded with comprehensive test dataset. Server running on feature/why-btn-to-admin for manual testing.
+
+### Up next
+- Manually test PR #151 at localhost:3000 -- verify Why? button visibility is controlled by `ai_enabled`, not the Settings toggle.
+- Merge PR #151 once manual testing passes.
+- Plan and implement stats dashboard (issue TBD) using the seeded dataset.
+- Run /reflect at the start of next session.
+
+### Notes
+- `node scripts/seed-dev.js` now resets all data on every run. Do not run it if you have data you want to keep.
+- The `TEST_USER_EMAIL` env var must be set (already present as `zerosession0@gmail.com` in `.env`). Sign in with that Google account via OAuth to test as the seeded user.
+- Active session for Root is in the DB with `id = 'seed-active-001'`. It will appear in the UI if the resume session flow is wired up.
+- Session mode values used in seed: `'points'` and `'winlose'` (matches app's `scoreMode` defaults, not the schema's `DEFAULT 'scores'`). Worth verifying this doesn't cause display issues in the stats dashboard.
