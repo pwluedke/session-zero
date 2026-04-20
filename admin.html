@@ -7,62 +7,397 @@
   <link rel="stylesheet" href="/style.css" />
   <style>
     body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
       padding: 2rem 1rem;
     }
 
-    .landing-card {
-      background: #16213e;
-      border: 1px solid #0f3460;
-      border-radius: 16px;
-      padding: 3rem 2.5rem;
-      text-align: center;
-      width: 100%;
-      max-width: 420px;
+    .admin-wrap {
+      max-width: 760px;
+      margin: 0 auto;
     }
 
-    .landing-card h1 {
-      font-size: 2rem;
-      color: #f5c842;
-      margin-bottom: 0.5rem;
-    }
-
-    .landing-card .tagline {
-      color: #9a9ab0;
-      font-size: 0.95rem;
-      margin-bottom: 2.5rem;
-      font-style: italic;
-    }
-
-    .admin-message {
-      color: #c0c0d0;
-      font-size: 0.95rem;
-      line-height: 1.6;
+    .admin-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
       margin-bottom: 2rem;
     }
 
+    .admin-header h1 {
+      margin-bottom: 0;
+    }
+
     .back-link {
-      color: #4a4a6a;
+      color: #9a9ab0;
       font-size: 0.85rem;
       text-decoration: none;
     }
 
     .back-link:hover {
+      color: #e0e0e0;
+    }
+
+    .admin-section {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .admin-section h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f5c842;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 1rem;
+    }
+
+    .bulk-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .user-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #0f3460;
+    }
+
+    .user-row:last-child {
+      border-bottom: none;
+    }
+
+    .user-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e0e0e0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-email {
+      font-size: 0.78rem;
       color: #9a9ab0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .ai-limit-input {
+      width: 72px;
+      padding: 0.25rem 0.4rem;
+      background: #1a1a2e;
+      border: 1px solid #0f3460;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-family: inherit;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    .ai-limit-input:focus {
+      outline: none;
+      border-color: #f5c842;
+    }
+
+    .ai-limit-label {
+      font-size: 0.78rem;
+      color: #9a9ab0;
+    }
+
+    .ai-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.82rem;
+      color: #9a9ab0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .ai-toggle input[type="checkbox"] {
+      accent-color: #f5c842;
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    .btn {
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: opacity 0.15s;
+    }
+
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .btn-approve {
+      background: rgba(93, 214, 122, 0.15);
+      border-color: #5dd67a;
+      color: #5dd67a;
+    }
+
+    .btn-approve:hover:not(:disabled) {
+      background: rgba(93, 214, 122, 0.25);
+    }
+
+    .btn-deny, .btn-revoke {
+      background: rgba(224, 82, 82, 0.15);
+      border-color: #e05252;
+      color: #e05252;
+    }
+
+    .btn-deny:hover:not(:disabled),
+    .btn-revoke:hover:not(:disabled) {
+      background: rgba(224, 82, 82, 0.25);
+    }
+
+    .btn-bulk {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: #0f3460;
+      color: #9a9ab0;
+      font-size: 0.82rem;
+    }
+
+    .btn-bulk:hover {
+      color: #e0e0e0;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .empty-state {
+      color: #4a4a6a;
+      font-size: 0.88rem;
+      font-style: italic;
+      padding: 0.5rem 0;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .status-msg {
+      font-size: 0.78rem;
+      color: #9a9ab0;
+      margin-top: 0.75rem;
+      min-height: 1em;
     }
   </style>
 </head>
 <body>
-  <div class="landing-card" data-testid="admin-page">
-    <h1>Session Zero</h1>
-    <p class="tagline">So many games, so little night.</p>
-    <p class="admin-message" data-testid="admin-message">
-      Admin panel coming soon.
-    </p>
-    <a href="/" class="back-link">Back to app</a>
+  <div class="admin-wrap" data-testid="admin-page">
+    <div class="admin-header">
+      <h1>Admin Panel</h1>
+      <a href="/" class="back-link">Back to app</a>
+    </div>
+
+    <section class="admin-section" data-testid="pending-section">
+      <h2>Pending Approval</h2>
+      <div data-testid="pending-list"></div>
+      <p class="empty-state hidden" data-testid="pending-empty">No users pending approval.</p>
+    </section>
+
+    <section class="admin-section" data-testid="active-section">
+      <h2>Active Users</h2>
+      <div class="bulk-actions">
+        <button class="btn btn-bulk" data-testid="enable-ai-all">Enable AI for all</button>
+        <button class="btn btn-bulk" data-testid="disable-ai-all">Disable AI for all</button>
+      </div>
+      <div data-testid="active-list"></div>
+      <p class="empty-state hidden" data-testid="active-empty">No active users.</p>
+      <p class="status-msg hidden" data-testid="bulk-status"></p>
+    </section>
   </div>
+
+  <script>
+    let currentUserId = null;
+
+    async function init() {
+      try {
+        const meRes = await fetch('/api/me');
+        if (meRes.ok) {
+          const me = await meRes.json();
+          currentUserId = me.id;
+        }
+      } catch {}
+      await loadUsers();
+    }
+
+    async function loadUsers() {
+      const res = await fetch('/api/admin/users');
+      if (!res.ok) return;
+      const users = await res.json();
+
+      const pending = users.filter(u => !u.approved);
+      const active  = users.filter(u => u.approved);
+
+      renderPending(pending);
+      renderActive(active);
+    }
+
+    function renderPending(users) {
+      const list  = document.querySelector('[data-testid="pending-list"]');
+      const empty = document.querySelector('[data-testid="pending-empty"]');
+      list.innerHTML = '';
+      if (users.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      users.forEach(u => {
+        const isSelf = u.id === currentUserId;
+        const row = document.createElement('div');
+        row.className = 'user-row';
+        row.dataset.testid = 'pending-user';
+        row.dataset.email = u.email;
+        row.innerHTML = `
+          <div class="user-info">
+            <div class="user-name">${esc(u.display_name || u.email)}</div>
+            <div class="user-email">${esc(u.email)}</div>
+          </div>
+          <div class="user-controls">
+            <button class="btn btn-approve" data-testid="approve-btn" data-user-id="${u.id}">Approve</button>
+            <button class="btn btn-deny" data-testid="deny-btn" data-user-id="${u.id}" ${isSelf ? 'disabled' : ''}>Deny</button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function renderActive(users) {
+      const list  = document.querySelector('[data-testid="active-list"]');
+      const empty = document.querySelector('[data-testid="active-empty"]');
+      list.innerHTML = '';
+      if (users.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      users.forEach(u => {
+        const isSelf = u.id === currentUserId;
+        const limitVal = u.ai_daily_limit != null ? u.ai_daily_limit : '';
+        const row = document.createElement('div');
+        row.className = 'user-row';
+        row.dataset.testid = 'active-user';
+        row.dataset.email = u.email;
+        row.innerHTML = `
+          <div class="user-info">
+            <div class="user-name">${esc(u.display_name || u.email)}</div>
+            <div class="user-email">${esc(u.email)}</div>
+          </div>
+          <div class="user-controls">
+            <label class="ai-toggle">
+              <input type="checkbox" data-testid="ai-enabled-checkbox" data-user-id="${u.id}" ${u.ai_enabled ? 'checked' : ''}>
+              AI
+            </label>
+            <input
+              type="number"
+              class="ai-limit-input"
+              data-testid="ai-daily-limit-input"
+              data-user-id="${u.id}"
+              value="${limitVal}"
+              placeholder="unlimited"
+              min="0"
+            />
+            <button class="btn btn-revoke" data-testid="revoke-btn" data-user-id="${u.id}" ${isSelf ? 'disabled' : ''}>Revoke</button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    async function apiPost(url) {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      return res.ok;
+    }
+
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-testid="approve-btn"],[data-testid="deny-btn"],[data-testid="revoke-btn"]');
+      if (!btn || btn.disabled) return;
+
+      const userId = btn.dataset.userId;
+      const action = btn.dataset.testid.replace('-btn', '');
+      const ok = await apiPost(`/api/admin/users/${userId}/${action}`);
+      if (ok) await loadUsers();
+    });
+
+    document.addEventListener('change', async (e) => {
+      const checkbox = e.target.closest('[data-testid="ai-enabled-checkbox"]');
+      if (!checkbox) return;
+      const userId = checkbox.dataset.userId;
+      const row = checkbox.closest('.user-row');
+      const limitInput = row.querySelector('[data-testid="ai-daily-limit-input"]');
+      const limitVal = limitInput.value.trim() === '' ? null : parseInt(limitInput.value);
+      await fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ai_enabled: checkbox.checked, ai_daily_limit: limitVal }),
+      });
+    });
+
+    document.addEventListener('change', async (e) => {
+      const input = e.target.closest('[data-testid="ai-daily-limit-input"]');
+      if (!input) return;
+      const userId = input.dataset.userId;
+      const row = input.closest('.user-row');
+      const checkbox = row.querySelector('[data-testid="ai-enabled-checkbox"]');
+      const limitVal = input.value.trim() === '' ? null : parseInt(input.value);
+      await fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ai_enabled: checkbox.checked, ai_daily_limit: limitVal }),
+      });
+    });
+
+    async function bulkAI(enabled) {
+      const res = await fetch('/api/admin/users/ai-bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ai_enabled: enabled }),
+      });
+      if (res.ok) {
+        const status = document.querySelector('[data-testid="bulk-status"]');
+        status.textContent = enabled ? 'AI enabled for all users.' : 'AI disabled for all users.';
+        status.classList.remove('hidden');
+        await loadUsers();
+      }
+    }
+
+    document.querySelector('[data-testid="enable-ai-all"]').addEventListener('click', () => bulkAI(true));
+    document.querySelector('[data-testid="disable-ai-all"]').addEventListener('click', () => bulkAI(false));
+
+    init();
+  </script>
 </body>
 </html>

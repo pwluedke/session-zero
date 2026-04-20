@@ -777,6 +777,7 @@ function applySettings() {
 }
 
 async function initAdminNav() {
+  if (isDemoMode()) return;
   try {
     const res = await fetch('/api/me');
     if (!res.ok) return;
