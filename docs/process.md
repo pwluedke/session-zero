@@ -275,6 +275,91 @@ When Playwright tests fail in GitHub Actions:
 2. Claude returns a structured report: what failed, probable root cause, affected file, suggested fix
 3. Report printed to CI logs and uploaded as a downloadable artifact
 
+## Manual Testing Workflow
+
+Manual testing verifies behavior that automated tests can't cover -- UI interactions, 
+auth flows, admin panel actions, and multi-user scenarios.
+
+### Setup
+
+1. Start local Postgres if not running:
+```bash
+brew services start postgresql@16
+```
+
+2. Seed the database with test data:
+```bash
+node scripts/seed-dev.js
+```
+
+3. Start the local server:
+```bash
+/start local
+```
+
+### Test users
+
+| Email | Role | Approved | AI Enabled | Purpose |
+|---|---|---|---|---|
+| $ADMIN_EMAIL (from .env) | admin | true | true | Admin panel, full access |
+| zerosession0@gmail.com | user | false | false | Pending approval flow |
+| alice@example.com | user | true | true | Approved user with AI |
+| bob@example.com | user | true | false | Approved user without AI |
+| carol@example.com | user | false | false | Pending user |
+| dave@example.com | user | false | false | Pending user |
+
+Note: alice, bob, carol, and dave are seeded with fake Google IDs and 
+cannot actually sign in via OAuth. They exist for database state testing 
+only -- use TablePlus to inspect their rows.
+
+For real OAuth testing, use the $ADMIN_EMAIL account (admin) and 
+zerosession0@gmail.com (pending user) in separate browser profiles.
+
+### Multi-user OAuth testing
+
+To test with two real Google accounts simultaneously:
+- Primary browser: sign in as $ADMIN_EMAIL (admin)
+- Incognito window: sign in as zerosession0@gmail.com (pending user)
+
+### After testing -- reset state
+
+To reset a user back to pending for re-testing the approval flow:
+```sql
+UPDATE users SET approved = false WHERE email = 'zerosession0@gmail.com';
+```
+
+To fully reset the local database:
+```sql
+-- Run in TablePlus
+DELETE FROM session;
+DELETE FROM session_players;
+DELETE FROM sessions;
+DELETE FROM active_sessions;
+DELETE FROM games;
+DELETE FROM players;
+DELETE FROM settings;
+DELETE FROM users WHERE email != 'your-admin-email'; -- use the value of ADMIN_EMAIL from .env
+```
+
+Then re-seed:
+```bash
+node scripts/seed-dev.js
+```
+
+### What to test manually
+
+These flows require manual testing and cannot be fully covered by Playwright:
+
+| Flow | How to test |
+|---|---|
+| New user approval email | Sign in with zerosession0@gmail.com, check $ADMIN_EMAIL inbox |
+| Admin panel approve/deny/revoke | Use admin panel at localhost:3000/admin |
+| Session invalidation on revoke | Active incognito session should redirect to /pending immediately |
+| AI feature flag behavior | Toggle ai_enabled in admin panel, verify Why? button appears/disappears |
+| BGG sync | Enter BGG username in Settings, click sync |
+| Spotify connection | Connect Spotify in Settings, verify music in session dashboard |
+| Demo mode | Visit localhost:3000/demo, verify no auth required |
+
 ---
 
 ## What This Demonstrates

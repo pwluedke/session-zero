@@ -11,10 +11,16 @@ if (url.includes("railway")) {
   process.exit(1);
 }
 
+const adminEmail = process.env.ADMIN_EMAIL;
+if (!adminEmail) {
+  console.error("ADMIN_EMAIL not set in .env -- cannot seed admin user.");
+  process.exit(1);
+}
+
 const pool = new Pool({ connectionString: url });
 
 const USERS = [
-  { google_id: "seed_paul_luedke",         email: "pwluedke@gmail.com",       display_name: "Paul Luedke",          approved: true,  role: "admin", ai_enabled: true,  ai_daily_limit: null },
+  { google_id: "seed_admin",                email: adminEmail,                 display_name: "Paul Luedke",          approved: true,  role: "admin", ai_enabled: true,  ai_daily_limit: null },
   { google_id: "seed_zerosession0",         email: "zerosession0@gmail.com",   display_name: "Session Zero Test",    approved: false, role: "user",  ai_enabled: false, ai_daily_limit: 20   },
   { google_id: "seed_alice_example_com",    email: "alice@example.com",        display_name: "Alice Approved",       approved: true,  role: "user",  ai_enabled: true,  ai_daily_limit: 10   },
   { google_id: "seed_bob_example_com",      email: "bob@example.com",          display_name: "Bob Approved",         approved: true,  role: "user",  ai_enabled: false, ai_daily_limit: 20   },
