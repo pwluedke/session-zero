@@ -109,6 +109,16 @@ Two saved connections:
 
 **Critical rule:** Never point `DATABASE_URL` at Railway credentials when running locally. The Railway database is production. Your family's real data lives there. Local development always uses the local Postgres instance.
 
+### Seed the local database
+
+Populate the local database with test users and data for manual testing:
+
+```bash
+node scripts/seed-dev.js
+```
+
+Never run this against production -- the script exits if `DATABASE_URL` contains `railway`.
+
 ### Running tests locally
 Never start `node server.js` before running Playwright tests. Playwright manages its own server with `NODE_ENV=test` via the `webServer` config. Running both simultaneously causes auth to bypass incorrectly and all tests fail on the login page.
 
