@@ -19,13 +19,15 @@ if (!adminEmail) {
 
 const pool = new Pool({ connectionString: url });
 
+// Do not seed real OAuth accounts -- they must sign in via Google to get a valid google_id.
+// zerosession0@gmail.com is intentionally excluded: sign in with that account via OAuth
+// to generate the pending-approval flow for manual testing.
 const USERS = [
-  { google_id: "seed_admin",                email: adminEmail,                 display_name: "Paul Luedke",          approved: true,  role: "admin", ai_enabled: true,  ai_daily_limit: null },
-  { google_id: "seed_zerosession0",         email: "zerosession0@gmail.com",   display_name: "Session Zero Test",    approved: false, role: "user",  ai_enabled: false, ai_daily_limit: 20   },
-  { google_id: "seed_alice_example_com",    email: "alice@example.com",        display_name: "Alice Approved",       approved: true,  role: "user",  ai_enabled: true,  ai_daily_limit: 10   },
-  { google_id: "seed_bob_example_com",      email: "bob@example.com",          display_name: "Bob Approved",         approved: true,  role: "user",  ai_enabled: false, ai_daily_limit: 20   },
-  { google_id: "seed_carol_example_com",    email: "carol@example.com",        display_name: "Carol Pending",        approved: false, role: "user",  ai_enabled: false, ai_daily_limit: 20   },
-  { google_id: "seed_dave_example_com",     email: "dave@example.com",         display_name: "Dave Pending",         approved: false, role: "user",  ai_enabled: false, ai_daily_limit: 20   },
+  { google_id: "seed_admin",                email: adminEmail,          display_name: "Paul Luedke",    approved: true,  role: "admin", ai_enabled: true,  ai_daily_limit: null },
+  { google_id: "seed_alice_example_com",    email: "alice@example.com", display_name: "Alice Approved", approved: true,  role: "user",  ai_enabled: true,  ai_daily_limit: 10   },
+  { google_id: "seed_bob_example_com",      email: "bob@example.com",   display_name: "Bob Approved",   approved: true,  role: "user",  ai_enabled: false, ai_daily_limit: 20   },
+  { google_id: "seed_carol_example_com",    email: "carol@example.com", display_name: "Carol Pending",  approved: false, role: "user",  ai_enabled: false, ai_daily_limit: 20   },
+  { google_id: "seed_dave_example_com",     email: "dave@example.com",  display_name: "Dave Pending",   approved: false, role: "user",  ai_enabled: false, ai_daily_limit: 20   },
 ];
 
 const ALICE_GAMES = [
