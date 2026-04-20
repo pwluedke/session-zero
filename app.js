@@ -55,7 +55,7 @@ let currentSpotifyData = null;    // { embedUrl, name } — the playlist current
 let currentSpotifyOptions = [];   // full list returned by last fetch
 
 // Settings
-const SETTINGS_DEFAULTS = { showWhyBtn: true };
+const SETTINGS_DEFAULTS = {};
 let settings = { ...SETTINGS_DEFAULTS };
 
 // Play History and Active Sessions
@@ -95,7 +95,7 @@ if (!isDemoMode()) {
   initGames();
   initHistory();
   initActiveSessions();
-  initAdminNav();
+  initUserState();
 }
 
 // ── Navigation ─────────────────────────────────────────────────────────────
@@ -522,13 +522,6 @@ function closeSettings() {
 }
 
 function renderSettingsModal() {
-  const btn = document.getElementById('setting-why-btn');
-  if (btn) {
-    btn.textContent = settings.showWhyBtn ? 'On' : 'Off';
-    btn.setAttribute('aria-pressed', settings.showWhyBtn);
-    btn.classList.toggle('toggle-on', settings.showWhyBtn);
-  }
-
   const usernameInput = document.getElementById('bgg-username-input');
   if (usernameInput && settings.bggUsername) {
     usernameInput.value = settings.bggUsername;
@@ -781,20 +774,19 @@ function toggleSetting(key) {
   renderSettingsModal();
 }
 
-function applySettings() {
-  document.body.classList.toggle('hide-why', !settings.showWhyBtn);
-}
+function applySettings() {}
 
-async function initAdminNav() {
+async function initUserState() {
   if (isDemoMode()) return;
   try {
     const res = await fetch('/api/me');
     if (!res.ok) return;
-    const { role } = await res.json();
+    const { role, ai_enabled } = await res.json();
     if (role === 'admin') {
       document.querySelector('[data-testid="nav-admin"]')?.classList.remove('hidden');
       document.querySelector('[data-testid="mobile-nav-admin"]')?.classList.remove('hidden');
     }
+    document.body.classList.toggle('hide-why', !ai_enabled);
   } catch {}
 }
 

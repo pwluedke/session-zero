@@ -8,8 +8,8 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // ── Me ─────────────────────────────────────────────────────────────────────
 router.get("/api/me", (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Not authenticated" });
-  const { id, display_name, email, avatar_url, role } = req.user;
-  res.json({ id, display_name, email, avatar_url, role });
+  const { id, display_name, email, avatar_url, role, ai_enabled } = req.user;
+  res.json({ id, display_name, email, avatar_url, role, ai_enabled });
 });
 
 // ── Players ────────────────────────────────────────────────────────────────
@@ -83,7 +83,6 @@ router.delete("/api/players/:id", async (req, res) => {
 // ── Settings ───────────────────────────────────────────────────────────────
 function normalizeSettings(row) {
   return {
-    showWhyBtn:       row.show_why_btn,
     bggUsername:      row.bgg_username,
     bggLastSync:      row.bgg_last_sync,
     bggLastSyncCount: row.bgg_last_sync_count,
@@ -91,7 +90,7 @@ function normalizeSettings(row) {
 }
 
 router.get("/api/settings", async (req, res) => {
-  if (!pool) return res.json(normalizeSettings({ show_why_btn: true, bgg_username: null, bgg_last_sync: null, bgg_last_sync_count: null }));
+  if (!pool) return res.json(normalizeSettings({ bgg_username: null, bgg_last_sync: null, bgg_last_sync_count: null }));
   try {
     const { rows } = await pool.query(
       `INSERT INTO settings (user_id) VALUES ($1)
@@ -109,17 +108,16 @@ router.get("/api/settings", async (req, res) => {
 router.put("/api/settings", async (req, res) => {
   if (!pool) return res.status(503).json({ error: "Database not available" });
   try {
-    const { showWhyBtn, bggUsername, bggLastSync, bggLastSyncCount } = req.body;
+    const { bggUsername, bggLastSync, bggLastSyncCount } = req.body;
     const { rows } = await pool.query(
-      `INSERT INTO settings (user_id, show_why_btn, bgg_username, bgg_last_sync, bgg_last_sync_count)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO settings (user_id, bgg_username, bgg_last_sync, bgg_last_sync_count)
+       VALUES ($1, $2, $3, $4)
        ON CONFLICT (user_id) DO UPDATE SET
-         show_why_btn        = EXCLUDED.show_why_btn,
          bgg_username        = EXCLUDED.bgg_username,
          bgg_last_sync       = EXCLUDED.bgg_last_sync,
          bgg_last_sync_count = EXCLUDED.bgg_last_sync_count
        RETURNING *`,
-      [req.user.id, showWhyBtn ?? true, bggUsername ?? null, bggLastSync ?? null, bggLastSyncCount ?? null]
+      [req.user.id, bggUsername ?? null, bggLastSync ?? null, bggLastSyncCount ?? null]
     );
     res.json(normalizeSettings(rows[0]));
   } catch (err) {

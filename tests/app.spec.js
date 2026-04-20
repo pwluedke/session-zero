@@ -418,60 +418,30 @@ test('can delete a game from the library', async ({ page }) => {
 });
 
 // ── Settings ───────────────────────────────────────────────────────────────
-test('settings modal opens and Why? toggle works', async ({ page }) => {
-  const settings = new SettingsModal(page);
-  const main     = new MainPage(page);
-
-  await settings.open();
-  await settings.expectWhyBtnOn();
-
-  await settings.toggleWhyBtn();
-  await settings.expectWhyBtnOff();
-  await settings.close();
-
-  // Why? buttons on game cards should now be hidden
+test('Why? button is hidden when ai_enabled is false', async ({ page }) => {
+  const main = new MainPage(page);
+  await page.route('**/api/me', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ id: 1, display_name: 'User', email: 'u@test.com', avatar_url: null, role: 'user', ai_enabled: false }),
+  }));
+  await page.reload();
+  await page.waitForLoadState('networkidle');
   await main.findGames();
   await expect(page.getByTestId('why-btn').first()).toBeHidden();
 });
 
-test('Why? toggle setting persists across page reload', async ({ page }) => {
-  const settings = new SettingsModal(page);
-  const main     = new MainPage(page);
-
-  let savedShowWhyBtn = true;
-
-  // Mock GET to return current value; mock PUT to capture what was saved
-  await settings.mockSettings(async route => {
-    if (route.request().method() === 'PUT') {
-      const body = route.request().postDataJSON();
-      savedShowWhyBtn = body.showWhyBtn;
-      return route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) });
-    }
-    return route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify({ showWhyBtn: savedShowWhyBtn, bggUsername: null, bggLastSync: null, bggLastSyncCount: null }),
-    });
-  });
-
+test('Why? button is visible when ai_enabled is true', async ({ page }) => {
+  const main = new MainPage(page);
+  await page.route('**/api/me', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ id: 1, display_name: 'User', email: 'u@test.com', avatar_url: null, role: 'user', ai_enabled: true }),
+  }));
   await page.reload();
-  await settings.open();
-  await settings.expectWhyBtnOn();
-
-  await settings.toggleWhyBtn();
-  await settings.expectWhyBtnOff();
-  await settings.close();
-
-  expect(savedShowWhyBtn).toBe(false);
-
-  // Reload - mock now returns the saved value of false
-  await page.reload();
-  await settings.open();
-  await settings.expectWhyBtnOff();
-
-  // Game cards should still hide the Why? button after reload
-  await settings.close();
+  await page.waitForLoadState('networkidle');
   await main.findGames();
-  await expect(page.getByTestId('why-btn').first()).toBeHidden();
+  await expect(page.getByTestId('why-btn').first()).toBeVisible();
 });
 
 // ── BGG Sync (merge behavior) ──────────────────────────────────────────────
