@@ -583,6 +583,19 @@ function parseBGGXml(xml) {
     const playsMatch = block.match(/<numplays>(\d+)<\/numplays>/);
     const played = playsMatch ? parseInt(playsMatch[1]) > 0 : false;
 
+    const weightMatch = block.match(/<averageweight\s+value="([^"]*)"/);
+    let complexity = "Medium";
+    if (weightMatch && weightMatch[1] !== "0") {
+      const w = parseFloat(weightMatch[1]);
+      if (!isNaN(w) && w > 0) {
+        if      (w < 2.0) complexity = "Light";
+        else if (w < 2.5) complexity = "Medium Light";
+        else if (w < 3.5) complexity = "Medium";
+        else if (w < 4.0) complexity = "Medium Heavy";
+        else              complexity = "Heavy";
+      }
+    }
+
     const playTime = maxPlaytime || minPlaytime || 60;
 
     games.push({
@@ -590,7 +603,7 @@ function parseBGGXml(xml) {
       minPlayers,
       maxPlayers,
       playTime: playTime >= 999 ? 999 : playTime,
-      complexity: "Medium",
+      complexity,
       type: "Board",
       age: 0,
       setupTime: 10,
