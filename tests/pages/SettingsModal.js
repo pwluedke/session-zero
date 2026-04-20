@@ -2,12 +2,11 @@ const { expect } = require('@playwright/test');
 
 class SettingsModal {
   constructor(page) {
-    this.page        = page;
-    this.modal       = page.getByTestId('profile-modal');
-    this.whyBtn      = page.getByTestId('setting-why-btn');
-    this.syncStatus  = page.getByTestId('bgg-sync-status');
+    this.page          = page;
+    this.modal         = page.getByTestId('profile-modal');
+    this.syncStatus    = page.getByTestId('bgg-sync-status');
     this.usernameInput = page.getByTestId('bgg-username-input');
-    this.syncBtn     = page.getByTestId('bgg-sync-btn');
+    this.syncBtn       = page.getByTestId('bgg-sync-btn');
   }
 
   async open() {
@@ -18,18 +17,6 @@ class SettingsModal {
   async close() {
     await this.page.getByTestId('profile-modal-close').click();
     await expect(this.modal).not.toHaveClass(/active/);
-  }
-
-  async toggleWhyBtn() {
-    await this.whyBtn.click();
-  }
-
-  async expectWhyBtnOn() {
-    await expect(this.whyBtn).toHaveText('On');
-  }
-
-  async expectWhyBtnOff() {
-    await expect(this.whyBtn).toHaveText('Off');
   }
 
   async mockSettings(routeHandler) {
