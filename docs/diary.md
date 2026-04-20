@@ -187,6 +187,7 @@ Read at the start of every session using /reflect.
 - `apiFetch` exception for `/api/me`: nav and profile fetches handle 401/403 silently rather than redirecting mid-load.
 - `ai_daily_limit` renders blank when `null` (unlimited); clearing the input saves `null`.
 - `zerosession0@gmail.com` excluded from seed: it's a real Google account that needs OAuth sign-in to get a real `google_id`. Fake seed IDs would break the sign-in flow.
+- **AI suggestion engine returns exactly 3 recommendations, not 5**: curated and decisive UX, reduces paradox of choice, strong picks with visible match scores are more compelling than a longer diluted list. Cost difference is negligible.
 
 ### In progress
 - Nothing open. PR #150 merged, all branches clean.
