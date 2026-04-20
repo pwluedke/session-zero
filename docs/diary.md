@@ -167,3 +167,37 @@ Read at the start of every session using /reflect.
 - The admin cluster dependency order is: #139 (done) → #140 (done) → #143 (done) → #141 → #147 → #142 (now redundant, absorbed into #141/#147).
 - Suggestion engine issues #136-#138 and #144 all tagged do-not-implement -- skeleton only until the ratings and real-world signals work is complete.
 - /reflect will suggest PWA as next up based on older diary entries -- ignore it. Current priority is #141 admin panel UI.
+---
+
+## 2026-04-19
+
+### Completed
+- PR #150 merged: Admin panel UI (#141). Full `admin.html` replacing the placeholder: pending users section (Approve/Deny per row), active users section (inline `ai_enabled` checkbox, `ai_daily_limit` input, Revoke button), bulk "Enable AI for all" / "Disable AI for all" buttons. Session invalidation on deny/revoke via direct DELETE on `session` table. Admin self-protection (Revoke/Deny disabled for own row). Demo mode guard on admin nav.
+- Schema: `ai_enabled BOOLEAN DEFAULT TRUE` and `ai_daily_limit INTEGER DEFAULT 20` columns added to users table.
+- `apiFetch` interceptor added to `app.js`: all `/api/` calls redirect to `/login` on 401 or 403 in non-demo mode. Two `/api/me` calls in `initAdminNav` and `fetchAndRenderProfile` kept as direct `fetch` (handle errors silently on load).
+- `id` added to `/api/me` response (needed by admin panel for self-protection logic).
+- `AdminPage` page object created (`tests/pages/AdminPage.js`). 9 new Playwright tests. Total: 74 passing.
+- `scripts/seed-dev.js` added to main: populates local DB with test users (Paul as admin, Alice/Bob approved, Carol/Dave pending) and 13 games for Alice and Bob. Railway guard exits if `DATABASE_URL` contains `railway`. `ADMIN_EMAIL` guard exits if env var not set.
+- Seed script hardened: `ADMIN_EMAIL` from `.env` used for admin row (no hardcoded email). `zerosession0@gmail.com` removed from seed -- real OAuth accounts must sign in via Google to get a valid `google_id`.
+- `docs/process.md` updated with seed script docs and Manual Testing Workflow section.
+
+### Decisions made
+- **Deny = hard delete**: denying a pending user deletes them from the database. If they sign in again, they start a new pending request. Prevents denied users from polluting the pending list.
+- **Revoke = set `approved = false`**: moves user back to pending list. Admin can re-approve later.
+- `apiFetch` exception for `/api/me`: nav and profile fetches handle 401/403 silently rather than redirecting mid-load.
+- `ai_daily_limit` renders blank when `null` (unlimited); clearing the input saves `null`.
+- `zerosession0@gmail.com` excluded from seed: it's a real Google account that needs OAuth sign-in to get a real `google_id`. Fake seed IDs would break the sign-in flow.
+
+### In progress
+- Nothing open. PR #150 merged, all branches clean.
+
+### Up next
+- Plan and implement #147 (move Why? toggle to admin, replace per-user `show_why_btn` setting with `ai_enabled` flag).
+- Manual testing of admin panel at localhost:3000/admin with seeded users.
+- Run /reflect at the start of next session.
+
+### Notes
+- Run `node scripts/seed-dev.js` once after a fresh DB setup. Idempotent -- safe to re-run, skips existing rows.
+- Never run the seed script with a Railway `DATABASE_URL` -- the guard exits immediately.
+- Multiple concurrent Playwright runs caused port 3000 contention and false failures during this session. Always kill the dev server before running tests (`/stop local`), and never run two Playwright processes simultaneously.
+- The admin cluster dependency order is now complete: #139 done → #140 done → #143 done → #141 done → **#147** next.
