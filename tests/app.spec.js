@@ -10,6 +10,7 @@ const { SpotifyPanel } = require('./pages/SpotifyPanel');
 const { LandingPage }  = require('./pages/LandingPage');
 const { NavBar }       = require('./pages/NavBar');
 const { PendingPage }  = require('./pages/PendingPage');
+const { AdminPage }    = require('./pages/AdminPage');
 
 // Mock Spotify API response used across Spotify tests.
 // Two playlists so we can also test the options row when needed.
@@ -1261,4 +1262,137 @@ test('admin nav item is not visible when role is absent', async ({ page }) => {
   await page.reload();
   await page.waitForLoadState('networkidle');
   await expect(nav.navAdmin).not.toBeVisible();
+});
+
+// ── Admin panel ─────────────────────────────────────────────────────────────
+
+const MOCK_ADMIN_USER = { id: 1, email: 'admin@test.com', display_name: 'Admin', role: 'admin', approved: true, ai_enabled: true, ai_daily_limit: 20 };
+const MOCK_PENDING_USER = { id: 2, email: 'pending@test.com', display_name: 'Pending User', role: 'user', approved: false, ai_enabled: true, ai_daily_limit: 20 };
+const MOCK_ACTIVE_USER  = { id: 3, email: 'active@test.com',  display_name: 'Active User',  role: 'user', approved: true,  ai_enabled: true, ai_daily_limit: 20 };
+
+function mockAdminRoutes(page, { users, meId = 1 } = {}) {
+  let mockUsers = users ?? [MOCK_ADMIN_USER, MOCK_PENDING_USER, MOCK_ACTIVE_USER];
+
+  page.route('**/api/me', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ id: meId, display_name: 'Admin', email: 'admin@test.com', avatar_url: null, role: 'admin' }),
+  }));
+
+  page.route(url => url.href.includes('/api/admin/users'), async route => {
+    const method = route.request().method();
+    const url = route.request().url();
+    const approveMatch = url.match(/\/api\/admin\/users\/(\d+)\/approve/);
+    const denyMatch    = url.match(/\/api\/admin\/users\/(\d+)\/deny/);
+    const revokeMatch  = url.match(/\/api\/admin\/users\/(\d+)\/revoke/);
+    const bulkMatch    = url.includes('/api/admin/users/ai-bulk');
+    const putMatch     = method === 'PUT' && url.match(/\/api\/admin\/users\/(\d+)$/);
+
+    if (bulkMatch) {
+      const { ai_enabled } = route.request().postDataJSON();
+      mockUsers = mockUsers.map(u => u.role === 'admin' ? u : { ...u, ai_enabled });
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, updated: mockUsers.filter(u => u.role !== 'admin').length }) });
+    }
+    if (approveMatch) {
+      const id = parseInt(approveMatch[1]);
+      mockUsers = mockUsers.map(u => u.id === id ? { ...u, approved: true } : u);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+    }
+    if (denyMatch) {
+      const id = parseInt(denyMatch[1]);
+      mockUsers = mockUsers.filter(u => u.id !== id);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+    }
+    if (revokeMatch) {
+      const id = parseInt(revokeMatch[1]);
+      mockUsers = mockUsers.map(u => u.id === id ? { ...u, approved: false } : u);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+    }
+    if (putMatch) {
+      const id = parseInt(putMatch[1]);
+      const body = route.request().postDataJSON();
+      mockUsers = mockUsers.map(u => u.id === id ? { ...u, ...body } : u);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+    }
+    // GET /api/admin/users
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockUsers) });
+  });
+}
+
+test('admin panel shows pending and active users', async ({ page }) => {
+  mockAdminRoutes(page);
+  const admin = new AdminPage(page);
+  await admin.goto();
+  await admin.expectPendingUser('pending@test.com');
+  await admin.expectActiveUser('active@test.com');
+});
+
+test('admin panel shows empty state when no pending users', async ({ page }) => {
+  mockAdminRoutes(page, { users: [MOCK_ADMIN_USER, MOCK_ACTIVE_USER] });
+  const admin = new AdminPage(page);
+  await admin.goto();
+  await admin.expectNoPendingUsers();
+  await admin.expectActiveUser('active@test.com');
+});
+
+test('approving a pending user moves them to the active list', async ({ page }) => {
+  mockAdminRoutes(page);
+  const admin = new AdminPage(page);
+  await admin.goto();
+  await admin.expectPendingUser('pending@test.com');
+  await admin.approvePendingUser('pending@test.com');
+  await admin.expectNoPendingUsers();
+  await admin.expectActiveUser('pending@test.com');
+});
+
+test('denying a pending user removes them from the pending list', async ({ page }) => {
+  mockAdminRoutes(page);
+  const admin = new AdminPage(page);
+  await admin.goto();
+  await admin.expectPendingUser('pending@test.com');
+  await admin.denyPendingUser('pending@test.com');
+  await admin.expectNoPendingUsers();
+});
+
+test('revoking an active user removes them from the active list', async ({ page }) => {
+  mockAdminRoutes(page);
+  const admin = new AdminPage(page);
+  await admin.goto();
+  await admin.expectActiveUser('active@test.com');
+  await admin.revokeUser('active@test.com');
+  await expect(admin.activeUser('active@test.com')).not.toBeVisible();
+});
+
+test('admin cannot revoke their own account', async ({ page }) => {
+  mockAdminRoutes(page, { meId: 1 });
+  const admin = new AdminPage(page);
+  await admin.goto();
+  await expect(admin.revokeBtn('admin@test.com')).toBeDisabled();
+});
+
+test('admin cannot deny their own pending account', async ({ page }) => {
+  const selfPending = { ...MOCK_ADMIN_USER, approved: false };
+  mockAdminRoutes(page, { users: [selfPending], meId: 1 });
+  const admin = new AdminPage(page);
+  await admin.goto();
+  await expect(admin.denyBtn('admin@test.com')).toBeDisabled();
+});
+
+test('bulk enable AI updates all active users', async ({ page }) => {
+  const disabledUser = { ...MOCK_ACTIVE_USER, ai_enabled: false };
+  mockAdminRoutes(page, { users: [MOCK_ADMIN_USER, disabledUser] });
+  const admin = new AdminPage(page);
+  await admin.goto();
+  await expect(admin.aiCheckbox('active@test.com')).not.toBeChecked();
+  await admin.enableAIAll.click();
+  await page.waitForLoadState('networkidle');
+  await expect(admin.aiCheckbox('active@test.com')).toBeChecked();
+});
+
+test('ai daily limit shows blank for null (unlimited)', async ({ page }) => {
+  const unlimitedUser = { ...MOCK_ACTIVE_USER, ai_daily_limit: null };
+  mockAdminRoutes(page, { users: [MOCK_ADMIN_USER, unlimitedUser] });
+  const admin = new AdminPage(page);
+  await admin.goto();
+  await expect(admin.aiLimitInput('active@test.com')).toHaveValue('');
 });

@@ -12,6 +12,15 @@ function isDemoMode() {
   return sessionStorage.getItem('szDemo') === 'true';
 }
 
+async function apiFetch(url, options = {}) {
+  const response = await fetch(url, options);
+  if ((response.status === 401 || response.status === 403) && !isDemoMode()) {
+    window.location.href = '/login';
+    return;
+  }
+  return response;
+}
+
 // ── State ──────────────────────────────────────────────────────────────────
 let games = [];
 let newOnly = false;
@@ -136,7 +145,7 @@ function normalizePlayer(p) {
 
 async function initVault() {
   try {
-    const res = await fetch('/api/players');
+    const res = await apiFetch('/api/players');
     if (!res.ok) return;
     vault = (await res.json()).map(normalizePlayer);
   } catch {
@@ -148,7 +157,7 @@ async function initVault() {
 
 async function initSettings() {
   try {
-    const res = await fetch('/api/settings');
+    const res = await apiFetch('/api/settings');
     if (!res.ok) return;
     Object.assign(settings, await res.json());
   } catch {
@@ -160,7 +169,7 @@ async function initSettings() {
 
 function saveSettings() {
   if (isDemoMode()) return;
-  fetch('/api/settings', {
+  apiFetch('/api/settings', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(settings),
@@ -169,7 +178,7 @@ function saveSettings() {
 
 async function initGames() {
   try {
-    const res = await fetch('/api/games');
+    const res = await apiFetch('/api/games');
     if (!res.ok) return;
     games = await res.json();
   } catch {
@@ -189,7 +198,7 @@ async function importLocalGames() {
   const legacy = JSON.parse(localStorage.getItem('sz-games') || '[]');
   if (legacy.length === 0) { dismissGamesImportPrompt(); return; }
   try {
-    const res = await fetch('/api/games/sync', {
+    const res = await apiFetch('/api/games/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(legacy),
@@ -208,7 +217,7 @@ function dismissGamesImportPrompt() {
 
 async function initHistory() {
   try {
-    const res = await fetch('/api/history');
+    const res = await apiFetch('/api/history');
     if (!res.ok) return;
     history = await res.json();
   } catch {
@@ -228,7 +237,7 @@ async function importLocalHistory() {
   const legacy = JSON.parse(localStorage.getItem('sz-history') || '[]');
   if (legacy.length === 0) { dismissHistoryImportPrompt(); return; }
   try {
-    const res = await fetch('/api/history/sync', {
+    const res = await apiFetch('/api/history/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(legacy),
@@ -246,7 +255,7 @@ function dismissHistoryImportPrompt() {
 
 async function initActiveSessions() {
   try {
-    const res = await fetch('/api/sessions/active');
+    const res = await apiFetch('/api/sessions/active');
     if (!res.ok) return;
     activeSessions = await res.json();
   } catch {
@@ -268,7 +277,7 @@ async function importLocalActiveSessions() {
   if (legacy.length === 0) { dismissActiveSessionsImportPrompt(); return; }
   try {
     await Promise.all(legacy.map(state =>
-      fetch('/api/sessions/active', {
+      apiFetch('/api/sessions/active', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(state),
@@ -297,7 +306,7 @@ async function importLocalVault() {
   const legacy = JSON.parse(localStorage.getItem('sz-vault') || '[]');
   for (const p of legacy) {
     try {
-      const res = await fetch('/api/players', {
+      const res = await apiFetch('/api/players', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: p.name, emoji: p.emoji, color: p.color }),
@@ -346,7 +355,7 @@ async function addToVault() {
     return;
   }
   try {
-    const res = await fetch('/api/players', {
+    const res = await apiFetch('/api/players', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, emoji: null, color }),
@@ -637,7 +646,7 @@ function handleBGGImport(input) {
       }
       games = imported;
       if (!isDemoMode()) {
-        fetch('/api/games/sync', {
+        apiFetch('/api/games/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(games),
@@ -735,7 +744,7 @@ async function syncBGGCollection() {
 
     games = mergeBGGGames(games, data.games);
     if (!isDemoMode()) {
-      fetch('/api/games/sync', {
+      apiFetch('/api/games/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(games),
@@ -777,6 +786,7 @@ function applySettings() {
 }
 
 async function initAdminNav() {
+  if (isDemoMode()) return;
   try {
     const res = await fetch('/api/me');
     if (!res.ok) return;
@@ -1362,7 +1372,7 @@ function backToSession() {
 function saveResult(result) {
   if (isDemoMode()) return;
   history.unshift(result);
-  fetch('/api/history', {
+  apiFetch('/api/history', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(result),
@@ -1416,7 +1426,7 @@ function pauseSession() {
     const idx = activeSessions.findIndex(s => s.id === state.id);
     if (idx >= 0) activeSessions[idx] = state;
     else activeSessions.push(state);
-    fetch('/api/sessions/active', {
+    apiFetch('/api/sessions/active', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(state),
@@ -2142,7 +2152,7 @@ function submitAddGame() {
   };
   games.push(newGame);
   if (!isDemoMode()) {
-    fetch('/api/games', {
+    apiFetch('/api/games', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newGame),
