@@ -354,9 +354,11 @@ button:hover {
   white-space: nowrap;
 }
 
-.badge-low    { background: #1e4d2b; color: #5dd67a; }
-.badge-medium { background: #4d3a1a; color: #f5a842; }
-.badge-high   { background: #4d1a1a; color: #f55252; }
+.badge-light        { background: #1e4d2b; color: #5dd67a; }
+.badge-medium-light { background: #2a4d1e; color: #8fd66a; }
+.badge-medium       { background: #4d3a1a; color: #f5a842; }
+.badge-medium-heavy { background: #4d2a1a; color: #f57842; }
+.badge-heavy        { background: #4d1a1a; color: #f55252; }
 
 .game-rating {
   font-size: 0.8rem;
@@ -2570,9 +2572,11 @@ body.hide-why .why-btn {
 
 .lib-tag:hover { border-color: #f5c842; color: #f5c842; }
 
-.lib-complexity-low    { border-color: #5dd67a; color: #5dd67a; }
-.lib-complexity-medium { border-color: #f5c842; color: #f5c842; }
-.lib-complexity-high   { border-color: #e05252; color: #e05252; }
+.lib-complexity-light        { border-color: #5dd67a; color: #5dd67a; }
+.lib-complexity-medium-light { border-color: #8fd66a; color: #8fd66a; }
+.lib-complexity-medium       { border-color: #f5c842; color: #f5c842; }
+.lib-complexity-medium-heavy { border-color: #f59042; color: #f59042; }
+.lib-complexity-heavy        { border-color: #e05252; color: #e05252; }
 
 .lib-toggle {
   font-size: 0.68rem;

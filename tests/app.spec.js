@@ -22,13 +22,15 @@ const MOCK_PLAYLISTS = {
 };
 
 // Default game library used by the /api/games mock in beforeEach.
-// Includes Low-complexity games (for filter tests) and Wingspan Asia (for 'wing' search test).
+// Covers all 5 complexity values to support filter tests and badge tests.
 const DEFAULT_TEST_GAMES = [
-  { id: 1, name: 'Wingspan Asia', type: 'Board', complexity: 'Medium', minPlayers: 1, maxPlayers: 2, playTime: 70, age: 14, setupTime: 10, rating: null, played: false, cooperative: false, thumbnail: null, bggId: 366161, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 2, name: 'Azul', type: 'Board', complexity: 'Medium', minPlayers: 2, maxPlayers: 4, playTime: 45, age: 8, setupTime: 5, rating: null, played: true, cooperative: false, thumbnail: null, bggId: 230802, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 3, name: 'Catan', type: 'Board', complexity: 'Medium', minPlayers: 3, maxPlayers: 6, playTime: 90, age: 10, setupTime: 10, rating: null, played: true, cooperative: false, thumbnail: null, bggId: 13, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 4, name: 'Codenames', type: 'Party', complexity: 'Low', minPlayers: 2, maxPlayers: 8, playTime: 15, age: 14, setupTime: 2, rating: null, played: true, cooperative: false, thumbnail: null, bggId: 178900, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 5, name: 'Fluxx', type: 'Card', complexity: 'Low', minPlayers: 2, maxPlayers: 6, playTime: 30, age: 8, setupTime: 1, rating: null, played: true, cooperative: false, thumbnail: null, bggId: 258, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 1, name: 'Wingspan Asia',   type: 'Board', complexity: 'Medium',       minPlayers: 1, maxPlayers: 2, playTime: 70, age: 14, setupTime: 10, rating: null, played: false, cooperative: false, thumbnail: null, bggId: 366161, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 2, name: 'Azul',            type: 'Board', complexity: 'Medium Light', minPlayers: 2, maxPlayers: 4, playTime: 45, age: 8,  setupTime: 5,  rating: null, played: true,  cooperative: false, thumbnail: null, bggId: 230802, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 3, name: 'Catan',           type: 'Board', complexity: 'Medium',       minPlayers: 3, maxPlayers: 6, playTime: 90, age: 10, setupTime: 10, rating: null, played: true,  cooperative: false, thumbnail: null, bggId: 13,     source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 4, name: 'Codenames',       type: 'Party', complexity: 'Light',        minPlayers: 2, maxPlayers: 8, playTime: 15, age: 14, setupTime: 2,  rating: null, played: true,  cooperative: false, thumbnail: null, bggId: 178900, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 5, name: 'Fluxx',           type: 'Card',  complexity: 'Light',        minPlayers: 2, maxPlayers: 6, playTime: 30, age: 8,  setupTime: 1,  rating: null, played: true,  cooperative: false, thumbnail: null, bggId: 258,    source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 6, name: 'Terraforming Mars', type: 'Board', complexity: 'Medium Heavy', minPlayers: 1, maxPlayers: 5, playTime: 120, age: 12, setupTime: 15, rating: null, played: true, cooperative: false, thumbnail: null, bggId: 167791, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 7, name: 'Spirit Island',   type: 'Board', complexity: 'Heavy',        minPlayers: 1, maxPlayers: 4, playTime: 120, age: 14, setupTime: 20, rating: null, played: true,  cooperative: true,  thumbnail: null, bggId: 162886, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
 ];
 
 // Each test gets a fresh localStorage so state doesn't bleed between runs.
@@ -269,12 +271,12 @@ test('filtering by player count narrows results', async ({ page }) => {
 
 test('filtering by complexity narrows results and all badges match', async ({ page }) => {
   const main = new MainPage(page);
-  await main.setComplexity('Low');
+  await main.setComplexity('Light');
   await main.findGames();
   await main.expectResults();
   const count = await main.gameCards().count();
   expect(count).toBeGreaterThan(0);
-  const badges = await page.locator('[data-testid="game-list"] .badge-low').count();
+  const badges = await page.locator('[data-testid="game-list"] .badge-light').count();
   expect(badges).toBe(count);
 });
 
@@ -316,7 +318,7 @@ test('expanded game card shows BGG badge linking to boardgamegeek.com for a BGG 
 
   await library.seedGames([
     { id: 101, name: 'Ticket to Ride', minPlayers: 2, maxPlayers: 5, playTime: 60,
-      complexity: 'Low', type: 'Board', age: 8, setupTime: 10, rating: 4,
+      complexity: 'Light', type: 'Board', age: 8, setupTime: 10, rating: 4,
       played: false, cooperative: false, thumbnail: null, bggId: 9209, source: 'bgg',
       spotifyEmbedUrl: null, spotifyPlaylistName: null },
   ]);
@@ -336,7 +338,7 @@ test('expanded game card shows BGG badge linking to Google search for a manual g
 
   await library.seedGames([
     { id: 102, name: 'My Homebrew Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
-      complexity: 'Low', type: 'Card', age: 0, setupTime: 5, rating: null,
+      complexity: 'Light', type: 'Card', age: 0, setupTime: 5, rating: null,
       played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual',
       spotifyEmbedUrl: null, spotifyPlaylistName: null },
   ]);
@@ -453,7 +455,7 @@ test('BGG sync preserves manually added games not in BGG response', async ({ pag
 
   await library.seedGames([
     { id: 201, name: 'My Homebrew Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
-      complexity: 'Low', type: 'Card', age: 0, setupTime: 5, rating: null,
+      complexity: 'Light', type: 'Card', age: 0, setupTime: 5, rating: null,
       played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual',
       spotifyEmbedUrl: null, spotifyPlaylistName: null },
   ]);
@@ -509,7 +511,7 @@ test('BGG sync adds new games from BGG not yet in the local library', async ({ p
       contentType: 'application/json',
       body: JSON.stringify({
         games: [{ name: 'Brand New Game', minPlayers: 2, maxPlayers: 4, playTime: 45,
-                  complexity: 'Low', type: 'Board', age: 8, setupTime: 5,
+                  complexity: 'Light', type: 'Board', age: 8, setupTime: 5,
                   rating: null, played: false, cooperative: false, thumbnail: null, bggId: 99999 }],
         count: 1,
       }),
@@ -529,7 +531,7 @@ test('BGG sync backfills bggId on a name-matched manual game so badge links to B
 
   await library.seedGames([
     { id: 204, name: 'Ticket to Ride', minPlayers: 2, maxPlayers: 5, playTime: 60,
-      complexity: 'Low', type: 'Board', age: 8, setupTime: 10, rating: 4,
+      complexity: 'Light', type: 'Board', age: 8, setupTime: 10, rating: 4,
       played: false, cooperative: false, thumbnail: null, bggId: null, source: 'manual',
       spotifyEmbedUrl: null, spotifyPlaylistName: null },
   ]);
@@ -539,7 +541,7 @@ test('BGG sync backfills bggId on a name-matched manual game so badge links to B
       contentType: 'application/json',
       body: JSON.stringify({
         games: [{ name: 'Ticket to Ride', minPlayers: 2, maxPlayers: 5, playTime: 60,
-                  complexity: 'Low', type: 'Board', age: 8, setupTime: 10,
+                  complexity: 'Light', type: 'Board', age: 8, setupTime: 10,
                   rating: null, played: false, cooperative: false, thumbnail: null, bggId: 9209 }],
         count: 1,
       }),
@@ -599,7 +601,7 @@ test('import prompt appears when localStorage has games and API returns empty li
   await page.evaluate(() => {
     localStorage.setItem('sz-games', JSON.stringify([
       { name: 'Old Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
-        complexity: 'Low', type: 'Card', age: 0, setupTime: 5,
+        complexity: 'Light', type: 'Card', age: 0, setupTime: 5,
         rating: null, played: false, cooperative: false, thumbnail: null,
         bggId: null, source: 'manual' },
     ]));
@@ -623,7 +625,7 @@ test('importing local games calls sync endpoint and dismisses prompt', async ({ 
     if (method === 'POST' && url.includes('/sync')) {
       syncCalled = true;
       return route.fulfill({ contentType: 'application/json', body: JSON.stringify([
-        { id: 1, name: 'Old Game', type: 'Card', complexity: 'Low', minPlayers: 2, maxPlayers: 4,
+        { id: 1, name: 'Old Game', type: 'Card', complexity: 'Light', minPlayers: 2, maxPlayers: 4,
           playTime: 30, age: 0, setupTime: 5, rating: null, played: false, cooperative: false,
           thumbnail: null, bggId: null, source: 'manual', spotifyEmbedUrl: null, spotifyPlaylistName: null },
       ]) });
@@ -633,7 +635,7 @@ test('importing local games calls sync endpoint and dismisses prompt', async ({ 
   await page.evaluate(() => {
     localStorage.setItem('sz-games', JSON.stringify([
       { name: 'Old Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
-        complexity: 'Low', type: 'Card', age: 0, setupTime: 5,
+        complexity: 'Light', type: 'Card', age: 0, setupTime: 5,
         rating: null, played: false, cooperative: false, thumbnail: null,
         bggId: null, source: 'manual' },
     ]));
@@ -661,7 +663,7 @@ test('dismissing import prompt removes localStorage entry', async ({ page }) => 
   await page.evaluate(() => {
     localStorage.setItem('sz-games', JSON.stringify([
       { name: 'Old Game', minPlayers: 2, maxPlayers: 4, playTime: 30,
-        complexity: 'Low', type: 'Card', age: 0, setupTime: 5,
+        complexity: 'Light', type: 'Card', age: 0, setupTime: 5,
         rating: null, played: false, cooperative: false, thumbnail: null,
         bggId: null, source: 'manual' },
     ]));

@@ -948,7 +948,7 @@ function renderResults(picked, heading) {
   const filters = getFilters();
 
   picked.forEach((game, index) => {
-    const badgeClass = `badge-${game.complexity.toLowerCase()}`;
+    const badgeClass = `badge-${game.complexity.toLowerCase().replace(/ /g, '-')}`;
     const playerCount = game.minPlayers === game.maxPlayers
       ? `${game.minPlayers} player${game.minPlayers > 1 ? "s" : ""}`
       : `${game.minPlayers}–${game.maxPlayers} players`;
@@ -1958,7 +1958,7 @@ let librarySortDir = 1;   // 1 = asc, -1 = desc
 let libraryDisplayed = []; // { game, idx } — maps display rows back to games[]
 
 const GAME_TYPES       = ['Abstract','Board','Card','Dice','Mystery','Narrative','Party'];
-const GAME_COMPLEXITIES = ['Low','Medium','High'];
+const GAME_COMPLEXITIES = ['Light','Medium Light','Medium','Medium Heavy','Heavy'];
 
 function openLibrary() {
   renderLibrary();
@@ -2050,7 +2050,7 @@ function renderLibrary() {
         <div class="lib-controls">
           <div class="lib-rating">${stars}</div>
           <button class="lib-tag lib-type-tag" onclick="cycleGameField(${di},'type')" title="Click to change type">${game.type}</button>
-          <button class="lib-tag lib-complexity-tag lib-complexity-${(game.complexity||'Medium').toLowerCase()}" onclick="cycleGameField(${di},'complexity')" title="Click to change complexity">${game.complexity}</button>
+          <button class="lib-tag lib-complexity-tag lib-complexity-${(game.complexity||'Medium').toLowerCase().replace(/ /g, '-')}" onclick="cycleGameField(${di},'complexity')" title="Click to change complexity">${game.complexity}</button>
           <button class="lib-toggle${game.cooperative ? ' on' : ''}" onclick="toggleGameField(${di},'cooperative')">Co-op</button>
           <button class="lib-toggle${game.played ? ' on' : ''}" onclick="toggleGameField(${di},'played')">Played</button>
           ${spotifyBadge}${bggLink}
