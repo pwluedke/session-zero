@@ -139,6 +139,7 @@ function normalizeGame(row) {
     age:                 row.age,
     setupTime:           row.setup_time,
     rating:              row.rating,
+    bggRating:           row.bgg_rating != null ? parseFloat(row.bgg_rating) : null,
     played:              row.played,
     cooperative:         row.cooperative,
     thumbnail:           row.thumbnail,
@@ -150,13 +151,13 @@ function normalizeGame(row) {
 }
 
 const GAME_INSERT_COLS = `(user_id, name, type, complexity, min_players, max_players,
-  play_time, age, setup_time, rating, played, cooperative, thumbnail, bgg_id, source,
+  play_time, age, setup_time, rating, bgg_rating, played, cooperative, thumbnail, bgg_id, source,
   spotify_embed_url, spotify_playlist_name)`;
-const GAME_INSERT_VALS = `($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`;
+const GAME_INSERT_VALS = `($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`;
 function gameParams(userId, g) {
   return [userId, g.name, g.type ?? 'Board', g.complexity ?? 'Medium',
     g.minPlayers ?? 1, g.maxPlayers ?? 1, g.playTime ?? 60,
-    g.age ?? 0, g.setupTime ?? 10, g.rating ?? null,
+    g.age ?? 0, g.setupTime ?? 10, g.rating ?? null, g.bggRating ?? null,
     g.played ?? false, g.cooperative ?? false, g.thumbnail ?? null,
     g.bggId ?? null, g.source ?? 'manual',
     g.spotifyEmbedUrl ?? null, g.spotifyPlaylistName ?? null];
@@ -217,8 +218,8 @@ router.put("/api/games/:id", async (req, res) => {
     const fieldMap = {
       name: 'name', type: 'type', complexity: 'complexity',
       minPlayers: 'min_players', maxPlayers: 'max_players', playTime: 'play_time',
-      age: 'age', setupTime: 'setup_time', rating: 'rating', played: 'played',
-      cooperative: 'cooperative', thumbnail: 'thumbnail', bggId: 'bgg_id',
+      age: 'age', setupTime: 'setup_time', rating: 'rating', bggRating: 'bgg_rating',
+      played: 'played', cooperative: 'cooperative', thumbnail: 'thumbnail', bggId: 'bgg_id',
       source: 'source', spotifyEmbedUrl: 'spotify_embed_url',
       spotifyPlaylistName: 'spotify_playlist_name',
     };
@@ -572,11 +573,11 @@ function parseBGGXml(xml) {
     }
 
     const avgMatch = block.match(/<average\s+value="([^"]*)"/);
-    let rating = null;
+    let bggRating = null;
     if (avgMatch && avgMatch[1] !== "N/A") {
       const raw = parseFloat(avgMatch[1]);
       if (!isNaN(raw) && raw > 0) {
-        rating = Math.min(5, Math.max(1, Math.round(raw / 2)));
+        bggRating = Math.round(raw * 10) / 10;
       }
     }
 
@@ -596,7 +597,7 @@ function parseBGGXml(xml) {
       type: "Board",
       age: 0,
       setupTime: 10,
-      rating,
+      bggRating,
       played,
       cooperative: false,
       thumbnail,

@@ -116,6 +116,14 @@ class MainPage {
   async expectNoResults() {
     await expect(this.noResults).not.toHaveClass(/hidden/);
   }
+
+  bggRatingBadge(cardLocator) {
+    return cardLocator.getByTestId('bgg-rating-badge');
+  }
+
+  async setMinRating(value) {
+    await this.minRatingSelect.selectOption(String(value));
+  }
 }
 
 module.exports = { MainPage };

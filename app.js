@@ -889,7 +889,7 @@ function getFilters() {
     type:       document.getElementById("type").value || null,
     age:        parseInt(document.getElementById("age").value) || null,
     setup:      parseInt(document.getElementById("setup").value) || null,
-    minRating:  parseInt(document.getElementById("min-rating").value) || null,
+    minRating:  parseFloat(document.getElementById("min-rating").value) || null,
     newOnly,
     coopOnly,
   };
@@ -903,7 +903,7 @@ function filterGames({ players, playtime, complexity, type, age, setup, minRatin
     if (type && game.type !== type) return false;
     if (age && game.age > age) return false;
     if (setup && game.setupTime > setup) return false;
-    if (minRating && (game.rating === null || game.rating < minRating)) return false;
+    if (minRating && (game.bggRating === null || game.bggRating === undefined || game.bggRating < minRating)) return false;
     if (newOnly && game.played) return false;
     if (coopOnly && !game.cooperative) return false;
     return true;
@@ -953,8 +953,8 @@ function renderResults(picked, heading) {
       ? `${game.minPlayers} player${game.minPlayers > 1 ? "s" : ""}`
       : `${game.minPlayers}–${game.maxPlayers} players`;
 
-    const ratingHtml = game.rating
-      ? `<span class="game-rating">${"★".repeat(game.rating)}${"☆".repeat(5 - game.rating)}</span>`
+    const ratingHtml = game.bggRating != null
+      ? `<span class="game-bgg-rating" data-testid="bgg-rating-badge">BGG ${game.bggRating.toFixed(1)}</span>`
       : "";
 
     const li = document.createElement("li");
