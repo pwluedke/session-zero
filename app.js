@@ -2021,10 +2021,9 @@ function renderLibrary() {
       ? `<img class="lib-thumb" src="${game.thumbnail}" alt="" loading="lazy" />`
       : `<div class="lib-thumb lib-thumb-initials">${game.name.charAt(0).toUpperCase()}</div>`;
 
-    const stars = [1,2,3,4,5].map(n =>
-      `<span class="lib-star${(game.rating ?? 0) >= n ? ' filled' : ''}" data-testid="lib-star" onclick="setGameRating(${di}, ${n})"
-        title="${n} star${n>1?'s':''}">★</span>`
-    ).join('');
+    const libBggRating = game.bggRating != null
+      ? `<span class="lib-badge game-bgg-rating" data-testid="lib-bgg-rating">BGG ${game.bggRating.toFixed(1)}</span>`
+      : '';
 
     const players = game.minPlayers === game.maxPlayers
       ? `${game.minPlayers}p`
@@ -2048,7 +2047,7 @@ function renderLibrary() {
           <div class="lib-meta">${players} · ${time} · Ages ${game.age}+</div>
         </div>
         <div class="lib-controls">
-          <div class="lib-rating">${stars}</div>
+          ${libBggRating}
           <button class="lib-tag lib-type-tag" onclick="cycleGameField(${di},'type')" title="Click to change type">${game.type}</button>
           <button class="lib-tag lib-complexity-tag lib-complexity-${(game.complexity||'Medium').toLowerCase().replace(/ /g, '-')}" onclick="cycleGameField(${di},'complexity')" title="Click to change complexity">${game.complexity}</button>
           <button class="lib-toggle${game.cooperative ? ' on' : ''}" onclick="toggleGameField(${di},'cooperative')">Co-op</button>
