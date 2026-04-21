@@ -243,3 +243,39 @@ Read at the start of every session using /reflect.
 - The `TEST_USER_EMAIL` env var must be set (already present as `zerosession0@gmail.com` in `.env`). Sign in with that Google account via OAuth to test as the seeded user.
 - Active session for Root is in the DB with `id = 'seed-active-001'`. It will appear in the UI if the resume session flow is wired up.
 - Session mode values used in seed: `'points'` and `'winlose'` (matches app's `scoreMode` defaults, not the schema's `DEFAULT 'scores'`). Worth verifying this doesn't cause display issues in the stats dashboard.
+
+---
+
+## 2026-04-20 (continued)
+
+### Completed
+- PR #151 merged: Move Why? toggle from Settings to admin-controlled `ai_enabled` flag. Closes #147.
+- PR #153 opened: Fix complexity filter and display to use BGG's 5-point weight scale (fix/complexity-bgg-5-point-scale, Closes #134).
+  - Root cause diagnosed: `<averageweight>` is not included in the BGG collection API response even with `stats=1`. It only appears in the BGG Thing API (`/xmlapi2/thing`).
+  - New `fetchBGGWeights(bggIds, token)` function in `routes/api.js`: after the collection sync, batches bggIds in groups of 20, calls the Thing API, parses `<averageweight>`, maps float to Light/Medium Light/Medium/Medium Heavy/Heavy using the approved thresholds.
+  - Filter dropdown and Add Game dropdown in `index.html` updated from 3 options to 5.
+  - `GAME_COMPLEXITIES` array in `app.js` expanded to all 5 values.
+  - Badge class generation updated to replace spaces with dashes (`badge-medium-light`, `badge-medium-heavy`).
+  - Four new CSS classes added to `style.css`: `badge-medium-light`, `badge-medium-heavy`, `lib-complexity-medium-light`, `lib-complexity-medium-heavy`.
+  - `DEFAULT_TEST_GAMES` expanded to 7 games covering all 5 complexity values; all `complexity: 'Low'` replaced with `'Light'`. 74/74 passing.
+- Issue #152 created: Enrich demo mode with seeded history and allow live session data during demo.
+- Issue #155 created and updated: Enforce AI rate limiting on suggestion engine (scoped to suggestion engine only, not Why? button; `do-not-implement` label; depends on #135).
+- Design note posted on issue #135: When suggestion engine ships, Why? button reveals the explanation already included in the suggestion response -- zero additional API cost per click. `/api/why` becomes obsolete.
+
+### Decisions made
+- **`averageweight` not in BGG collection API**: A second batch call to `/xmlapi2/thing` is required after each collection sync to get weight data. Implemented as `fetchBGGWeights()` called immediately after `parseBGGXml()` in the route handler.
+- **AI rate limiting scoped to suggestion engine only**: The Why? button (`/api/why`) will be replaced when #135 ships. Issue #155 explicitly excludes `/api/why` and is tagged `do-not-implement` until #135 exists.
+- **Issue #142 not reopened**: The `ai_daily_limit` infrastructure from #141 is sufficient. New issue #155 tracks enforcement as a clearly scoped separate piece.
+
+### In progress
+- PR #153 open (fix/complexity-bgg-5-point-scale): Closes #134. 74/74 passing. Awaiting manual testing confirmation and merge.
+
+### Up next
+- Merge PR #153 once manual testing confirms varied complexity values appear after BGG sync.
+- Plan and implement #152 (demo mode history enrichment) or next backlog issue.
+- Run /reflect at the start of next session.
+
+### Notes
+- BGG Thing API batch call adds a few seconds to sync time for large collections (100 games = ~5 extra requests). Acceptable -- sync is infrequent.
+- The `complexity: 'Low'` value no longer exists in the system. Old data with `'Low'` displays with no badge styling until re-synced. The `cycleGameField` library function handles it gracefully (resets to `'Light'` since `indexOf('Low')` returns -1, giving index 0).
+- Port 3000 contention remains the most common false-failure cause for Playwright. Always kill the dev server before running tests.
