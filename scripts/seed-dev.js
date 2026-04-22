@@ -121,7 +121,7 @@ function buildSession({ gameDef, gameId, date, participants, winnerName, forcedR
     winner: winnerSet.has(p.name),
     feedback_rating: (p.name in forcedRatings)
       ? forcedRatings[p.name]
-      : (rng() < 0.7 ? ri(5, 9) : null),
+      : (rng() < 0.7 ? ri(3, 5) : null),
   }));
 
   return { id, game_name: gameDef.name, game_id: gameId, played_at: date, duration_seconds: duration, mode, outcome, players };
@@ -213,7 +213,7 @@ async function main() {
     const others = pickN([carl, mordecai, bautista, katia], ri(2, 3));
     const participants = [donut, ...others];
     const forcedRatings = { 'Princess Donut': ri(2, 3) };
-    others.forEach(p => { forcedRatings[p.name] = ri(6, 8); });
+    others.forEach(p => { forcedRatings[p.name] = ri(3, 5); });
     sessions.push(buildSession({
       gameDef: catan.def, gameId: catan.id,
       date: randomDate(180),
@@ -230,7 +230,7 @@ async function main() {
   for (let i = 0; i < 3; i++) {
     const participants = pickN(noPrep, ri(2, 4));
     const forcedRatings = {};
-    participants.forEach(p => { forcedRatings[p.name] = ri(8, 9); });
+    participants.forEach(p => { forcedRatings[p.name] = ri(4, 5); });
     sessions.push(buildSession({
       gameDef: everdell.def, gameId: everdell.id,
       date: dateAgo(ri(140, 165)),
@@ -247,7 +247,7 @@ async function main() {
       const maxOthers = Math.min(g.def.max_players, 4) - 1;
       const others = pickN(noPrep.filter(p => p !== katia), ri(1, maxOthers));
       const participants = [katia, ...others];
-      const forcedRatings = { 'Katia': ri(8, 10) };
+      const forcedRatings = { 'Katia': ri(4, 5) };
       sessions.push(buildSession({
         gameDef: g.def, gameId: g.id,
         date: randomDate(180),
@@ -353,17 +353,36 @@ async function main() {
       userId,
       JSON.stringify({
         id: 'seed-active-001',
-        gameName: 'Root',
-        gameId: rootGame.id,
+        game: {
+          id: rootGame.id,
+          name: rootGame.def.name,
+          type: rootGame.def.type,
+          complexity: rootGame.def.complexity,
+          minPlayers: rootGame.def.min_players,
+          maxPlayers: rootGame.def.max_players,
+          playTime: rootGame.def.play_time,
+          bggId: rootGame.def.bgg_id,
+          cooperative: rootGame.def.cooperative,
+          played: true,
+          source: 'manual',
+          bggRating: null,
+          rating: null,
+          thumbnail: null,
+        },
         players: [
-          { id: String(carl.id),     name: 'Carl',     emoji: '⚔️',  color: '#e74c3c', score: 12 },
-          { id: String(mordecai.id), name: 'Mordecai', emoji: '🎩',  color: '#2c3e50', score: 8  },
-          { id: String(bautista.id), name: 'Bautista', emoji: '💪',  color: '#e67e22', score: 15 },
+          { id: String(carl.id),     name: 'Carl',     emoji: '⚔️',  color: '#e74c3c' },
+          { id: String(mordecai.id), name: 'Mordecai', emoji: '🎩',  color: '#2c3e50' },
+          { id: String(bautista.id), name: 'Bautista', emoji: '💪',  color: '#e67e22' },
         ],
-        mode: 'points',
+        scores: {
+          [String(carl.id)]: 12,
+          [String(mordecai.id)]: 8,
+          [String(bautista.id)]: 15,
+        },
+        scoreMode: 'points',
         lowScoreWins: false,
+        outcome: null,
         timerSeconds: 2820,
-        timerRunning: false,
         pausedAt: new Date().toISOString(),
       }),
     ]
