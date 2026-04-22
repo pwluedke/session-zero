@@ -121,7 +121,7 @@ function buildSession({ gameDef, gameId, date, participants, winnerName, forcedR
     winner: winnerSet.has(p.name),
     feedback_rating: (p.name in forcedRatings)
       ? forcedRatings[p.name]
-      : (rng() < 0.7 ? ri(3, 5) : null),
+      : (rng() < 0.7 ? ri(6, 9) : null),
   }));
 
   return { id, game_name: gameDef.name, game_id: gameId, played_at: date, duration_seconds: duration, mode, outcome, players };
@@ -212,8 +212,8 @@ async function main() {
   for (let i = 0; i < 6; i++) {
     const others = pickN([carl, mordecai, bautista, katia], ri(2, 3));
     const participants = [donut, ...others];
-    const forcedRatings = { 'Princess Donut': ri(2, 3) };
-    others.forEach(p => { forcedRatings[p.name] = ri(3, 5); });
+    const forcedRatings = { 'Princess Donut': ri(2, 4) };
+    others.forEach(p => { forcedRatings[p.name] = ri(6, 8); });
     sessions.push(buildSession({
       gameDef: catan.def, gameId: catan.id,
       date: randomDate(180),
@@ -230,7 +230,7 @@ async function main() {
   for (let i = 0; i < 3; i++) {
     const participants = pickN(noPrep, ri(2, 4));
     const forcedRatings = {};
-    participants.forEach(p => { forcedRatings[p.name] = ri(4, 5); });
+    participants.forEach(p => { forcedRatings[p.name] = ri(8, 10); });
     sessions.push(buildSession({
       gameDef: everdell.def, gameId: everdell.id,
       date: dateAgo(ri(140, 165)),
@@ -247,7 +247,7 @@ async function main() {
       const maxOthers = Math.min(g.def.max_players, 4) - 1;
       const others = pickN(noPrep.filter(p => p !== katia), ri(1, maxOthers));
       const participants = [katia, ...others];
-      const forcedRatings = { 'Katia': ri(4, 5) };
+      const forcedRatings = { 'Katia': ri(8, 10) };
       sessions.push(buildSession({
         gameDef: g.def, gameId: g.id,
         date: randomDate(180),
