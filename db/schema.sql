@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS games (
   age                   INTEGER DEFAULT 0,
   setup_time            INTEGER DEFAULT 10,
   rating                INTEGER,
+  bgg_rating            NUMERIC(4,2),
   played                BOOLEAN DEFAULT FALSE,
   cooperative           BOOLEAN DEFAULT FALSE,
   thumbnail             TEXT,

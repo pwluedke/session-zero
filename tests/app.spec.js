@@ -24,13 +24,13 @@ const MOCK_PLAYLISTS = {
 // Default game library used by the /api/games mock in beforeEach.
 // Covers all 5 complexity values to support filter tests and badge tests.
 const DEFAULT_TEST_GAMES = [
-  { id: 1, name: 'Wingspan Asia',   type: 'Board', complexity: 'Medium',       minPlayers: 1, maxPlayers: 2, playTime: 70, age: 14, setupTime: 10, rating: null, played: false, cooperative: false, thumbnail: null, bggId: 366161, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 2, name: 'Azul',            type: 'Board', complexity: 'Medium Light', minPlayers: 2, maxPlayers: 4, playTime: 45, age: 8,  setupTime: 5,  rating: null, played: true,  cooperative: false, thumbnail: null, bggId: 230802, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 3, name: 'Catan',           type: 'Board', complexity: 'Medium',       minPlayers: 3, maxPlayers: 6, playTime: 90, age: 10, setupTime: 10, rating: null, played: true,  cooperative: false, thumbnail: null, bggId: 13,     source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 4, name: 'Codenames',       type: 'Party', complexity: 'Light',        minPlayers: 2, maxPlayers: 8, playTime: 15, age: 14, setupTime: 2,  rating: null, played: true,  cooperative: false, thumbnail: null, bggId: 178900, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 5, name: 'Fluxx',           type: 'Card',  complexity: 'Light',        minPlayers: 2, maxPlayers: 6, playTime: 30, age: 8,  setupTime: 1,  rating: null, played: true,  cooperative: false, thumbnail: null, bggId: 258,    source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 6, name: 'Terraforming Mars', type: 'Board', complexity: 'Medium Heavy', minPlayers: 1, maxPlayers: 5, playTime: 120, age: 12, setupTime: 15, rating: null, played: true, cooperative: false, thumbnail: null, bggId: 167791, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 7, name: 'Spirit Island',   type: 'Board', complexity: 'Heavy',        minPlayers: 1, maxPlayers: 4, playTime: 120, age: 14, setupTime: 20, rating: null, played: true,  cooperative: true,  thumbnail: null, bggId: 162886, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 1, name: 'Wingspan Asia',   type: 'Board', complexity: 'Medium',       minPlayers: 1, maxPlayers: 2, playTime: 70, age: 14, setupTime: 10, rating: null, bggRating: 8.1, played: false, cooperative: false, thumbnail: null, bggId: 366161, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 2, name: 'Azul',            type: 'Board', complexity: 'Medium Light', minPlayers: 2, maxPlayers: 4, playTime: 45, age: 8,  setupTime: 5,  rating: null, bggRating: 7.8, played: true,  cooperative: false, thumbnail: null, bggId: 230802, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 3, name: 'Catan',           type: 'Board', complexity: 'Medium',       minPlayers: 3, maxPlayers: 6, playTime: 90, age: 10, setupTime: 10, rating: null, bggRating: 7.1, played: true,  cooperative: false, thumbnail: null, bggId: 13,     source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 4, name: 'Codenames',       type: 'Party', complexity: 'Light',        minPlayers: 2, maxPlayers: 8, playTime: 15, age: 14, setupTime: 2,  rating: null, bggRating: 7.7, played: true,  cooperative: false, thumbnail: null, bggId: 178900, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 5, name: 'Fluxx',           type: 'Card',  complexity: 'Light',        minPlayers: 2, maxPlayers: 6, playTime: 30, age: 8,  setupTime: 1,  rating: null, bggRating: null, played: true,  cooperative: false, thumbnail: null, bggId: 258,    source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 6, name: 'Terraforming Mars', type: 'Board', complexity: 'Medium Heavy', minPlayers: 1, maxPlayers: 5, playTime: 120, age: 12, setupTime: 15, rating: null, bggRating: 8.4, played: true, cooperative: false, thumbnail: null, bggId: 167791, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 7, name: 'Spirit Island',   type: 'Board', complexity: 'Heavy',        minPlayers: 1, maxPlayers: 4, playTime: 120, age: 14, setupTime: 20, rating: null, bggRating: 8.2, played: true,  cooperative: true,  thumbnail: null, bggId: 162886, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
 ];
 
 // Each test gets a fresh localStorage so state doesn't bleed between runs.
@@ -1367,4 +1367,44 @@ test('ai daily limit shows blank for null (unlimited)', async ({ page }) => {
   const admin = new AdminPage(page);
   await admin.goto();
   await expect(admin.aiLimitInput('active@test.com')).toHaveValue('');
+});
+
+// -- BGG Rating Display --
+
+test('game card displays BGG rating badge when bgg_rating is set', async ({ page }) => {
+  const main = new MainPage(page);
+  await page.goto('/');
+  await main.findGames();
+  const cards = main.gameCards();
+  await expect(cards).not.toHaveCount(0);
+  const firstCard = cards.first();
+  const badge = main.bggRatingBadge(firstCard);
+  await expect(badge).toBeVisible();
+  await expect(badge).toContainText('BGG');
+});
+
+test('game card shows no BGG rating badge when bgg_rating is null', async ({ page }) => {
+  const main = new MainPage(page);
+  await page.goto('/');
+  await main.findGames();
+  // Fluxx (id: 5) has bggRating: null -- find it by name
+  const cards = main.gameCards();
+  const fluxxCard = cards.filter({ hasText: 'Fluxx' });
+  await expect(fluxxCard).toHaveCount(1);
+  await expect(main.bggRatingBadge(fluxxCard)).toHaveCount(0);
+});
+
+test('min BGG rating filter excludes games below threshold', async ({ page }) => {
+  const main = new MainPage(page);
+  await page.goto('/');
+  await main.setMinRating(8);
+  await main.findGames();
+  // Only Wingspan Asia (8.1), Terraforming Mars (8.4), Spirit Island (8.2) are >= 8.0
+  const cards = main.gameCards();
+  const count = await cards.count();
+  expect(count).toBeGreaterThan(0);
+  // Catan (7.1) should not appear
+  await expect(cards.filter({ hasText: 'Catan' })).toHaveCount(0);
+  // Fluxx (null) should not appear
+  await expect(cards.filter({ hasText: 'Fluxx' })).toHaveCount(0);
 });
