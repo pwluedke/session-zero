@@ -279,3 +279,37 @@ Read at the start of every session using /reflect.
 - BGG Thing API batch call adds a few seconds to sync time for large collections (100 games = ~5 extra requests). Acceptable -- sync is infrequent.
 - The `complexity: 'Low'` value no longer exists in the system. Old data with `'Low'` displays with no badge styling until re-synced. The `cycleGameField` library function handles it gracefully (resets to `'Light'` since `indexOf('Low')` returns -1, giving index 0).
 - Port 3000 contention remains the most common false-failure cause for Playwright. Always kill the dev server before running tests.
+
+---
+
+## 2026-04-22
+
+### Completed
+- PR #153 merged (previous session): Fix complexity filter and BGG 5-point scale. Closes #134.
+- PR #156 opened: Display BGG community rating as a badge on game cards (feature/bgg-rating-display, Closes #132). Shows "BGG 8.1" badge on game cards and library view; null-safe (no badge if no rating). The Fluxx fixture in `DEFAULT_TEST_GAMES` already has `bggRating: null` and tests the no-badge case.
+- Epic #157 created: Social Play Network. 11 child issues created (#158-#168) covering Phase 1 (username, friend requests, player linking), Phase 2 (shared sessions, played-not-owned indicator, library/ratings visibility), Phase 3 (game recommendations, friend suggestions). All labeled `do-not-implement`. Epic body updated with linked checklist.
+- `scripts/seed-dev.js` hardened in three separate commits to main:
+  - **OAuth conflict fix**: seed now checks if `TEST_USER_EMAIL` already exists before inserting; reuses existing id instead of failing on duplicate. `DELETE` also excludes `TEST_USER_EMAIL` so OAuth-authed users are not wiped before the lookup.
+  - **Active session JSONB shape fix**: blob was using `gameName`/`gameId`/`mode` instead of the `game: {name, id, ...}` object, `scoreMode`, and separate `scores` object that `pauseSession()` actually writes. `renderGamesInProgress()` was crashing on `s.game.name` (undefined). Fixed to match the real shape exactly.
+  - **Feedback rating scale fix**: seed used `ri(5, 9)` and `ri(6, 10)` but the history star display hardcodes 5 stars -- `'☆'.repeat(5 - 8)` = `repeat(-3)` throws `RangeError`, preventing the history modal from opening. All seed ratings corrected to 1-5 scale.
+- PR #169 opened and merged: Fix pg DATE columns returning as JS Date objects (`fix/date-type-parser`). `String(dateObj)` on a Tuesday or Thursday produces a string starting with 'T', so `split('T')[0]` returns `""`. Added `types.setTypeParser(1082, val => val)` to `db/index.js` so DATE columns return plain `'YYYY-MM-DD'` strings.
+- Cursor keybindings fixed after macOS reinstall: `/terminal-setup` wrote Shift+Enter binding to VS Code's `keybindings.json` but not Cursor's. Created `/Users/pluedke/Library/Application Support/Cursor/User/keybindings.json` with the same binding.
+- `gh auth login` re-authenticated after macOS reinstall.
+
+### Decisions made
+- Social Play Network (#157) structured as three phases: Foundation (auth/identity), Shared Data (sessions/library), Discovery (recommendations/suggestions). All 11 child issues tagged `do-not-implement` -- planning only, no implementation scheduled.
+- Seed script feedback ratings use the same 1-5 scale as the UI star widget. Everdell and Katia coop patterns now use `ri(4, 5)` (loved). Catan "others" use `ri(3, 5)`. Default random uses `ri(3, 5)`. Princess Donut's Catan ratings (`ri(2, 3)`) unchanged.
+
+### In progress
+- PR #156 open (feature/bgg-rating-display): BGG rating badge on game cards. Branch is 2 commits ahead of `origin/feature/bgg-rating-display` and has diverged from main -- needs rebase before /review and merge.
+
+### Up next
+- Rebase `feature/bgg-rating-display` onto main (`git rebase main`), push, then run `/review 156`.
+- Merge PR #156 once review passes.
+- Run /reflect at the start of next session.
+
+### Notes
+- `repeat()` with a negative argument throws `RangeError` -- not just returns empty string. Any star/badge display that does `repeat(n - value)` must clamp or guard against values exceeding `n`.
+- pg DATE type (OID 1082) returns JS Date objects by default. `String(dateObj)` is locale/timezone-dependent and not safe for date extraction. Use `types.setTypeParser(1082, val => val)` at pool setup to get raw `'YYYY-MM-DD'` strings.
+- Days starting with 'T' (Tuesday, Thursday) caused `"date": ""` in the history API response -- a subtle bug that only appeared with sufficient seeded data spanning multiple weekdays.
+- `feature/bgg-rating-display` branch has extra commits from seed fixes that were cherry-picked to main. These will show in the PR diff but are already on main -- no harm on merge, git won't double-apply them.
