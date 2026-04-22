@@ -136,14 +136,21 @@ async function main() {
   await pool.query('DELETE FROM settings');
   await pool.query('DELETE FROM games');
   await pool.query('DELETE FROM players');
-  await pool.query('DELETE FROM users WHERE email != $1', [adminEmail]);
+  await pool.query('DELETE FROM users WHERE email != $1 AND email != $2', [adminEmail, testUserEmail]);
 
   // --- TEST USER ---
-  const { rows: [{ id: userId }] } = await pool.query(
-    `INSERT INTO users (google_id, email, display_name, approved, role, ai_enabled, ai_daily_limit)
-     VALUES ($1, $2, 'Test User', TRUE, 'user', TRUE, 20) RETURNING id`,
-    ['seed-test-user-001', testUserEmail]
-  );
+  const existing = await pool.query('SELECT id FROM users WHERE email = $1', [testUserEmail]);
+  let userId;
+  if (existing.rows.length > 0) {
+    userId = existing.rows[0].id;
+  } else {
+    const { rows: [{ id }] } = await pool.query(
+      `INSERT INTO users (google_id, email, display_name, approved, role, ai_enabled, ai_daily_limit)
+       VALUES ($1, $2, 'Test User', TRUE, 'user', TRUE, 20) RETURNING id`,
+      ['seed-test-user-001', testUserEmail]
+    );
+    userId = id;
+  }
 
   // --- PLAYERS ---
   const players = [];
