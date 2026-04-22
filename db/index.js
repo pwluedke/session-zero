@@ -1,4 +1,9 @@
-const { Pool } = require("pg");
+const { Pool, types } = require("pg");
+
+// pg returns DATE columns as JS Date objects by default.
+// String(dateObj).split('T')[0] splits on the 'T' in "GMT", not the date/time boundary.
+// Return DATE values as plain 'YYYY-MM-DD' strings instead.
+types.setTypeParser(1082, val => val);
 
 let pool = null;
 
