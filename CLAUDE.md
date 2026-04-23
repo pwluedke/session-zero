@@ -138,6 +138,7 @@ Don't assume. Don't hide confusion. Surface tradeoffs.
 ### 2. Simplicity First
 Minimum code that solves the problem. Nothing speculative.
 
+- YAGNI -- You Aren't Gonna Need It. Never build flexibility, configurability, or abstractions that were not explicitly requested. If the issue doesn't ask for it, don't build it.
 - No features beyond what was asked
 - No abstractions for single-use code
 - No flexibility or configurability that wasn't requested
