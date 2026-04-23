@@ -128,6 +128,8 @@ router.put("/api/settings", async (req, res) => {
 
 // ── Games ──────────────────────────────────────────────────────────────────
 function normalizeGame(row) {
+  const override = row.table_rating_override != null ? parseFloat(row.table_rating_override) : null;
+  const computed = row.computed_table_rating != null ? parseFloat(row.computed_table_rating) : null;
   return {
     id:                  row.id,
     name:                row.name,
@@ -140,6 +142,7 @@ function normalizeGame(row) {
     setupTime:           row.setup_time,
     rating:              row.rating,
     bggRating:           row.bgg_rating != null ? parseFloat(row.bgg_rating) : null,
+    tableRating:         override ?? computed,
     played:              row.played,
     cooperative:         row.cooperative,
     thumbnail:           row.thumbnail,
@@ -152,22 +155,29 @@ function normalizeGame(row) {
 
 const GAME_INSERT_COLS = `(user_id, name, type, complexity, min_players, max_players,
   play_time, age, setup_time, rating, bgg_rating, played, cooperative, thumbnail, bgg_id, source,
-  spotify_embed_url, spotify_playlist_name)`;
-const GAME_INSERT_VALS = `($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`;
+  spotify_embed_url, spotify_playlist_name, table_rating_override)`;
+const GAME_INSERT_VALS = `($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`;
 function gameParams(userId, g) {
   return [userId, g.name, g.type ?? 'Board', g.complexity ?? 'Medium',
     g.minPlayers ?? 1, g.maxPlayers ?? 1, g.playTime ?? 60,
     g.age ?? 0, g.setupTime ?? 10, g.rating ?? null, g.bggRating ?? null,
     g.played ?? false, g.cooperative ?? false, g.thumbnail ?? null,
     g.bggId ?? null, g.source ?? 'manual',
-    g.spotifyEmbedUrl ?? null, g.spotifyPlaylistName ?? null];
+    g.spotifyEmbedUrl ?? null, g.spotifyPlaylistName ?? null,
+    g.tableRatingOverride ?? null];
 }
 
 router.get("/api/games", async (req, res) => {
   if (!pool) return res.json([]);
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM games WHERE user_id = $1 ORDER BY name",
+      `SELECT g.*, ROUND(AVG(sp.feedback_rating), 1) AS computed_table_rating
+       FROM games g
+       LEFT JOIN sessions s ON s.game_id = g.id AND s.user_id = g.user_id
+       LEFT JOIN session_players sp ON sp.session_id = s.id AND sp.feedback_rating IS NOT NULL
+       WHERE g.user_id = $1
+       GROUP BY g.id
+       ORDER BY g.name`,
       [req.user.id]
     );
     res.json(rows.map(normalizeGame));
@@ -222,6 +232,7 @@ router.put("/api/games/:id", async (req, res) => {
       played: 'played', cooperative: 'cooperative', thumbnail: 'thumbnail', bggId: 'bgg_id',
       source: 'source', spotifyEmbedUrl: 'spotify_embed_url',
       spotifyPlaylistName: 'spotify_playlist_name',
+      tableRatingOverride: 'table_rating_override',
     };
     const sets = [];
     const vals = [req.params.id, req.user.id];

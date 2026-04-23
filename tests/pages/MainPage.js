@@ -121,6 +121,10 @@ class MainPage {
     return cardLocator.getByTestId('bgg-rating-badge');
   }
 
+  tableRatingBadge(cardLocator) {
+    return cardLocator.getByTestId('table-rating-badge');
+  }
+
   async setMinRating(value) {
     await this.minRatingSelect.selectOption(String(value));
   }

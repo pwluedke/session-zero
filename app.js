@@ -957,6 +957,10 @@ function renderResults(picked, heading) {
       ? `<span class="game-bgg-rating" data-testid="bgg-rating-badge">BGG ${game.bggRating.toFixed(1)}</span>`
       : "";
 
+    const tableRatingHtml = game.tableRating != null
+      ? `<span class="game-table-rating" data-testid="table-rating-badge">Table ${game.tableRating.toFixed(1)}</span>`
+      : "";
+
     const li = document.createElement("li");
     li.className = "game-card";
     li.setAttribute('data-testid', 'game-card');
@@ -974,6 +978,7 @@ function renderResults(picked, heading) {
         </div>
         <div class="game-card-right">
           ${ratingHtml}
+          ${tableRatingHtml}
           <span class="badge ${badgeClass}">${game.complexity}</span>
           <button class="why-btn" data-testid="why-btn" onclick="event.stopPropagation(); askWhy(this, ${JSON.stringify(game).replace(/"/g, '&quot;')}, ${JSON.stringify(filters).replace(/"/g, '&quot;')})">Why?</button>
         </div>
@@ -1528,7 +1533,7 @@ function renderHistory() {
       ? Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length)
       : 0;
     const ratingHtml = avgRating
-      ? `<span class="history-stars">${'★'.repeat(avgRating)}${'☆'.repeat(5 - avgRating)}</span>`
+      ? `<span class="history-stars">${'★'.repeat(avgRating)}${'☆'.repeat(10 - avgRating)}</span>`
       : '';
 
     const paCounts = { yes: 0, maybe: 0, no: 0 };
@@ -1645,7 +1650,7 @@ function renderStats() {
       : '';
 
     const ratingHtml = s.avgRating
-      ? `<div class="stats-row"><span>Avg Rating Given</span><span class="stats-stars">${'★'.repeat(s.avgRating)}${'☆'.repeat(5 - s.avgRating)}</span></div>`
+      ? `<div class="stats-row"><span>Avg Rating Given</span><span class="stats-stars">${'★'.repeat(s.avgRating)}${'☆'.repeat(10 - s.avgRating)}</span></div>`
       : '';
 
     const paTotal = s.paCounts.yes + s.paCounts.maybe + s.paCounts.no;
@@ -1897,7 +1902,7 @@ function renderPlayerFeedbackForm() {
   if (!player || !container) return;
 
   const fb = feedbackByPlayer[player.id];
-  const stars = [1, 2, 3, 4, 5].map(i =>
+  const stars = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i =>
     `<button class="star-btn ${i <= fb.rating ? 'star-on' : ''}" onclick="setRating(${i})">★</button>`
   ).join('');
 
@@ -2025,6 +2030,10 @@ function renderLibrary() {
       ? `<span class="lib-badge game-bgg-rating" data-testid="lib-bgg-rating">BGG ${game.bggRating.toFixed(1)}</span>`
       : '';
 
+    const libTableRating = game.tableRating != null
+      ? `<span class="lib-badge game-table-rating" data-testid="lib-table-rating" onclick="setTableRating(${di})" style="cursor:pointer" title="Click to override">Table ${game.tableRating.toFixed(1)}</span>`
+      : '';
+
     const players = game.minPlayers === game.maxPlayers
       ? `${game.minPlayers}p`
       : `${game.minPlayers}–${game.maxPlayers}p`;
@@ -2048,6 +2057,7 @@ function renderLibrary() {
         </div>
         <div class="lib-controls">
           ${libBggRating}
+          ${libTableRating}
           <button class="lib-tag lib-type-tag" onclick="cycleGameField(${di},'type')" title="Click to change type">${game.type}</button>
           <button class="lib-tag lib-complexity-tag lib-complexity-${(game.complexity||'Medium').toLowerCase().replace(/ /g, '-')}" onclick="cycleGameField(${di},'complexity')" title="Click to change complexity">${game.complexity}</button>
           <button class="lib-toggle${game.cooperative ? ' on' : ''}" onclick="toggleGameField(${di},'cooperative')">Co-op</button>
@@ -2074,6 +2084,22 @@ function setGameRating(displayIdx, n) {
   games[idx].rating = game.rating === n ? null : n;
   renderLibrary();
   gamePut(game, { rating: games[idx].rating });
+}
+
+function setTableRating(displayIdx) {
+  const { game, idx } = libraryDisplayed[displayIdx];
+  const current = game.tableRating != null ? game.tableRating : '';
+  const input = prompt(`Set table rating for "${game.name}" (1-10, or blank to clear):`, current);
+  if (input === null) return;
+  const trimmed = input.trim();
+  const val = trimmed === '' ? null : parseFloat(trimmed);
+  if (val !== null && (isNaN(val) || val < 1 || val > 10)) {
+    alert('Enter a number between 1 and 10, or leave blank to clear.');
+    return;
+  }
+  games[idx].tableRating = val;
+  renderLibrary();
+  gamePut(game, { tableRatingOverride: val });
 }
 
 function cycleGameField(displayIdx, field) {

@@ -71,6 +71,10 @@ class LibraryModal {
     await expect(this.row(gameName)).toHaveCount(0);
   }
 
+  tableRatingBadge(rowLocator) {
+    return rowLocator.getByTestId('lib-table-rating');
+  }
+
   async seedGames(games) {
     await this.page.route(url => url.href.includes('/api/games'), async route => {
       if (route.request().method() === 'GET' && !route.request().url().includes('/sync')) {

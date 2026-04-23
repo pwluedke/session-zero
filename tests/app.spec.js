@@ -24,13 +24,13 @@ const MOCK_PLAYLISTS = {
 // Default game library used by the /api/games mock in beforeEach.
 // Covers all 5 complexity values to support filter tests and badge tests.
 const DEFAULT_TEST_GAMES = [
-  { id: 1, name: 'Wingspan Asia',   type: 'Board', complexity: 'Medium',       minPlayers: 1, maxPlayers: 2, playTime: 70, age: 14, setupTime: 10, rating: null, bggRating: 8.1, played: false, cooperative: false, thumbnail: null, bggId: 366161, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 2, name: 'Azul',            type: 'Board', complexity: 'Medium Light', minPlayers: 2, maxPlayers: 4, playTime: 45, age: 8,  setupTime: 5,  rating: null, bggRating: 7.8, played: true,  cooperative: false, thumbnail: null, bggId: 230802, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 3, name: 'Catan',           type: 'Board', complexity: 'Medium',       minPlayers: 3, maxPlayers: 6, playTime: 90, age: 10, setupTime: 10, rating: null, bggRating: 7.1, played: true,  cooperative: false, thumbnail: null, bggId: 13,     source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 4, name: 'Codenames',       type: 'Party', complexity: 'Light',        minPlayers: 2, maxPlayers: 8, playTime: 15, age: 14, setupTime: 2,  rating: null, bggRating: 7.7, played: true,  cooperative: false, thumbnail: null, bggId: 178900, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 5, name: 'Fluxx',           type: 'Card',  complexity: 'Light',        minPlayers: 2, maxPlayers: 6, playTime: 30, age: 8,  setupTime: 1,  rating: null, bggRating: null, played: true,  cooperative: false, thumbnail: null, bggId: 258,    source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 6, name: 'Terraforming Mars', type: 'Board', complexity: 'Medium Heavy', minPlayers: 1, maxPlayers: 5, playTime: 120, age: 12, setupTime: 15, rating: null, bggRating: 8.4, played: true, cooperative: false, thumbnail: null, bggId: 167791, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
-  { id: 7, name: 'Spirit Island',   type: 'Board', complexity: 'Heavy',        minPlayers: 1, maxPlayers: 4, playTime: 120, age: 14, setupTime: 20, rating: null, bggRating: 8.2, played: true,  cooperative: true,  thumbnail: null, bggId: 162886, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 1, name: 'Wingspan Asia',   type: 'Board', complexity: 'Medium',       minPlayers: 1, maxPlayers: 2, playTime: 70, age: 14, setupTime: 10, rating: null, bggRating: 8.1, tableRating: 7.8, played: false, cooperative: false, thumbnail: null, bggId: 366161, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 2, name: 'Azul',            type: 'Board', complexity: 'Medium Light', minPlayers: 2, maxPlayers: 4, playTime: 45, age: 8,  setupTime: 5,  rating: null, bggRating: 7.8, tableRating: null, played: true,  cooperative: false, thumbnail: null, bggId: 230802, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 3, name: 'Catan',           type: 'Board', complexity: 'Medium',       minPlayers: 3, maxPlayers: 6, playTime: 90, age: 10, setupTime: 10, rating: null, bggRating: 7.1, tableRating: null, played: true,  cooperative: false, thumbnail: null, bggId: 13,     source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 4, name: 'Codenames',       type: 'Party', complexity: 'Light',        minPlayers: 2, maxPlayers: 8, playTime: 15, age: 14, setupTime: 2,  rating: null, bggRating: 7.7, tableRating: null, played: true,  cooperative: false, thumbnail: null, bggId: 178900, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 5, name: 'Fluxx',           type: 'Card',  complexity: 'Light',        minPlayers: 2, maxPlayers: 6, playTime: 30, age: 8,  setupTime: 1,  rating: null, bggRating: null, tableRating: null, played: true,  cooperative: false, thumbnail: null, bggId: 258,    source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 6, name: 'Terraforming Mars', type: 'Board', complexity: 'Medium Heavy', minPlayers: 1, maxPlayers: 5, playTime: 120, age: 12, setupTime: 15, rating: null, bggRating: 8.4, tableRating: null, played: true, cooperative: false, thumbnail: null, bggId: 167791, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
+  { id: 7, name: 'Spirit Island',   type: 'Board', complexity: 'Heavy',        minPlayers: 1, maxPlayers: 4, playTime: 120, age: 14, setupTime: 20, rating: null, bggRating: 8.2, tableRating: null, played: true,  cooperative: true,  thumbnail: null, bggId: 162886, source: 'bgg', spotifyEmbedUrl: null, spotifyPlaylistName: null },
 ];
 
 // Each test gets a fresh localStorage so state doesn't bleed between runs.
@@ -1407,4 +1407,50 @@ test('min BGG rating filter excludes games below threshold', async ({ page }) =>
   await expect(cards.filter({ hasText: 'Catan' })).toHaveCount(0);
   // Fluxx (null) should not appear
   await expect(cards.filter({ hasText: 'Fluxx' })).toHaveCount(0);
+});
+
+// -- Table Rating Display --
+
+test('game card shows table rating badge when tableRating is set', async ({ page }) => {
+  const main = new MainPage(page);
+  await page.goto('/');
+  await main.findGames();
+  const cards = main.gameCards();
+  // Wingspan Asia has tableRating: 7.8
+  const wingspanCard = cards.filter({ hasText: 'Wingspan Asia' });
+  await expect(wingspanCard).toHaveCount(1);
+  const badge = main.tableRatingBadge(wingspanCard);
+  await expect(badge).toBeVisible();
+  await expect(badge).toContainText('Table 7.8');
+});
+
+test('game card shows no table rating badge when tableRating is null', async ({ page }) => {
+  const main = new MainPage(page);
+  await page.goto('/');
+  await main.findGames();
+  const cards = main.gameCards();
+  // Azul has tableRating: null
+  const azulCard = cards.filter({ hasText: 'Azul' });
+  await expect(azulCard).toHaveCount(1);
+  await expect(main.tableRatingBadge(azulCard)).toHaveCount(0);
+});
+
+test('library view shows table rating badge when tableRating is set', async ({ page }) => {
+  const lib = new LibraryModal(page);
+  await page.goto('/');
+  await lib.open();
+  const wingspanRow = lib.row('Wingspan Asia');
+  await expect(wingspanRow).toBeVisible();
+  const badge = lib.tableRatingBadge(wingspanRow);
+  await expect(badge).toBeVisible();
+  await expect(badge).toContainText('Table 7.8');
+});
+
+test('library view shows no table rating badge when tableRating is null', async ({ page }) => {
+  const lib = new LibraryModal(page);
+  await page.goto('/');
+  await lib.open();
+  const azulRow = lib.row('Azul');
+  await expect(azulRow).toBeVisible();
+  await expect(lib.tableRatingBadge(azulRow)).toHaveCount(0);
 });
