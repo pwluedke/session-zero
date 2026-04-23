@@ -167,14 +167,21 @@ Define success criteria. Loop until verified.
 
 ## Testing Standards
 
-- All tests use Page Object Model -- no raw selectors anywhere in test files
-- External APIs are mocked with `page.route()` -- never hit live APIs in tests
-- Every test is fully isolated -- `beforeEach` clears all state, tests never share data
-- Seed test state via `page.evaluate()` directly into localStorage or memory
-- New features require tests for: happy path, empty/zero state, error state, edge cases
-- API integrations require tests for: success response, failure response, loading state
-- Test names describe behavior, not implementation: "adding a player persists after reload" not "POST /api/players works"
-- The Why? button (/api/why) is never tested with Playwright -- it hits a paid API
+Testing strategy is determined by issue type -- see `.claude/rules/testing.md` for full details.
+
+Summary:
+- **Feature/Enhancement**: Acceptance-Driven -- AC in issue, tests written in same PR as code
+- **Bug**: Regression-first -- write failing test that reproduces the bug before fixing it
+- **Refactor**: Characterization-first -- lock in current behavior with tests before touching code
+
+Before writing any test, ask: "Am I adding new behavior or preserving existing behavior?"
+
+All tests follow these rules regardless of type:
+- Page Object Model -- no raw selectors in test files
+- External APIs mocked with `page.route()` -- never hit live APIs
+- Every test fully isolated -- `beforeEach` clears all state
+- Test names describe behavior not implementation
+- NODE_ENV=test bypasses auth and AI calls -- intentional
 
 ## Conventions
 - Branch names: feature/short-description or fix/short-description
