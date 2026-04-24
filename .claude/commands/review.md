@@ -27,3 +27,7 @@ State one of:
 - QUESTION -- something needs clarification before a verdict
 
 Never approve a PR that fails Pass 1. A well-written PR that doesn't meet the spec is not done.
+
+After both passes complete, end your output with:
+"PR #N is open. After you merge it on GitHub, run `/merged N` to sync locally."
+Use the actual PR number obtained via `gh pr view --json number`.
