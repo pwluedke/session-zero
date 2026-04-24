@@ -313,3 +313,32 @@ Read at the start of every session using /reflect.
 - pg DATE type (OID 1082) returns JS Date objects by default. `String(dateObj)` is locale/timezone-dependent and not safe for date extraction. Use `types.setTypeParser(1082, val => val)` at pool setup to get raw `'YYYY-MM-DD'` strings.
 - Days starting with 'T' (Tuesday, Thursday) caused `"date": ""` in the history API response -- a subtle bug that only appeared with sufficient seeded data spanning multiple weekdays.
 - `feature/bgg-rating-display` branch has extra commits from seed fixes that were cherry-picked to main. These will show in the PR diff but are already on main -- no harm on merge, git won't double-apply them.
+
+---
+
+## 2026-04-24
+
+### Completed
+- Diagnosed missing statusline: `jq` was not installed. `brew install jq` fixed it. Script at `/Users/pluedke/.claude/statusline-command.sh` confirmed working -- outputs `pluedke@Pauls-MacBook-Air session-zero | Claude Sonnet [#-------------------] 5%`.
+- Issue #171 created: Add /merged slash command for post-merge local sync.
+- PR #172 opened: Port /merged slash command from scavenger-protocol (chore/merged-slash-command, Closes #171).
+  - Created `.claude/commands/merged.md`: 5-step command (verify PR merged via gh, checkout main, pull, delete feature branch with -d, confirm clean state, report SHA).
+  - Appended a `/merged N` reminder to the end of `.claude/commands/review.md` so it surfaces after every review completes.
+
+### Decisions made
+- `/merged` uses `$ARGUMENTS` for the PR number -- same convention as `plan.md` and `implement.md`.
+- The `chore` label does not exist in this repo. Used `infrastructure` + `dx` instead.
+- `git branch -d` (safe delete) only. Command explicitly prohibits `-D` (force) without explicit user confirmation.
+
+### In progress
+- PR #172 open (chore/merged-slash-command): Closes #171.
+
+### Up next
+- Run `/review 172` and merge PR #172.
+- Identify next feature or infra issue to pick up.
+- Run /reflect at the start of next session.
+
+### Notes
+- The statusline requires `jq` on PATH. If the statusline stops working after a new machine setup, check `which jq` first.
+- `/merged N` is now a skill available in this project. The `/review` reminder will prompt to run it after each merge.
+- The test command from the statusline-setup instructions must be run on a single line -- shell line wrapping causes the pipe to feed JSON to bare `bash`, not to the script.
